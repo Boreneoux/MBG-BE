@@ -1,47 +1,52 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '../../generated/prisma/client';
+import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError';
+import logger from '../config/logger.config';
+
+function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): AppError {
+  switch (err.code) {
+    case 'P2002': {
+      const field = (err.meta?.target as string[])?.[0] ?? 'Field';
+      return new AppError(`${field} already exists`, 409);
+    }
+    case 'P2025':
+      return new AppError('Resource not found', 404);
+    case 'P2003':
+      return new AppError('Related resource not found', 400);
+    case 'P2011':
+      return new AppError('Required field is missing', 400);
+    default:
+      logger.warn(`Unhandled Prisma error [${err.code}]`, { meta: err.meta });
+      return new AppError('Database operation failed', 500);
+  }
+}
 
 export const errorMiddleware = (
   err: any,
-  _: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
-  // Prisma → AppError
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    if (err.code === 'P2002') {
-      const field = (err.meta?.target as string[])?.[0];
-      err = new AppError(`${field} already exists`, 409);
-    } else if (err.code === 'P2025') {
-      err = new AppError('Resource not found', 404);
-    }
+    const appError = handlePrismaError(err);
+    return res.status(appError.statusCode).json({ success: false, message: appError.message, data: null });
   }
 
-  // Prisma validation errors (client input)
   if (err instanceof Prisma.PrismaClientValidationError) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid request data',
-      data: null
-    });
+    logger.warn('PrismaClientValidationError', { message: err.message });
+    return res.status(400).json({ success: false, message: 'Invalid request data', data: null });
   }
 
-  // AppError → client
+  if (err instanceof ZodError) {
+    const message = err.issues[0]?.message ?? 'Validation error';
+    return res.status(400).json({ success: false, message, data: null });
+  }
+
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      data: null
-    });
+    return res.status(err.statusCode).json({ success: false, message: err.message, data: null });
   }
 
-  // Unknown error → 500
-  console.error('UNEXPECTED ERROR:', err);
-
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    data: null
-  });
+  logger.error('Unexpected error', { message: err?.message ?? err, stack: err?.stack });
+  return res.status(500).json({ success: false, message: 'Internal server error', data: null });
 };

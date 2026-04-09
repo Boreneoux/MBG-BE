@@ -70,18 +70,23 @@ enum stock_mutation_status {
 
 model User {
   id                  Int                  @id @default(autoincrement())
-  name                String?              @db.VarChar(100)
+  first_name          String?              @db.VarChar(50)
+  last_name           String?              @db.VarChar(50)
   email               String               @unique @db.VarChar(255)
   password            String?              @db.VarChar(255)
   phone               String?              @db.VarChar(20)
-  profile_image       String?              @db.VarChar(255)
+  profile_image          String?              @db.VarChar(255)
+  profile_image_public_id String?             @db.VarChar(255)
   role                user_role            @default(user)
   is_verified         Boolean              @default(false)
   referral_code       String?              @unique @db.VarChar(20)
+  referred_by_id      Int?
   created_at          DateTime             @default(now())
   updated_at          DateTime             @default(now())
   deleted_at          DateTime?
 
+  referred_by         User?                @relation("UserReferral", fields: [referred_by_id], references: [id])
+  referrals           User[]               @relation("UserReferral")
   user_oauth_accounts UserOAuthAccount[]
   verification_tokens VerificationToken[]
   user_addresses      UserAddress[]
@@ -289,6 +294,7 @@ model ProductImage {
   id         Int       @id @default(autoincrement())
   product_id Int
   image_url  String    @db.VarChar(255)
+  public_id  String?   @db.VarChar(255)
   is_primary Boolean   @default(false)
   created_at DateTime  @default(now())
   deleted_at DateTime?
@@ -453,8 +459,9 @@ model Order {
   address_id       Int
   voucher_id       Int?
   payment_method   payment_method
-  payment_proof    String?        @db.VarChar(255)
-  payment_deadline DateTime?
+  payment_proof           String?        @db.VarChar(255)
+  payment_proof_public_id String?        @db.VarChar(255)
+  payment_deadline        DateTime?
   shipped_at       DateTime?
   confirmed_at     DateTime?
   cancelled_at     DateTime?

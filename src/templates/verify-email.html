@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Your Email</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #18181b;
+      }
+      .wrapper {
+        max-width: 560px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .header {
+        background-color: #D87756;
+        padding: 32px 40px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .body {
+        padding: 36px 40px;
+      }
+      .body p {
+        margin: 0 0 16px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #3f3f46;
+      }
+      .btn-wrapper {
+        text-align: center;
+        margin: 28px 0;
+      }
+      .btn {
+        display: inline-block;
+        background-color: #D87756;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 14px 36px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .fallback {
+        font-size: 13px;
+        color: #71717a;
+        word-break: break-all;
+      }
+      .footer {
+        padding: 20px 40px;
+        background-color: #f4f4f5;
+        text-align: center;
+        font-size: 12px;
+        color: #a1a1aa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="header">
+        <h1>MalesBeliGrocery</h1>
+      </div>
+      <div class="body">
+        <p>Hi <strong>{{firstName}}</strong>,</p>
+        <p>
+          Thanks for signing up! Please verify your email address to activate
+          your account. The link will expire in
+          <strong>{{expirationTime}}</strong>.
+        </p>
+        <div class="btn-wrapper">
+          <a href="{{verifyLink}}" class="btn">Verify Email Address</a>
+        </div>
+        <p class="fallback">
+          If the button doesn't work, copy and paste this link into your
+          browser:<br />
+          {{verifyLink}}
+        </p>
+        <p>
+          If you didn't create an account, you can safely ignore this email.
+        </p>
+      </div>
+      <div class="footer">
+        &copy; {{year}} MalesBeliGrocery. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
