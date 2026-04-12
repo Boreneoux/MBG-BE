@@ -2,153 +2,138 @@ import { prisma } from '../config/prisma-client.config';
 import { AppError } from '../utils/AppError';
 import { hashing, hashMatch } from '../helpers/bcrypt.helper';
 import logger from '../config/logger.config';
-import { GoogleProfile } from '../middlewares/auth.middleware';
+import { authRepository } from '../repositories/auth.repository';
 import {
   RegisterInput,
   LoginInput,
-  TOKEN_EXPIRY,
+  GoogleProfile,
   Tx,
+  TOKEN_EXPIRY
+} from '../types/auth';
+import {
+  generateToken,
+  hashToken,
   buildCookieToken,
-  getUniqueReferralCode,
-  invalidateTokens,
-  validateVerificationToken,
-  validateReferrer,
-  applyReferralVoucher,
-  createVerificationToken,
+  generateReferralCode,
   sendVerificationEmail,
   sendResetEmail
 } from './auth.helpers';
 
-async function createUserTx(
-  data: Omit<RegisterInput, 'referral_code' | 'password'> & {
-    referral_code: string;
-    referred_by_id?: number;
-  },
-  referrer: { id: number } | null
-) {
-  return prisma.$transaction(async (tx: Tx) => {
-    const user = await tx.user.create({ data });
-    if (referrer) await applyReferralVoucher(tx, user.id);
-    return user;
-  });
+// ─── Private helpers ─────────────────────────────────────────────────────────
+
+async function resolveReferrer(referralCode?: string) {
+  if (!referralCode) return null;
+  const referrer = await authRepository.findUserByReferralCode(referralCode);
+  if (!referrer) throw new AppError('Invalid referral code', 400);
+  return referrer;
 }
 
-async function issueVerification(
+async function generateUniqueReferralCode(
+  firstName: string,
+  lastName: string
+): Promise<string> {
+  let code = generateReferralCode(firstName, lastName);
+  while (await authRepository.findUserByReferralCode(code)) {
+    code = generateReferralCode(firstName, lastName);
+  }
+  return code;
+}
+
+async function issueVerificationToken(
   userId: number,
   email: string,
   firstName: string
-) {
-  const raw = await createVerificationToken(
+): Promise<void> {
+  const { raw, hashed } = generateToken();
+  const expiresAt = new Date(
+    Date.now() + TOKEN_EXPIRY.email_verification * 60 * 1000
+  );
+  await authRepository.createVerificationToken(
     userId,
+    hashed,
     'email_verification',
-    TOKEN_EXPIRY.email_verification
+    expiresAt
   );
   sendVerificationEmail(email, firstName, raw);
 }
 
-async function handleExistingOAuth(oAuth: { user: any }) {
-  const token = buildCookieToken(
-    oAuth.user.id,
-    oAuth.user.email,
-    oAuth.user.role
-  );
-  const { password: _, ...user } = oAuth.user;
-  return { user, token, isNewUser: false };
+async function validateToken(rawToken: string, expectedType: string) {
+  const hashed = hashToken(rawToken);
+  const record = await authRepository.findVerificationTokenByHash(hashed);
+  if (!record || record.type !== expectedType)
+    throw new AppError('Invalid or expired link', 400);
+  if (record.is_used)
+    throw new AppError('This link has already been used', 400);
+  if (new Date(record.expires_at) < new Date())
+    throw new AppError('This link has expired', 400);
+  return record;
 }
 
-async function linkGoogleAccount(
-  existing: any,
-  oAuthData: { provider_user_id: string; provider_email: string }
-) {
-  await prisma.userOAuthAccount.create({
-    data: { user_id: existing.id, provider: 'google', ...oAuthData }
-  });
-  if (!existing.is_verified) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: { is_verified: true }
-    });
-  }
-  const token = buildCookieToken(existing.id, existing.email, existing.role);
-  const { password: _, ...user } = existing;
-  return { user, token, isNewUser: false };
+async function applyReferralVoucher(userId: number, tx: Tx): Promise<void> {
+  const voucher = await authRepository.findActiveReferralVoucher(tx);
+  if (voucher) await authRepository.assignVoucherToUser(userId, voucher.id, tx);
 }
 
-async function createGoogleUser(profile: GoogleProfile) {
-  const {
-    provider_user_id,
-    provider_email: email,
-    first_name,
-    last_name
-  } = profile;
-  const referral_code = await getUniqueReferralCode(first_name, last_name);
-  const newUser = await prisma.$transaction(async (tx: Tx) => {
-    const created = await tx.user.create({
-      data: { first_name, last_name, email, is_verified: true, referral_code }
-    });
-    await tx.userOAuthAccount.create({
-      data: {
-        user_id: created.id,
-        provider: 'google',
-        provider_user_id,
-        provider_email: email
-      }
-    });
-    return created;
-  });
-  const token = buildCookieToken(newUser.id, newUser.email, newUser.role);
-  const { password: _, ...user } = newUser;
-  return { user, token, isNewUser: true };
-}
+// ─── Service ──────────────────────────────────────────────────────────────────
 
 export const authService = {
   async register(input: RegisterInput) {
     const { first_name, last_name, email, phone, referral_code } = input;
-    if (await prisma.user.findUnique({ where: { email } }))
+
+    if (await authRepository.findUserByEmail(email))
       throw new AppError('Email already in use', 409);
-    const referrer = referral_code ? await validateReferrer(referral_code) : null;
-    const newReferralCode = await getUniqueReferralCode(first_name, last_name);
-    const user = await createUserTx(
-      { first_name, last_name, email, phone, referral_code: newReferralCode, ...(referrer && { referred_by_id: referrer.id }) },
-      referrer
+
+    const referrer = await resolveReferrer(referral_code);
+    const newReferralCode = await generateUniqueReferralCode(
+      first_name,
+      last_name
     );
-    await issueVerification(user.id, email, first_name);
+
+    const user = await prisma.$transaction(async (tx: Tx) => {
+      const created = await authRepository.createUser(
+        {
+          first_name,
+          last_name,
+          email,
+          phone,
+          referral_code: newReferralCode,
+          ...(referrer && { referred_by_id: referrer.id })
+        },
+        tx
+      );
+      if (referrer) await applyReferralVoucher(created.id, tx);
+      return created;
+    });
+
+    await issueVerificationToken(user.id, email, first_name);
     logger.info(`New user registered: ${email}`);
     return { user: { id: user.id, email: user.email } };
   },
 
-  // Verifies the email token and sets the password in one step
   async verifyEmail(rawToken: string, password: string) {
-    const record = await validateVerificationToken(rawToken, 'email_verification');
+    const record = await validateToken(rawToken, 'email_verification');
     const hashedPassword = await hashing(password);
     await prisma.$transaction(async (tx: Tx) => {
-      await tx.user.update({
-        where: { id: record.user_id },
-        data: { is_verified: true, password: hashedPassword }
-      });
-      await tx.verificationToken.update({ where: { id: record.id }, data: { is_used: true } });
+      await authRepository.updateUser(
+        record.user_id,
+        { is_verified: true, password: hashedPassword },
+        tx
+      );
+      await authRepository.markTokenUsed(record.id, tx);
     });
-    logger.info(`Email verified + password set for user id=${record.user_id}`);
+    logger.info(`Email verified for user id=${record.user_id}`);
   },
 
   async resendVerification(email: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        first_name: true,
-        is_verified: true,
-        deleted_at: true
-      }
-    });
+    const user = await authRepository.findUserByEmail(email);
     if (!user || user.deleted_at)
       return {
         message: 'If that email exists, a verification link has been sent'
       };
     if (user.is_verified)
       throw new AppError('Account is already verified', 400);
-    await invalidateTokens(user.id, 'email_verification');
-    await issueVerification(user.id, email, user.first_name ?? 'there');
+    await authRepository.invalidateUserTokens(user.id, 'email_verification');
+    await issueVerificationToken(user.id, email, user.first_name ?? 'there');
     return {
       message: 'If that email exists, a verification link has been sent'
     };
@@ -156,7 +141,7 @@ export const authService = {
 
   async login(input: LoginInput) {
     const { email, password } = input;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await authRepository.findUserByEmail(email);
     if (!user || user.deleted_at)
       throw new AppError('Invalid email or password', 401);
     if (!user.password)
@@ -180,24 +165,80 @@ export const authService = {
   },
 
   async googleCallback(profile: GoogleProfile) {
-    const { provider_user_id, provider_email } = profile;
-    const existingOAuth = await prisma.userOAuthAccount.findUnique({
-      where: {
-        provider_provider_user_id: { provider: 'google', provider_user_id }
-      },
-      include: { user: true }
-    });
-    if (existingOAuth) return handleExistingOAuth(existingOAuth);
-    const existingUser = await prisma.user.findUnique({
-      where: { email: provider_email }
-    });
-    if (existingUser)
-      return linkGoogleAccount(existingUser, {
+    const { provider_user_id, provider_email, first_name, last_name } = profile;
+
+    const existingOAuth = await authRepository.findOAuthAccount(
+      'google',
+      provider_user_id
+    );
+    if (existingOAuth) {
+      const { password: _, ...user } = existingOAuth.user;
+      return {
+        user,
+        token: buildCookieToken(
+          existingOAuth.user.id,
+          existingOAuth.user.email,
+          existingOAuth.user.role
+        ),
+        isNewUser: false
+      };
+    }
+
+    const existingUser = await authRepository.findUserByEmail(provider_email);
+    if (existingUser) {
+      await authRepository.createOAuthAccount({
+        user_id: existingUser.id,
+        provider: 'google',
         provider_user_id,
         provider_email
       });
+      if (!existingUser.is_verified)
+        await authRepository.updateUser(existingUser.id, { is_verified: true });
+      const { password: _, ...user } = existingUser;
+      return {
+        user,
+        token: buildCookieToken(
+          existingUser.id,
+          existingUser.email,
+          existingUser.role
+        ),
+        isNewUser: false
+      };
+    }
+
     logger.info(`New user via Google OAuth: ${provider_email}`);
-    return createGoogleUser(profile);
+    const referralCode = await generateUniqueReferralCode(
+      first_name,
+      last_name
+    );
+    const newUser = await prisma.$transaction(async (tx: Tx) => {
+      const created = await authRepository.createUser(
+        {
+          first_name,
+          last_name,
+          email: provider_email,
+          is_verified: true,
+          referral_code: referralCode
+        },
+        tx
+      );
+      await authRepository.createOAuthAccount(
+        {
+          user_id: created.id,
+          provider: 'google',
+          provider_user_id,
+          provider_email
+        },
+        tx
+      );
+      return created;
+    });
+    const { password: _, ...user } = newUser;
+    return {
+      user,
+      token: buildCookieToken(newUser.id, newUser.email, newUser.role),
+      isNewUser: true
+    };
   },
 
   async completeProfile(
@@ -205,95 +246,88 @@ export const authService = {
     input: { phone: string; referral_code?: string }
   ) {
     const { phone, referral_code } = input;
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, phone: true }
+    const user = await authRepository.findUserById(userId, {
+      id: true,
+      phone: true
     });
     if (!user) throw new AppError('User not found', 404);
     if (user.phone) throw new AppError('Profile already completed', 400);
-    const referrer = referral_code
-      ? await validateReferrer(referral_code)
-      : null;
+
+    const referrer = await resolveReferrer(referral_code);
+
     const updatedUser = await prisma.$transaction(async (tx: Tx) => {
-      const updated = await tx.user.update({
-        where: { id: userId },
-        data: { phone, ...(referrer && { referred_by_id: referrer.id }) },
-        select: {
-          id: true,
-          first_name: true,
-          last_name: true,
-          email: true,
-          phone: true,
-          role: true,
-          referral_code: true
-        }
-      });
-      if (referrer) await applyReferralVoucher(tx, userId);
+      const updated = await authRepository.updateUser(
+        userId,
+        { phone, ...(referrer && { referred_by_id: referrer.id }) },
+        tx
+      );
+      if (referrer) await applyReferralVoucher(userId, tx);
       return updated;
     });
     return { user: updatedUser };
   },
 
-  // For Google OAuth users who want to add email/password login to their account
   async setupPassword(userId: number, password: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, password: true, email: true, role: true } });
+    const user = await authRepository.findUserById(userId, {
+      id: true,
+      password: true
+    });
     if (!user) throw new AppError('User not found', 404);
-    if (user.password) throw new AppError('A password is already set on this account', 400);
+    if (user.password)
+      throw new AppError('A password is already set on this account', 400);
     const hashedPassword = await hashing(password);
-    await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword } });
+    await authRepository.updateUser(userId, { password: hashedPassword });
     return { message: 'Password set successfully' };
   },
 
   async getMe(userId: number) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        phone: true,
-        profile_image: true,
-        role: true,
-        is_verified: true,
-        referral_code: true,
-        created_at: true
-      }
+    const user = await authRepository.findUserById(userId, {
+      id: true,
+      first_name: true,
+      last_name: true,
+      email: true,
+      phone: true,
+      profile_image: true,
+      role: true,
+      is_verified: true,
+      referral_code: true,
+      created_at: true
     });
     if (!user) throw new AppError('User not found', 404);
     return user;
   },
 
   async forgotPassword(email: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, first_name: true, password: true, deleted_at: true }
-    });
+    const user = await authRepository.findUserByEmail(email);
     if (!user || user.deleted_at || !user.password)
       return { message: 'If that email exists, a reset link has been sent' };
-    await invalidateTokens(user.id, 'password_reset');
-    const raw = await createVerificationToken(
+
+    await authRepository.invalidateUserTokens(user.id, 'password_reset');
+    const { raw, hashed } = generateToken();
+    const expiresAt = new Date(
+      Date.now() + TOKEN_EXPIRY.password_reset * 60 * 1000
+    );
+    await authRepository.createVerificationToken(
       user.id,
+      hashed,
       'password_reset',
-      TOKEN_EXPIRY.password_reset
+      expiresAt
     );
     sendResetEmail(email, user.first_name ?? 'there', raw);
     return { message: 'If that email exists, a reset link has been sent' };
   },
 
   async resetPassword(rawToken: string, newPassword: string) {
-    const record = await validateVerificationToken(rawToken, 'password_reset');
+    const record = await validateToken(rawToken, 'password_reset');
     const hashedPassword = await hashing(newPassword);
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: record.user_id },
-        data: { password: hashedPassword }
-      }),
-      prisma.verificationToken.update({
-        where: { id: record.id },
-        data: { is_used: true }
-      })
-    ]);
+    await prisma.$transaction(async (tx: Tx) => {
+      await authRepository.updateUser(
+        record.user_id,
+        { password: hashedPassword },
+        tx
+      );
+      await authRepository.markTokenUsed(record.id, tx);
+    });
     logger.info(`Password reset for user id=${record.user_id}`);
     return { message: 'Password has been reset successfully' };
   }
