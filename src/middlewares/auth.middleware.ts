@@ -3,13 +3,9 @@ import { jwtVerifyToken } from '../helpers/jwt.helper';
 import { JWT_SECRET_TOKEN } from '../config/main.config';
 import { AppError } from '../utils/AppError';
 import { user_role } from '../../generated/prisma/client';
+import { GoogleProfile } from '../types/auth';
 
-export interface GoogleProfile {
-  provider_user_id: string;
-  provider_email: string;
-  first_name: string;
-  last_name: string;
-}
+export { GoogleProfile };
 
 declare global {
   namespace Express {
