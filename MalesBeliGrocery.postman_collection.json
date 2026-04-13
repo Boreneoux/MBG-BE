@@ -217,6 +217,74 @@
       ]
     },
     {
+      "name": "Stores",
+      "item": [
+        {
+          "name": "Get Default Store (no location)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"]
+            },
+            "description": "Returns the default store (lowest ID) when no coordinates are provided. distance_km will be null."
+          }
+        },
+        {
+          "name": "Get Nearest Store (with location)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=-6.2&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "-6.2", "description": "User latitude (-90 to 90)" },
+                { "key": "lng", "value": "106.8", "description": "User longitude (-180 to 180)" }
+              ]
+            },
+            "description": "Returns the nearest store to the given coordinates with a distance_km field."
+          }
+        },
+        {
+          "name": "Get Nearest Store — lat out of range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=91&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "91" },
+                { "key": "lng", "value": "106.8" }
+              ]
+            },
+            "description": "Expects 400 — lat must be >= -90 and <= 90."
+          }
+        },
+        {
+          "name": "Get Nearest Store — missing lng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=-6.2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "-6.2" }
+              ]
+            },
+            "description": "Expects 400 — Provide both lat and lng, or neither."
+          }
+        }
+      ]
+    },
+    {
       "name": "Error Cases",
       "item": [
         {
