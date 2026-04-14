@@ -8,6 +8,9 @@ import { errorMiddleware } from './middlewares/error.middleware';
 import { corsOptions } from './config/cors.config';
 import { PORT, SESSION_SECRET } from './config/main.config';
 import authRouter from './routes/auth.router';
+import userRouter from './routes/user.router';
+import categoryRouter from './routes/category.router';
+import productRouter from './routes/product.router';
 import cartRouter from './routes/cart.router';
 import storeRouter from './routes/store.router';
 
@@ -33,6 +36,9 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/stores', storeRouter);
 
