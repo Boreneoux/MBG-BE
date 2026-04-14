@@ -39,7 +39,7 @@ export async function cloudinaryDelete(publicId: string) {
 }
 
 export function buildCloudinaryFolder(
-  entity: 'users' | 'products' | 'stores',
+  entity: 'users' | 'products' | 'stores' | 'categories',
   entityId: string,
   type: string
 ) {
