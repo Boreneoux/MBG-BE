@@ -27,7 +27,8 @@ export class CategoryController {
 
     createCategory = catchAsync(async (req: Request, res: Response) => {
         const { name } = req.body;
-        const category = await categoryService.createCategory(name);
+        const file = req.file;
+        const category = await categoryService.createCategory(name, file);
 
         res.status(201).json({
             success: true,
@@ -39,7 +40,8 @@ export class CategoryController {
     updateCategory = catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         const { name } = req.body;
-        const category = await categoryService.updateCategory(id, name);
+        const file = req.file;
+        const category = await categoryService.updateCategory(id, name, file);
 
         res.status(200).json({
             success: true,

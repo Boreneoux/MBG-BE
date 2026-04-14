@@ -2,6 +2,7 @@ import { Prisma } from '../../generated/prisma/client';
 import { productRepository } from '../repositories/product.repository';
 import { AppError } from '../utils/AppError';
 import { cloudinaryUpload, cloudinaryDelete, buildCloudinaryFolder } from '../helpers/cloudinary.helper';
+import slugify from 'slugify';
 
 export class ProductService {
     async getProducts(params: {
@@ -62,6 +63,7 @@ export class ProductService {
             // 3. Create Product in DB
             const createData: Prisma.ProductCreateInput = {
                 name: data.name,
+                slug: slugify(data.name, { lower: true, strict: true }) + '-' + Math.floor(Math.random() * 10000),
                 description: data.description,
                 price: data.price,
                 weight: data.weight,
@@ -106,7 +108,7 @@ export class ProductService {
             }
 
             const updateData: Prisma.ProductUpdateInput = {
-                ...(data.name && { name: data.name }),
+                ...(data.name && { name: data.name, slug: slugify(data.name, { lower: true, strict: true }) + '-' + Math.floor(Math.random() * 10000) }),
                 ...(data.description !== undefined && { description: data.description }),
                 ...(data.price && { price: data.price }),
                 ...(data.weight && { weight: data.weight }),

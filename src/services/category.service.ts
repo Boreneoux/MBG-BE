@@ -1,5 +1,6 @@
 import { categoryRepository } from '../repositories/category.repository';
 import { AppError } from '../utils/AppError';
+import { cloudinaryUpload, cloudinaryDelete, buildCloudinaryFolder } from '../helpers/cloudinary.helper';
 
 export class CategoryService {
     async getCategories(search?: string) {
@@ -14,16 +15,31 @@ export class CategoryService {
         return category;
     }
 
-    async createCategory(name: string) {
+    async createCategory(name: string, file?: Express.Multer.File) {
         const existing = await categoryRepository.findByName(name);
         if (existing) {
             throw new AppError('Category with this name already exists', 400);
         }
 
-        return categoryRepository.create({ name });
+        let uploadedImage: { secureUrl: string; publicId: string } | null = null;
+        try {
+            if (file) {
+                const folder = buildCloudinaryFolder('categories', `temp-${Date.now()}`, 'images');
+                uploadedImage = await cloudinaryUpload(file.buffer, folder);
+            }
+            return await categoryRepository.create({
+                name,
+                ...(uploadedImage && { image_url: uploadedImage.secureUrl, public_id: uploadedImage.publicId })
+            });
+        } catch (error) {
+            if (uploadedImage) {
+                await cloudinaryDelete(uploadedImage.publicId).catch(() => null);
+            }
+            throw error;
+        }
     }
 
-    async updateCategory(id: number, name: string) {
+    async updateCategory(id: number, name: string, file?: Express.Multer.File) {
         const category = await categoryRepository.findById(id);
         if (!category) {
             throw new AppError('Category not found', 404);
@@ -34,7 +50,22 @@ export class CategoryService {
             throw new AppError('Category with this name already exists', 400);
         }
 
-        return categoryRepository.update(id, { name });
+        let uploadedImage: { secureUrl: string; publicId: string } | null = null;
+        try {
+            if (file) {
+                const folder = buildCloudinaryFolder('categories', id.toString(), 'images');
+                uploadedImage = await cloudinaryUpload(file.buffer, folder);
+            }
+            return await categoryRepository.update(id, {
+                name,
+                ...(uploadedImage && { image_url: uploadedImage.secureUrl, public_id: uploadedImage.publicId })
+            });
+        } catch (error) {
+            if (uploadedImage) {
+                await cloudinaryDelete(uploadedImage.publicId).catch(() => null);
+            }
+            throw error;
+        }
     }
 
     async deleteCategory(id: number) {

@@ -4,8 +4,10 @@ import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
 import { createCategorySchema, updateCategorySchema, getCategoriesQuerySchema } from '../validators/category.validator';
 import { user_role } from '../../generated/prisma/client';
+import { multerUpload } from '../helpers/multer.helper';
 
 const router = Router();
+const uploadImage = multerUpload('categories', 'CAT', ['jpg', 'jpeg', 'png', 'gif'], 'memory').single('image');
 
 // Store Admins and Super Admins can only view the categories
 // We combine both in one array inside authorize
@@ -30,6 +32,7 @@ router.get(
 router.post(
     '/',
     authorize(user_role.super_admin),
+    uploadImage,
     validate(createCategorySchema),
     categoryController.createCategory
 );
@@ -37,6 +40,7 @@ router.post(
 router.put(
     '/:id',
     authorize(user_role.super_admin),
+    uploadImage,
     validate(updateCategorySchema),
     categoryController.updateCategory
 );
