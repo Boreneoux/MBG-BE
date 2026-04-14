@@ -145,6 +145,40 @@ All endpoints return a consistent JSON shape:
 
 Protected routes require a valid JWT. The token is issued as an `access_token` `HttpOnly` cookie on login / OAuth callback. Alternatively, pass it as a `Bearer` token in the `Authorization` header.
 
+### Auth (`/api/auth`)
+
+| Method | Endpoint                | Auth | Description                          |
+| ------ | ----------------------- | ---- | ------------------------------------ |
+| POST   | `/register`             | No   | Register a new user                  |
+| POST   | `/login`                | No   | Log in with email & password         |
+| POST   | `/verify-email`         | No   | Verify email and set password        |
+| POST   | `/resend-verification`  | No   | Resend verification email            |
+| POST   | `/forgot-password`      | No   | Request password reset link          |
+| POST   | `/reset-password`       | No   | Reset password via token             |
+| GET    | `/google`               | No   | Initiate Google OAuth                |
+| GET    | `/google/callback`      | No   | Google OAuth callback                |
+| GET    | `/me`                   | Yes  | Get current user profile             |
+| POST   | `/logout`               | Yes  | Log out (clear cookie)               |
+| POST   | `/complete-profile`     | Yes  | Complete profile (phone, referral)   |
+| POST   | `/setup-password`       | Yes  | Set password for OAuth-only accounts |
+
+### Cart (`/api/cart`)
+
+All cart routes require authentication. Only verified users can add items.
+
+| Method | Endpoint | Auth | Description                                        |
+| ------ | -------- | ---- | -------------------------------------------------- |
+| GET    | `/`      | Yes  | Get authenticated user's cart with items            |
+| POST   | `/`      | Yes  | Add item to cart (increments qty if already exists) |
+| PUT    | `/:id`   | Yes  | Update cart item quantity                           |
+| DELETE | `/:id`   | Yes  | Remove cart item (auto-deletes empty cart)          |
+
+**Business rules:**
+
+- Stock is validated against `StoreInventory` before adding or updating
+- A cart is locked to one store — adding from a different store returns `400`
+- Deleting the last item automatically removes the cart
+
 ## Data Model Overview
 
 | Model                            | Description                                                     |
