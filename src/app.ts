@@ -14,6 +14,7 @@ import productRouter from './routes/product.router';
 import cartRouter from './routes/cart.router';
 import storeRouter from './routes/store.router';
 import orderRouter from './routes/order.router';
+import shippingRouter from './routes/shipping.router';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -43,6 +44,7 @@ app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/stores', storeRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/shipping', shippingRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
