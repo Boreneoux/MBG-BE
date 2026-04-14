@@ -2,7 +2,7 @@
   "info": {
     "name": "MalesBeliGrocery API",
     "_postman_id": "malesbeligrocery-api-v1",
-    "description": "User Authorization & Registration endpoints for MalesBeliGrocery backend.",
+    "description": "MalesBeliGrocery backend API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -20,31 +20,16 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Budi\",\n  \"last_name\": \"Santoso\",\n  \"email\": \"budi@example.com\",\n  \"phone\": \"081234567890\",\n  \"referral_code\": \"\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -52,31 +37,16 @@
           "name": "Verify Email + Set Password",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/verify-email",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "verify-email"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify-email"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"PASTE_TOKEN_FROM_EMAIL_HERE\",\n  \"password\": \"Password123\",\n  \"confirm_password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -84,31 +54,16 @@
           "name": "Resend Verification Email",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/resend-verification",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "resend-verification"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "resend-verification"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"budi@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         }
@@ -133,31 +88,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -168,14 +108,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/auth/me",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "me"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
             }
           }
         },
@@ -186,14 +120,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/auth/logout",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "logout"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
             }
           }
         }
@@ -209,14 +137,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/auth/google",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "google"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "google"]
             },
             "description": "Open this URL in a browser — Postman cannot handle the OAuth redirect flow."
           }
@@ -225,31 +147,16 @@
           "name": "Complete Profile (Google new user)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/complete-profile",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "complete-profile"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "complete-profile"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"phone\": \"081234567890\",\n  \"referral_code\": \"\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Call after Google OAuth for new users. Requires access_token cookie."
           }
@@ -258,31 +165,16 @@
           "name": "Setup Password (Google user — add email login)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/setup-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "setup-password"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "setup-password"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"password\": \"Password123\",\n  \"confirm_password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Only works when user has no password yet (OAuth-only account)."
           }
@@ -296,31 +188,16 @@
           "name": "Forgot Password",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/forgot-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "forgot-password"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "forgot-password"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"budi@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -328,221 +205,85 @@
           "name": "Reset Password (Confirm)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/auth/reset-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "reset-password"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "reset-password"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"PASTE_TOKEN_FROM_EMAIL_HERE\",\n  \"new_password\": \"NewPassword123\",\n  \"confirm_password\": \"NewPassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         }
       ]
     },
     {
-      "name": "Error Cases",
+      "name": "Stores",
       "item": [
         {
-          "name": "Register — duplicate email",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Budi\",\n  \"last_name\": \"Santoso\",\n  \"email\": \"budi@example.com\",\n  \"phone\": \"081234567890\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Expects 409 Conflict."
-          }
-        },
-        {
-          "name": "Login — unverified user",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"unverified@example.com\",\n  \"password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Expects 403 Forbidden."
-          }
-        },
-        {
-          "name": "Login — wrong password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"WrongPassword1\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Expects 401 Unauthorized."
-          }
-        },
-        {
-          "name": "Get Me — no token",
+          "name": "Get Default Store (no location)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/auth/me",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "me"
-              ]
+              "raw": "{{base_url}}/api/stores",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"]
             },
-            "description": "Expects 401 Authentication required."
+            "description": "Returns the default store (lowest ID) when no coordinates are provided. distance_km will be null."
           }
         },
         {
-          "name": "Verify Email — expired/invalid token",
+          "name": "Get Nearest Store (with location)",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/auth/verify-email",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "verify-email"
+              "raw": "{{base_url}}/api/stores?lat=-6.2&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "-6.2", "description": "User latitude (-90 to 90)" },
+                { "key": "lng", "value": "106.8", "description": "User longitude (-180 to 180)" }
               ]
             },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"invalidtoken\",\n  \"password\": \"Password123\",\n  \"confirm_password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Expects 400 Invalid or expired link."
+            "description": "Returns the nearest store to the given coordinates with a distance_km field."
           }
         },
         {
-          "name": "Register — invalid referral code",
+          "name": "Get Nearest Store — lat out of range",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
+              "raw": "{{base_url}}/api/stores?lat=91&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "91" },
+                { "key": "lng", "value": "106.8" }
               ]
             },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Ani\",\n  \"last_name\": \"Susanti\",\n  \"email\": \"ani@example.com\",\n  \"phone\": \"089876543210\",\n  \"referral_code\": \"FAKECODE\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+            "description": "Expects 400 — lat must be >= -90 and <= 90."
+          }
+        },
+        {
+          "name": "Get Nearest Store — missing lng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=-6.2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "-6.2" }
+              ]
             },
-            "description": "Expects 400 Invalid referral code."
+            "description": "Expects 400 — Provide both lat and lng, or neither."
           }
         }
       ]
@@ -557,22 +298,11 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/users?page=1&limit=10",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
               ]
             }
           }
@@ -581,30 +311,16 @@
           "name": "Create User (Store Admin)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/users",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Store\",\n  \"last_name\": \"Admin 1\",\n  \"email\": \"storeadmin1@example.com\",\n  \"password\": \"Password123\",\n  \"phone\": \"0811111111\",\n  \"role\": \"store_admin\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -612,31 +328,16 @@
           "name": "Update User",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/users/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "1"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Updated Name\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -647,14 +348,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/users/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "1"]
             }
           }
         }
@@ -670,13 +365,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/categories",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "categories"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories"]
             }
           }
         },
@@ -687,27 +377,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/categories",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "categories"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories"]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "name",
-                  "value": "Fresh Produce",
-                  "type": "text"
-                },
-                {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
-                }
+                { "key": "name", "value": "Fresh Produce", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
               ]
             }
           }
@@ -719,28 +396,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/categories/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "categories",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories", "1"]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "name",
-                  "value": "Fresh Produce Updated",
-                  "type": "text"
-                },
-                {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
-                }
+                { "key": "name", "value": "Fresh Produce Updated", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
               ]
             }
           }
@@ -752,14 +415,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/categories/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "categories",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories", "1"]
             }
           }
         }
@@ -775,22 +432,11 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/products?page=1&limit=10",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
               ]
             }
           }
@@ -802,14 +448,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/products/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
             }
           }
         },
@@ -820,47 +460,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/products",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "name",
-                  "value": "Apple Fuji",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "Fresh apples",
-                  "type": "text"
-                },
-                {
-                  "key": "price",
-                  "value": "15000",
-                  "type": "text"
-                },
-                {
-                  "key": "weight",
-                  "value": "1000",
-                  "type": "text"
-                },
-                {
-                  "key": "category_id",
-                  "value": "1",
-                  "type": "text"
-                },
-                {
-                  "key": "images",
-                  "type": "file",
-                  "src": []
-                }
+                { "key": "name", "value": "Apple Fuji", "type": "text" },
+                { "key": "description", "value": "Fresh apples", "type": "text" },
+                { "key": "price", "value": "15000", "type": "text" },
+                { "key": "weight", "value": "1000", "type": "text" },
+                { "key": "category_id", "value": "1", "type": "text" },
+                { "key": "images", "type": "file", "src": [] }
               ]
             }
           }
@@ -872,23 +483,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/products/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "price",
-                  "value": "20000",
-                  "type": "text"
-                }
+                { "key": "price", "value": "20000", "type": "text" }
               ]
             }
           }
@@ -900,15 +501,180 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/products/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
+            }
+          }
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1,\n  \"store_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item Qty",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/cart/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Remove Cart Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "Register — duplicate email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Budi\",\n  \"last_name\": \"Santoso\",\n  \"email\": \"budi@example.com\",\n  \"phone\": \"081234567890\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 409 Conflict."
+          }
+        },
+        {
+          "name": "Login — unverified user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"unverified@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 403 Forbidden."
+          }
+        },
+        {
+          "name": "Login — wrong password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"WrongPassword1\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 401 Unauthorized."
+          }
+        },
+        {
+          "name": "Get Me — no token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Expects 401 Authentication required."
+          }
+        },
+        {
+          "name": "Verify Email — expired/invalid token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify-email"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invalidtoken\",\n  \"password\": \"Password123\",\n  \"confirm_password\": \"Password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 Invalid or expired link."
+          }
+        },
+        {
+          "name": "Register — invalid referral code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ani\",\n  \"last_name\": \"Susanti\",\n  \"email\": \"ani@example.com\",\n  \"phone\": \"089876543210\",\n  \"referral_code\": \"FAKECODE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 Invalid referral code."
           }
         }
       ]

@@ -11,6 +11,8 @@ import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';
 import categoryRouter from './routes/category.router';
 import productRouter from './routes/product.router';
+import cartRouter from './routes/cart.router';
+import storeRouter from './routes/store.router';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -37,6 +39,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/stores', storeRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
