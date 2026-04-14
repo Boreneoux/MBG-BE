@@ -242,8 +242,16 @@
               "host": ["{{base_url}}"],
               "path": ["api", "stores"],
               "query": [
-                { "key": "lat", "value": "-6.2", "description": "User latitude (-90 to 90)" },
-                { "key": "lng", "value": "106.8", "description": "User longitude (-180 to 180)" }
+                {
+                  "key": "lat",
+                  "value": "-6.2",
+                  "description": "User latitude (-90 to 90)"
+                },
+                {
+                  "key": "lng",
+                  "value": "106.8",
+                  "description": "User longitude (-180 to 180)"
+                }
               ]
             },
             "description": "Returns the nearest store to the given coordinates with a distance_km field."
@@ -275,9 +283,7 @@
               "raw": "{{base_url}}/api/stores?lat=-6.2",
               "host": ["{{base_url}}"],
               "path": ["api", "stores"],
-              "query": [
-                { "key": "lat", "value": "-6.2" }
-              ]
+              "query": [{ "key": "lat", "value": "-6.2" }]
             },
             "description": "Expects 400 — Provide both lat and lng, or neither."
           }
@@ -398,7 +404,11 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "name", "value": "Fresh Produce Updated", "type": "text" },
+                {
+                  "key": "name",
+                  "value": "Fresh Produce Updated",
+                  "type": "text"
+                },
                 { "key": "image", "type": "file", "src": [] }
               ]
             }
@@ -463,7 +473,11 @@
               "mode": "formdata",
               "formdata": [
                 { "key": "name", "value": "Apple Fuji", "type": "text" },
-                { "key": "description", "value": "Fresh apples", "type": "text" },
+                {
+                  "key": "description",
+                  "value": "Fresh apples",
+                  "type": "text"
+                },
                 { "key": "price", "value": "15000", "type": "text" },
                 { "key": "weight", "value": "1000", "type": "text" },
                 { "key": "category_id", "value": "1", "type": "text" },
@@ -484,9 +498,7 @@
             },
             "body": {
               "mode": "formdata",
-              "formdata": [
-                { "key": "price", "value": "20000", "type": "text" }
-              ]
+              "formdata": [{ "key": "price", "value": "20000", "type": "text" }]
             }
           }
         },

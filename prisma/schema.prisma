@@ -502,3 +502,17 @@ model OrderItem {
   @@map("order_items")
 }
 
+model ShippingCostCache {
+  id                  Int      @id @default(autoincrement())
+  origin_city_id      Int
+  destination_city_id Int
+  weight              Int
+  courier             String   @db.VarChar(20)
+  result              Json
+  created_at          DateTime @default(now())
+  expires_at          DateTime
+
+  @@unique([origin_city_id, destination_city_id, weight, courier])
+  @@map("shipping_cost_cache")
+}
+
