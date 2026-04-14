@@ -2,7 +2,7 @@
   "info": {
     "name": "MalesBeliGrocery API",
     "_postman_id": "malesbeligrocery-api-v1",
-    "description": "User Authorization & Registration endpoints for MalesBeliGrocery backend.",
+    "description": "Auth, Cart, Stores, and Orders endpoints for MalesBeliGrocery backend.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -75,8 +75,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has cookie', () => pm.cookies.has('access_token'));"
+                  "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Has cookie', function() { pm.cookies.has('access_token'); });"
                 ],
                 "type": "text/javascript"
               }
@@ -402,13 +402,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/cart",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
             }
           }
         },
@@ -416,30 +411,16 @@
           "name": "Add to Cart",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/cart",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "cart"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1,\n  \"store_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -447,31 +428,16 @@
           "name": "Update Cart Item Qty",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": {
               "raw": "{{base_url}}/api/cart/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"quantity\": 2\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             }
           }
         },
@@ -482,15 +448,208 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/cart/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "cart",
-                "1"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', function() { pm.response.to.have.status(201); });",
+                  "pm.test('Has order_number', function() { var b = pm.response.json(); pm.expect(b.data.order.order_number).to.match(/^MBG-/); });",
+                  "pm.test('Status is waiting_for_payment', function() { var b = pm.response.json(); pm.expect(b.data.order.status).to.eql('waiting_for_payment'); });",
+                  "pm.test('payment_deadline is set', function() { var b = pm.response.json(); pm.expect(b.data.order.payment_deadline).to.not.be.null; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\",\n  \"shipping_method\": \"JNE REG\",\n  \"shipping_cost\": 15000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates an order from the user's active cart. Nearest warehouse is selected automatically via Haversine distance. Returns status=waiting_for_payment with a 1-hour payment_deadline."
+          }
+        },
+        {
+          "name": "Create Order (with voucher)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"payment_gateway\",\n  \"voucher_code\": \"DISC10\",\n  \"shipping_method\": \"GOJEK INSTANT\",\n  \"shipping_cost\": 25000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Same as Create Order but includes voucher_code. Applied against subtotal or shipping depending on voucher type."
+          }
+        },
+        {
+          "name": "Create Order — no token (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 401 — Authentication required. Send without access_token cookie or Bearer header."
+          }
+        },
+        {
+          "name": "Create Order — unverified user (403)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 403 — logged in as a user whose email is not yet verified."
+          }
+        },
+        {
+          "name": "Create Order — empty cart (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Your cart is empty."
+          }
+        },
+        {
+          "name": "Create Order — invalid address_id (404)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 999999,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 404 — Delivery address not found (wrong user or non-existent)."
+          }
+        },
+        {
+          "name": "Create Order — invalid payment_method (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"cash_on_delivery\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Zod: payment_method must be manual_transfer or payment_gateway."
+          }
+        },
+        {
+          "name": "Create Order — missing required fields (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Zod: address_id and payment_method are required."
+          }
+        },
+        {
+          "name": "Create Order — invalid voucher code (404)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\",\n  \"voucher_code\": \"FAKEVOUCHER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 404 — Voucher not found or expired."
+          }
+        },
+        {
+          "name": "Create Order — insufficient global stock (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Insufficient global stock. Cart product must have 0 total stock across all warehouses."
           }
         }
       ]
