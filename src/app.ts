@@ -8,6 +8,7 @@ import { errorMiddleware } from './middlewares/error.middleware';
 import { corsOptions } from './config/cors.config';
 import { PORT, SESSION_SECRET } from './config/main.config';
 import authRouter from './routes/auth.router';
+import cartRouter from './routes/cart.router';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -31,6 +32,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRouter);
+app.use('/api/cart', cartRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
