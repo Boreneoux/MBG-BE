@@ -62,9 +62,23 @@ export class UserRepository {
                 is_verified: true,
                 created_at: true,
                 profile_image: true,
+                profile_image_public_id: true,
                 store_admins: {
                     select: { store: true }
                 }
+            }
+        });
+    }
+
+    async findByIdWithPassword(id: number) {
+        return prisma.user.findUnique({
+            where: { id, deleted_at: null },
+            select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                password: true
             }
         });
     }
