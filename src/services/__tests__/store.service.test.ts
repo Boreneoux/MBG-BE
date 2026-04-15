@@ -1,6 +1,7 @@
 import { storeService } from '../store.service';
 import storeRepository from '../../repositories/store.repository';
 import { AppError } from '../../utils/AppError';
+import { CreateStoreInput, UpdateStoreInput } from '../../types/store';
 
 jest.mock('../../repositories/store.repository');
 
@@ -167,5 +168,224 @@ describe('storeService.getAll', () => {
     const result = await storeService.getAll();
 
     expect(result.stores).toEqual([]);
+  });
+});
+
+// ─── Shared fixtures for CRUD tests ──────────────────────────────────────────
+
+const createInput: CreateStoreInput = {
+  name: 'New Store',
+  address: 'Jl. Baru No. 1',
+  district_id: 1,
+  city_id: 1,
+  province_id: 1,
+  postal_code: '12345',
+  latitude: -6.1754,
+  longitude: 106.8272,
+  max_delivery_distance: 15
+};
+
+// Reuses makeStore which already includes province, city, district relations
+const fullStore = makeStore(1, -6.1754, 106.8272);
+
+const mockStoreAdminUser = {
+  id: 10,
+  first_name: 'Jane',
+  last_name: 'Admin',
+  email: 'jane.admin@test.com',
+  role: 'store_admin' as const,
+  deleted_at: null
+};
+
+const mockRegularUser = {
+  ...mockStoreAdminUser,
+  id: 11,
+  role: 'user' as const
+};
+
+const mockStoreAdminRecord = {
+  id: 1,
+  store_id: 1,
+  user_id: 10,
+  created_at: new Date(),
+  deleted_at: null,
+  user: {
+    id: 10,
+    first_name: 'Jane',
+    last_name: 'Admin',
+    email: 'jane.admin@test.com'
+  },
+  store: { id: 1, name: 'Store 1' }
+};
+
+// ─── storeService.create ─────────────────────────────────────────────────────
+
+describe('storeService.create', () => {
+  it('creates a store with the provided input and returns it', async () => {
+    mockRepo.create.mockResolvedValue(fullStore);
+
+    const result = await storeService.create(createInput);
+
+    expect(result.store).toEqual(fullStore);
+    expect(mockRepo.create).toHaveBeenCalledWith(createInput);
+  });
+
+  it('propagates repository errors (e.g. FK violation) to the caller', async () => {
+    mockRepo.create.mockRejectedValue(new Error('FK constraint'));
+
+    await expect(storeService.create(createInput)).rejects.toThrow('FK constraint');
+  });
+});
+
+// ─── storeService.getById ────────────────────────────────────────────────────
+
+describe('storeService.getById', () => {
+  it('returns store when found', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+
+    const result = await storeService.getById(1);
+
+    expect(result.store).toEqual(fullStore);
+    expect(mockRepo.findByIdWithDetails).toHaveBeenCalledWith(1);
+  });
+
+  it('throws 404 when store does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.getById(99)).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+  });
+
+  it('throws 404 when store is soft-deleted', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null); // repo already returns null for deleted
+
+    await expect(storeService.getById(1)).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+  });
+});
+
+// ─── storeService.update ─────────────────────────────────────────────────────
+
+describe('storeService.update', () => {
+  it('updates the store and returns the updated record', async () => {
+    const updateData: UpdateStoreInput = { name: 'Renamed Store', max_delivery_distance: 20 };
+    const updatedStore = { ...fullStore, name: 'Renamed Store', max_delivery_distance: toDecimal(20) };
+
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.update.mockResolvedValue(updatedStore);
+
+    const result = await storeService.update(1, updateData);
+
+    expect(result.store).toEqual(updatedStore);
+    expect(mockRepo.findByIdWithDetails).toHaveBeenCalledWith(1);
+    expect(mockRepo.update).toHaveBeenCalledWith(1, updateData);
+  });
+
+  it('throws 404 when store does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.update(99, { name: 'Ghost' })).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('does not call update when store is not found', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.update(99, { latitude: -7 })).rejects.toThrow();
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+});
+
+// ─── storeService.delete ─────────────────────────────────────────────────────
+
+describe('storeService.delete', () => {
+  it('soft-deletes the store when found', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.softDelete.mockResolvedValue(undefined);
+
+    await expect(storeService.delete(1)).resolves.toBeUndefined();
+    expect(mockRepo.softDelete).toHaveBeenCalledWith(1);
+  });
+
+  it('throws 404 when store does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.delete(99)).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+    expect(mockRepo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it('does not call softDelete when store is not found', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.delete(99)).rejects.toThrow();
+    expect(mockRepo.softDelete).not.toHaveBeenCalled();
+  });
+});
+
+// ─── storeService.assignAdmin ─────────────────────────────────────────────────
+
+describe('storeService.assignAdmin', () => {
+  it('assigns a store_admin user to a store and returns the record', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(mockStoreAdminUser);
+    mockRepo.findAdminByStoreAndUser.mockResolvedValue(null);
+    mockRepo.createAdmin.mockResolvedValue(mockStoreAdminRecord);
+
+    const result = await storeService.assignAdmin(1, 10);
+
+    expect(result.storeAdmin).toEqual(mockStoreAdminRecord);
+    expect(mockRepo.findByIdWithDetails).toHaveBeenCalledWith(1);
+    expect(mockRepo.findUserById).toHaveBeenCalledWith(10);
+    expect(mockRepo.findAdminByStoreAndUser).toHaveBeenCalledWith(1, 10);
+    expect(mockRepo.createAdmin).toHaveBeenCalledWith(1, 10);
+  });
+
+  it('throws 404 when store does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.assignAdmin(99, 10)).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+    expect(mockRepo.findUserById).not.toHaveBeenCalled();
+    expect(mockRepo.createAdmin).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when user does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(null);
+
+    await expect(storeService.assignAdmin(1, 99)).rejects.toThrow(
+      new AppError('User not found', 404)
+    );
+    expect(mockRepo.findAdminByStoreAndUser).not.toHaveBeenCalled();
+    expect(mockRepo.createAdmin).not.toHaveBeenCalled();
+  });
+
+  it('throws 400 when user does not have store_admin role', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(mockRegularUser);
+
+    await expect(storeService.assignAdmin(1, 11)).rejects.toThrow(
+      new AppError('User does not have store_admin role', 400)
+    );
+    expect(mockRepo.findAdminByStoreAndUser).not.toHaveBeenCalled();
+    expect(mockRepo.createAdmin).not.toHaveBeenCalled();
+  });
+
+  it('throws 409 when user is already assigned to this store', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(mockStoreAdminUser);
+    mockRepo.findAdminByStoreAndUser.mockResolvedValue(mockStoreAdminRecord);
+
+    await expect(storeService.assignAdmin(1, 10)).rejects.toThrow(
+      new AppError('User is already assigned to this store', 409)
+    );
+    expect(mockRepo.createAdmin).not.toHaveBeenCalled();
   });
 });
