@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { userController } from '../controllers/user.controller';
+import { userAddressController } from '../controllers/user.address.controller';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
 import {
@@ -9,6 +10,11 @@ import {
   changeRoleSchema,
   updateProfileSchema
 } from '../validators/user.validator';
+import {
+  createAddressSchema,
+  updateAddressSchema,
+  addressParamsSchema
+} from '../validators/user.address.validator';
 import { user_role } from '../../generated/prisma/client';
 import { multerUpload } from '../helpers/multer.helper';
 
@@ -25,6 +31,37 @@ router.put(
   ),
   validate(updateProfileSchema),
   userController.updateProfile
+);
+
+// ── Address routes (any authenticated user) ───────────────────────────────────
+router.get('/me/addresses', authenticate, userAddressController.getAddresses);
+
+router.post(
+  '/me/addresses',
+  authenticate,
+  validate(createAddressSchema),
+  userAddressController.createAddress
+);
+
+router.put(
+  '/me/addresses/:id',
+  authenticate,
+  validate(updateAddressSchema),
+  userAddressController.updateAddress
+);
+
+router.delete(
+  '/me/addresses/:id',
+  authenticate,
+  validate(addressParamsSchema),
+  userAddressController.deleteAddress
+);
+
+router.patch(
+  '/me/addresses/:id/primary',
+  authenticate,
+  validate(addressParamsSchema),
+  userAddressController.setPrimaryAddress
 );
 
 // ── Admin-only routes ─────────────────────────────────────────────────────────
