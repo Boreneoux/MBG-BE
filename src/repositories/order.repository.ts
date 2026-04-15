@@ -226,6 +226,51 @@ export const orderRepository = {
     });
   },
 
+  updatePaymentProof(
+    orderId: number,
+    paymentProof: string,
+    paymentProofPublicId: string,
+    db: Db = prisma
+  ) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        payment_proof: paymentProof,
+        payment_proof_public_id: paymentProofPublicId,
+        status: 'waiting_for_confirmation'
+      }
+    });
+  },
+
+  cancelOrder(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'cancelled',
+        cancelled_at: new Date()
+      }
+    });
+  },
+
+  findOrdersToCancel(now: Date, db: Db = prisma) {
+    return db.order.findMany({
+      where: {
+        status: 'waiting_for_payment',
+        payment_deadline: { lt: now },
+        payment_proof: null
+      },
+      select: { id: true, order_number: true, user_id: true }
+    });
+  },
+  confirmPayment(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'processing',
+        confirmed_at: new Date()
+      }
+    });
+  },
   // ── Cart cleanup ─────────────────────────────────────────────────────────────
 
   deleteCartItems(cartId: number, db: Db = prisma) {
