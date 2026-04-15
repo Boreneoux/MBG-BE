@@ -183,11 +183,13 @@ All cart routes require authentication. Only verified users can add items.
 
 ### Orders (`/api/orders`)
 
-All order routes require authentication. Only verified users can place orders.
+All order routes require authentication unless otherwise noted. Only verified users can place orders.
 
-| Method | Endpoint | Auth | Description                                          |
-| ------ | -------- | ---- | ---------------------------------------------------- |
-| POST   | `/`      | Yes  | Create a new order from the authenticated user's cart |
+| Method | Endpoint                      | Auth | Description                                                       |
+| ------ | ----------------------------- | ---- | ----------------------------------------------------------------- |
+| POST   | `/`                           | Yes  | Create a new order from the authenticated user's cart             |
+| POST   | `/:id/payment-proof`          | Yes  | Upload payment proof image for a manual-transfer order            |
+| POST   | `/webhook/payment`            | No   | Receive payment gateway webhook for automatic payment confirmation |
 
 #### Request body — `POST /api/orders`
 
@@ -242,6 +244,11 @@ All order routes require authentication. Only verified users can place orders.
 - Active store/product discounts (BOGO, percentage, nominal) are applied per line item
 - Vouchers are validated against ownership (`UserVoucher`), expiry, and minimum purchase amount
 - Order is created with status `waiting_for_payment` and a **1-hour payment deadline**
+- Users upload payment proof via `POST /api/orders/:id/payment-proof` using `proof` file field
+  - Accepted formats: `jpg`, `jpeg`, `png`
+  - Max file size: `1MB`
+- Orders without payment proof after one hour are automatically cancelled by the scheduler
+- Payment gateway webhooks are accepted at `POST /api/orders/webhook/payment` for automatic confirmation
 - On success, the following happen atomically inside a single transaction:
   - `Order` + `OrderItem` records are created
   - `StoreInventory` stock is decremented for the selected warehouse
