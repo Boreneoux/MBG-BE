@@ -15,6 +15,7 @@ import cartRouter from './routes/cart.router';
 import storeRouter from './routes/store.router';
 import orderRouter from './routes/order.router';
 import shippingRouter from './routes/shipping.router';
+import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -53,4 +54,7 @@ app.listen(serverPort, () => {
   console.log(
     `⚡️[server]: Server is running at http://localhost:${serverPort}`
   );
+
+  // Start the scheduler
+  schedulerService.start();
 });

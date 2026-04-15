@@ -6,6 +6,7 @@ import logger from '../config/logger.config';
 import { orderRepository } from '../repositories/order.repository';
 import { CreateOrderInput, Tx } from '../types/order';
 import { haversineKm } from '../helpers/geo.helper';
+import { cloudinaryUpload } from '../helpers/cloudinary.helper';
 
 /**
  * Generates a unique order number: MBG-<8 random hex chars (upper)>
@@ -345,5 +346,69 @@ export const orderService = {
 
     // Return full order with items
     return orderRepository.findOrderById(createdOrderId!);
+  },
+
+  async uploadPaymentProof(orderId: number, userId: number, file: Express.Multer.File) {
+    // 1. Verify order exists and belongs to user
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.user_id !== userId) throw new AppError('Access denied', 403);
+
+    // 2. Check order status
+    if (order.status !== 'waiting_for_payment') {
+      throw new AppError('Payment proof can only be uploaded for orders waiting for payment', 400);
+    }
+
+    // 3. Check payment deadline
+    if (order.payment_deadline && new Date() > order.payment_deadline) {
+      throw new AppError('Payment deadline has passed', 400);
+    }
+
+    // 4. Upload to Cloudinary
+    const folder = `orders/${orderId}/payment-proof`;
+    const uploadResult = await cloudinaryUpload(file.buffer, folder);
+
+    // 5. Update order
+    const updatedOrder = await orderRepository.updatePaymentProof(
+      orderId,
+      uploadResult.secureUrl,
+      uploadResult.publicId
+    );
+
+    logger.info(`Payment proof uploaded for order ${order.order_number}`);
+
+    return updatedOrder;
+  },
+
+  async cancelExpiredOrders() {
+    const now = new Date();
+    const ordersToCancel = await orderRepository.findOrdersToCancel(now);
+
+    if (ordersToCancel.length === 0) return;
+
+    for (const order of ordersToCancel) {
+      await orderRepository.cancelOrder(order.id);
+      logger.info(`Auto-cancelled order ${order.order_number} due to payment deadline`);
+    }
+
+    return ordersToCancel.length;
+  },
+
+  async confirmPayment(orderId: number, gatewayReference?: string) {
+    // 1. Verify order exists
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+
+    // 2. Check order status
+    if (order.status !== 'waiting_for_confirmation') {
+      throw new AppError('Order is not waiting for confirmation', 400);
+    }
+
+    // 3. Confirm payment
+    const updatedOrder = await orderRepository.confirmPayment(orderId);
+
+    logger.info(`Payment confirmed for order ${order.order_number}`);
+
+    return updatedOrder;
   }
 };
