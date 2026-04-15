@@ -47,7 +47,22 @@ export const authRepository = {
           provider_user_id: providerUserId
         }
       },
-      include: { user: true }
+      select: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone: true,
+            profile_image: true,
+            role: true,
+            is_verified: true,
+            referral_code: true,
+            created_at: true
+          }
+        }
+      }
     });
   },
 

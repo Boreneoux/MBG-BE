@@ -13,3 +13,5 @@ export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 export const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
 export const SESSION_SECRET = process.env.SESSION_SECRET || 'secret';
+export const RAJAONGKIR_API_KEY = process.env.RAJAONGKIR_API_KEY;
+export const RAJAONGKIR_BASE_URL = process.env.RAJAONGKIR_BASE_URL;

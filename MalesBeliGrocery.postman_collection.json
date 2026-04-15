@@ -2,7 +2,7 @@
   "info": {
     "name": "MalesBeliGrocery API",
     "_postman_id": "malesbeligrocery-api-v1",
-    "description": "User Authorization & Registration endpoints for MalesBeliGrocery backend.",
+    "description": "MalesBeliGrocery backend API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -212,6 +212,568 @@
               "raw": "{\n  \"token\": \"PASTE_TOKEN_FROM_EMAIL_HERE\",\n  \"new_password\": \"NewPassword123\",\n  \"confirm_password\": \"NewPassword123\"\n}",
               "options": { "raw": { "language": "json" } }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stores",
+      "item": [
+        {
+          "name": "Get Default Store (no location)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"]
+            },
+            "description": "Returns the default store (lowest ID) when no coordinates are provided. distance_km will be null."
+          }
+        },
+        {
+          "name": "Get Nearest Store (with location)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=-6.2&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "-6.2",
+                  "description": "User latitude (-90 to 90)"
+                },
+                {
+                  "key": "lng",
+                  "value": "106.8",
+                  "description": "User longitude (-180 to 180)"
+                }
+              ]
+            },
+            "description": "Returns the nearest store to the given coordinates with a distance_km field."
+          }
+        },
+        {
+          "name": "Get Nearest Store — lat out of range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=91&lng=106.8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [
+                { "key": "lat", "value": "91" },
+                { "key": "lng", "value": "106.8" }
+              ]
+            },
+            "description": "Expects 400 — lat must be >= -90 and <= 90."
+          }
+        },
+        {
+          "name": "Get Nearest Store — missing lng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stores?lat=-6.2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stores"],
+              "query": [{ "key": "lat", "value": "-6.2" }]
+            },
+            "description": "Expects 400 — Provide both lat and lng, or neither."
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management (Admin - Super Admin Only)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User (Store Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Store\",\n  \"last_name\": \"Admin 1\",\n  \"email\": \"storeadmin1@example.com\",\n  \"password\": \"Password123\",\n  \"phone\": \"0811111111\",\n  \"role\": \"store_admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Updated Name\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Category Management",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Super Admin - FormData with Image)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Fresh Produce", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Super Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories", "1"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Fresh Produce Updated",
+                  "type": "text"
+                },
+                { "key": "image", "type": "file", "src": [] }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Super Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Product Management",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Product (Super Admin - Uses FormData for Images)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Apple Fuji", "type": "text" },
+                {
+                  "key": "description",
+                  "value": "Fresh apples",
+                  "type": "text"
+                },
+                { "key": "price", "value": "15000", "type": "text" },
+                { "key": "weight", "value": "1000", "type": "text" },
+                { "key": "category_id", "value": "1", "type": "text" },
+                { "key": "images", "type": "file", "src": [] }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Product (Super Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "price", "value": "20000", "type": "text" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Product (Super Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
+            }
+          }
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1,\n  \"store_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item Qty",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/cart/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Remove Cart Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', function() { pm.response.to.have.status(201); });",
+                  "pm.test('Has order_number', function() { var b = pm.response.json(); pm.expect(b.data.order.order_number).to.match(/^MBG-/); });",
+                  "pm.test('Status is waiting_for_payment', function() { var b = pm.response.json(); pm.expect(b.data.order.status).to.eql('waiting_for_payment'); });",
+                  "pm.test('payment_deadline is set', function() { var b = pm.response.json(); pm.expect(b.data.order.payment_deadline).to.not.be.null; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\",\n  \"shipping_method\": \"JNE REG\",\n  \"shipping_cost\": 15000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates an order from the user's active cart. Nearest warehouse is selected automatically via Haversine distance. Returns status=waiting_for_payment with a 1-hour payment_deadline."
+          }
+        },
+        {
+          "name": "Create Order (with voucher)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"payment_gateway\",\n  \"voucher_code\": \"DISC10\",\n  \"shipping_method\": \"GOJEK INSTANT\",\n  \"shipping_cost\": 25000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Same as Create Order but includes voucher_code. Applied against subtotal or shipping depending on voucher type."
+          }
+        },
+        {
+          "name": "Create Order — no token (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 401 — Authentication required. Send without access_token cookie or Bearer header."
+          }
+        },
+        {
+          "name": "Create Order — unverified user (403)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 403 — logged in as a user whose email is not yet verified."
+          }
+        },
+        {
+          "name": "Create Order — empty cart (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Your cart is empty."
+          }
+        },
+        {
+          "name": "Create Order — invalid address_id (404)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 999999,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 404 — Delivery address not found (wrong user or non-existent)."
+          }
+        },
+        {
+          "name": "Create Order — invalid payment_method (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"cash_on_delivery\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Zod: payment_method must be manual_transfer or payment_gateway."
+          }
+        },
+        {
+          "name": "Create Order — missing required fields (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Zod: address_id and payment_method are required."
+          }
+        },
+        {
+          "name": "Create Order — invalid voucher code (404)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\",\n  \"voucher_code\": \"FAKEVOUCHER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 404 — Voucher not found or expired."
+          }
+        },
+        {
+          "name": "Create Order — insufficient global stock (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_id\": 1,\n  \"payment_method\": \"manual_transfer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expects 400 — Insufficient global stock. Cart product must have 0 total stock across all warehouses."
           }
         }
       ]
