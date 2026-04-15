@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import { productService } from '../services/product.service';
 import { catchAsync } from '../utils/catch-async';
 
-export class ProductController {
-    getProducts = catchAsync(async (req: Request, res: Response) => {
+export const productController = {
+    getProducts: catchAsync(async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;
@@ -17,9 +17,9 @@ export class ProductController {
             data: result.data,
             meta: result.meta
         });
-    });
+    }),
 
-    getProductById = catchAsync(async (req: Request, res: Response) => {
+    getProductById: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         const product = await productService.getProductById(id);
 
@@ -28,9 +28,9 @@ export class ProductController {
             message: 'Product retrieved successfully',
             data: product
         });
-    });
+    }),
 
-    createProduct = catchAsync(async (req: Request, res: Response) => {
+    createProduct: catchAsync(async (req: Request, res: Response) => {
         const files = req.files as Express.Multer.File[];
         const product = await productService.createProduct(req.body, files);
 
@@ -39,9 +39,9 @@ export class ProductController {
             message: 'Product created successfully',
             data: product
         });
-    });
+    }),
 
-    updateProduct = catchAsync(async (req: Request, res: Response) => {
+    updateProduct: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         const files = req.files as Express.Multer.File[];
         const product = await productService.updateProduct(id, req.body, files);
@@ -51,9 +51,9 @@ export class ProductController {
             message: 'Product updated successfully',
             data: product
         });
-    });
+    }),
 
-    deleteProduct = catchAsync(async (req: Request, res: Response) => {
+    deleteProduct: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         await productService.deleteProduct(id);
 
@@ -62,7 +62,5 @@ export class ProductController {
             message: 'Product deleted successfully',
             data: null
         });
-    });
-}
-
-export const productController = new ProductController();
+    })
+};

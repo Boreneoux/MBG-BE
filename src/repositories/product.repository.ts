@@ -1,8 +1,8 @@
 import { Prisma } from '../../generated/prisma/client';
 import { prisma } from '../config/prisma-client.config';
 
-export class ProductRepository {
-    async findAll(params: {
+export const productRepository = {
+    findAll(params: {
         skip?: number;
         take?: number;
         search?: string;
@@ -18,7 +18,7 @@ export class ProductRepository {
             })
         };
 
-        const [products, total] = await prisma.$transaction([
+        return prisma.$transaction([
             prisma.product.findMany({
                 where,
                 skip,
@@ -36,11 +36,9 @@ export class ProductRepository {
             }),
             prisma.product.count({ where })
         ]);
+    },
 
-        return { products, total };
-    }
-
-    async findById(id: number) {
+    findById(id: number) {
         return prisma.product.findUnique({
             where: { id, deleted_at: null },
             include: {
@@ -53,15 +51,15 @@ export class ProductRepository {
                 }
             }
         });
-    }
+    },
 
-    async findByName(name: string) {
+    findByName(name: string) {
         return prisma.product.findUnique({
             where: { name, deleted_at: null }
         });
-    }
+    },
 
-    async create(data: Prisma.ProductCreateInput, imageUrls: { secureUrl: string; publicId: string }[]) {
+    create(data: Prisma.ProductCreateInput, imageUrls: { secureUrl: string; publicId: string }[]) {
         return prisma.product.create({
             data: {
                 ...data,
@@ -77,9 +75,9 @@ export class ProductRepository {
                 product_images: true
             }
         });
-    }
+    },
 
-    async update(id: number, data: Prisma.ProductUpdateInput, newImages?: { secureUrl: string; publicId: string }[]) {
+    update(id: number, data: Prisma.ProductUpdateInput, newImages?: { secureUrl: string; publicId: string }[]) {
         return prisma.product.update({
             where: { id },
             data: {
@@ -89,7 +87,7 @@ export class ProductRepository {
                         create: newImages.map(img => ({
                             image_url: img.secureUrl,
                             public_id: img.publicId,
-                            is_primary: false // Appending photos
+                            is_primary: false
                         }))
                     }
                 })
@@ -98,14 +96,12 @@ export class ProductRepository {
                 product_images: true
             }
         });
-    }
+    },
 
-    async softDelete(id: number) {
+    softDelete(id: number) {
         return prisma.product.update({
             where: { id },
             data: { deleted_at: new Date() }
         });
     }
-}
-
-export const productRepository = new ProductRepository();
+};

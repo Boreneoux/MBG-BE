@@ -4,7 +4,7 @@ import { AppError } from '../utils/AppError';
 import { cloudinaryUpload, cloudinaryDelete, buildCloudinaryFolder } from '../helpers/cloudinary.helper';
 import slugify from 'slugify';
 
-export class ProductService {
+export const productService = {
     async getProducts(params: {
         page?: number;
         limit?: number;
@@ -15,7 +15,7 @@ export class ProductService {
         const limit = params.limit || 10;
         const skip = (page - 1) * limit;
 
-        const { products, total } = await productRepository.findAll({
+        const [products, total] = await productRepository.findAll({
             skip,
             take: limit,
             search: params.search,
@@ -31,7 +31,7 @@ export class ProductService {
                 totalPages: Math.ceil(total / limit)
             }
         };
-    }
+    },
 
     async getProductById(id: number) {
         const product = await productRepository.findById(id);
@@ -39,10 +39,9 @@ export class ProductService {
             throw new AppError('Product not found', 404);
         }
         return product;
-    }
+    },
 
     async createProduct(data: any, files?: Express.Multer.File[]) {
-        // 1. Validation uniqueness
         const existing = await productRepository.findByName(data.name);
         if (existing) {
             throw new AppError('Product with this name already exists', 400);
@@ -51,7 +50,6 @@ export class ProductService {
         const uploadedImages: { secureUrl: string; publicId: string }[] = [];
 
         try {
-            // 2. Upload images to Cloudinary (if any)
             if (files && files.length > 0) {
                 const folder = buildCloudinaryFolder('products', `temp-${Date.now()}`, 'images');
                 for (const file of files) {
@@ -60,7 +58,6 @@ export class ProductService {
                 }
             }
 
-            // 3. Create Product in DB
             const createData: Prisma.ProductCreateInput = {
                 name: data.name,
                 slug: slugify(data.name, { lower: true, strict: true }) + '-' + Math.floor(Math.random() * 10000),
@@ -70,10 +67,8 @@ export class ProductService {
                 category: { connect: { id: data.category_id } }
             };
 
-            const product = await productRepository.create(createData, uploadedImages);
-            return product;
+            return await productRepository.create(createData, uploadedImages);
         } catch (error) {
-            // ROLLBACK: Delete all successfully uploaded images
             if (uploadedImages.length > 0) {
                 await Promise.all(
                     uploadedImages.map((img) => cloudinaryDelete(img.publicId).catch(() => null))
@@ -81,7 +76,7 @@ export class ProductService {
             }
             throw error;
         }
-    }
+    },
 
     async updateProduct(id: number, data: any, files?: Express.Multer.File[]) {
         const product = await productRepository.findById(id);
@@ -108,7 +103,10 @@ export class ProductService {
             }
 
             const updateData: Prisma.ProductUpdateInput = {
-                ...(data.name && { name: data.name, slug: slugify(data.name, { lower: true, strict: true }) + '-' + Math.floor(Math.random() * 10000) }),
+                ...(data.name && {
+                    name: data.name,
+                    slug: slugify(data.name, { lower: true, strict: true }) + '-' + Math.floor(Math.random() * 10000)
+                }),
                 ...(data.description !== undefined && { description: data.description }),
                 ...(data.price && { price: data.price }),
                 ...(data.weight && { weight: data.weight }),
@@ -117,7 +115,6 @@ export class ProductService {
 
             return await productRepository.update(id, updateData, uploadedImages);
         } catch (error) {
-            // ROLLBACK
             if (uploadedImages.length > 0) {
                 await Promise.all(
                     uploadedImages.map((img) => cloudinaryDelete(img.publicId).catch(() => null))
@@ -125,7 +122,7 @@ export class ProductService {
             }
             throw error;
         }
-    }
+    },
 
     async deleteProduct(id: number) {
         const product = await productRepository.findById(id);
@@ -135,6 +132,4 @@ export class ProductService {
 
         return productRepository.softDelete(id);
     }
-}
-
-export const productService = new ProductService();
+};

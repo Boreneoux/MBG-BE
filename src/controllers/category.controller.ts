@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import { categoryService } from '../services/category.service';
 import { catchAsync } from '../utils/catch-async';
 
-export class CategoryController {
-    getCategories = catchAsync(async (req: Request, res: Response) => {
+export const categoryController = {
+    getCategories: catchAsync(async (req: Request, res: Response) => {
         const search = req.query.search as string;
         const categories = await categoryService.getCategories(search);
 
@@ -12,9 +12,9 @@ export class CategoryController {
             message: 'Categories retrieved successfully',
             data: categories
         });
-    });
+    }),
 
-    getCategoryById = catchAsync(async (req: Request, res: Response) => {
+    getCategoryById: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         const category = await categoryService.getCategoryById(id);
 
@@ -23,9 +23,9 @@ export class CategoryController {
             message: 'Category retrieved successfully',
             data: category
         });
-    });
+    }),
 
-    createCategory = catchAsync(async (req: Request, res: Response) => {
+    createCategory: catchAsync(async (req: Request, res: Response) => {
         const { name } = req.body;
         const file = req.file;
         const category = await categoryService.createCategory(name, file);
@@ -35,9 +35,9 @@ export class CategoryController {
             message: 'Category created successfully',
             data: category
         });
-    });
+    }),
 
-    updateCategory = catchAsync(async (req: Request, res: Response) => {
+    updateCategory: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         const { name } = req.body;
         const file = req.file;
@@ -48,9 +48,9 @@ export class CategoryController {
             message: 'Category updated successfully',
             data: category
         });
-    });
+    }),
 
-    deleteCategory = catchAsync(async (req: Request, res: Response) => {
+    deleteCategory: catchAsync(async (req: Request, res: Response) => {
         const id = parseInt(req.params.id as string);
         await categoryService.deleteCategory(id);
 
@@ -59,7 +59,5 @@ export class CategoryController {
             message: 'Category deleted successfully',
             data: null
         });
-    });
-}
-
-export const categoryController = new CategoryController();
+    })
+};

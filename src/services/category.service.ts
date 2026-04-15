@@ -2,10 +2,10 @@ import { categoryRepository } from '../repositories/category.repository';
 import { AppError } from '../utils/AppError';
 import { cloudinaryUpload, cloudinaryDelete, buildCloudinaryFolder } from '../helpers/cloudinary.helper';
 
-export class CategoryService {
-    async getCategories(search?: string) {
+export const categoryService = {
+    getCategories(search?: string) {
         return categoryRepository.findAll(search);
-    }
+    },
 
     async getCategoryById(id: number) {
         const category = await categoryRepository.findById(id);
@@ -13,7 +13,7 @@ export class CategoryService {
             throw new AppError('Category not found', 404);
         }
         return category;
-    }
+    },
 
     async createCategory(name: string, file?: Express.Multer.File) {
         const existing = await categoryRepository.findByName(name);
@@ -37,7 +37,7 @@ export class CategoryService {
             }
             throw error;
         }
-    }
+    },
 
     async updateCategory(id: number, name: string, file?: Express.Multer.File) {
         const category = await categoryRepository.findById(id);
@@ -66,7 +66,7 @@ export class CategoryService {
             }
             throw error;
         }
-    }
+    },
 
     async deleteCategory(id: number) {
         const category = await categoryRepository.findById(id);
@@ -76,6 +76,4 @@ export class CategoryService {
 
         return categoryRepository.softDelete(id);
     }
-}
-
-export const categoryService = new CategoryService();
+};

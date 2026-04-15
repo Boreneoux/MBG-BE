@@ -1,8 +1,8 @@
 import { Prisma, user_role } from '../../generated/prisma/client';
 import { prisma } from '../config/prisma-client.config';
 
-export class UserRepository {
-    async findAll(params: {
+export const userRepository = {
+    findAll(params: {
         skip?: number;
         take?: number;
         search?: string;
@@ -22,7 +22,7 @@ export class UserRepository {
             })
         };
 
-        const [users, total] = await prisma.$transaction([
+        return prisma.$transaction([
             prisma.user.findMany({
                 where,
                 skip,
@@ -45,11 +45,9 @@ export class UserRepository {
             }),
             prisma.user.count({ where })
         ]);
+    },
 
-        return { users, total };
-    }
-
-    async findById(id: number) {
+    findById(id: number) {
         return prisma.user.findUnique({
             where: { id, deleted_at: null },
             select: {
@@ -62,34 +60,20 @@ export class UserRepository {
                 is_verified: true,
                 created_at: true,
                 profile_image: true,
-                profile_image_public_id: true,
                 store_admins: {
                     select: { store: true }
                 }
             }
         });
-    }
+    },
 
-    async findByIdWithPassword(id: number) {
-        return prisma.user.findUnique({
-            where: { id, deleted_at: null },
-            select: {
-                id: true,
-                email: true,
-                first_name: true,
-                last_name: true,
-                password: true
-            }
-        });
-    }
-
-    async findByEmail(email: string) {
+    findByEmail(email: string) {
         return prisma.user.findUnique({
             where: { email, deleted_at: null }
         });
-    }
+    },
 
-    async create(data: Prisma.UserCreateInput) {
+    create(data: Prisma.UserCreateInput) {
         return prisma.user.create({
             data,
             select: {
@@ -101,9 +85,9 @@ export class UserRepository {
                 created_at: true
             }
         });
-    }
+    },
 
-    async update(id: number, data: Prisma.UserUpdateInput) {
+    update(id: number, data: Prisma.UserUpdateInput) {
         return prisma.user.update({
             where: { id },
             data,
@@ -116,14 +100,12 @@ export class UserRepository {
                 updated_at: true
             }
         });
-    }
+    },
 
-    async softDelete(id: number) {
+    softDelete(id: number) {
         return prisma.user.update({
             where: { id },
             data: { deleted_at: new Date() }
         });
     }
-}
-
-export const userRepository = new UserRepository();
+};
