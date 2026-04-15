@@ -66,12 +66,24 @@ export const orderRepository = {
 
   // ── Inventory ───────────────────────────────────────────────────────────────
 
-  /** Returns total stock for a product across ALL warehouses */
-  findGlobalStockByProduct(productId: number, db: Db = prisma) {
-    return db.storeInventory.aggregate({
-      where: { product_id: productId, deleted_at: null },
+  /**
+   * Returns total global stock per product in a single query.
+   * Result is a Map<productId, totalStock>.
+   */
+  async findGlobalStockByProducts(
+    productIds: number[],
+    db: Db = prisma
+  ): Promise<Map<number, number>> {
+    const rows = await db.storeInventory.groupBy({
+      by: ['product_id'],
+      where: { product_id: { in: productIds }, deleted_at: null },
       _sum: { stock: true }
     });
+    const map = new Map<number, number>();
+    for (const r of rows) {
+      map.set(r.product_id, r._sum.stock ?? 0);
+    }
+    return map;
   },
 
   /** Returns stock for a specific product in a specific store */
@@ -80,6 +92,30 @@ export const orderRepository = {
       where: { store_id_product_id: { store_id: storeId, product_id: productId } },
       select: { id: true, stock: true }
     });
+  },
+
+  /**
+   * Bulk-fetch inventories for a set of stores × products in one query.
+   * Returns a Map keyed by `"storeId:productId"` for O(1) lookup.
+   */
+  async findInventoriesBulk(
+    storeIds: number[],
+    productIds: number[],
+    db: Db = prisma
+  ): Promise<Map<string, { id: number; stock: number }>> {
+    const rows = await db.storeInventory.findMany({
+      where: {
+        store_id: { in: storeIds },
+        product_id: { in: productIds },
+        deleted_at: null
+      },
+      select: { id: true, store_id: true, product_id: true, stock: true }
+    });
+    const map = new Map<string, { id: number; stock: number }>();
+    for (const r of rows) {
+      map.set(`${r.store_id}:${r.product_id}`, { id: r.id, stock: r.stock });
+    }
+    return map;
   },
 
   decrementStock(inventoryId: number, quantity: number, db: Db = prisma) {

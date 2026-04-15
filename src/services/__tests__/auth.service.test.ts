@@ -190,11 +190,10 @@ describe('authService.resendVerification', () => {
     expect(result.message).toContain('If that email exists');
   });
 
-  it('throws 400 when account is already verified', async () => {
-    mockRepo.findUserByEmail.mockResolvedValue(mockUser);
-    await expect(
-      authService.resendVerification('user@test.com')
-    ).rejects.toThrow(new AppError('Account is already verified', 400));
+  it('returns obfuscated message when account is already verified (no enumeration leak)', async () => {
+    mockRepo.findUserByEmail.mockResolvedValue(mockUser); // is_verified: true
+    const result = await authService.resendVerification('user@test.com');
+    expect(result.message).toContain('If that email exists');
   });
 
   it('invalidates old tokens and sends new verification on success', async () => {

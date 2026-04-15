@@ -35,6 +35,24 @@ const shippingRepository = {
     });
   },
 
+  deleteCache(
+    originCityId: number,
+    destinationCityId: number,
+    weight: number,
+    courier: string
+  ) {
+    return prisma.shippingCostCache.delete({
+      where: {
+        origin_city_id_destination_city_id_weight_courier: {
+          origin_city_id: originCityId,
+          destination_city_id: destinationCityId,
+          weight,
+          courier
+        }
+      }
+    });
+  },
+
   upsertCache(data: UpsertCacheInput) {
     return prisma.shippingCostCache.upsert({
       where: {

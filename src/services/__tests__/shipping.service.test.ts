@@ -223,6 +223,7 @@ describe('shippingService.calculate', () => {
     mockShippingRepo.findCachedCost.mockResolvedValue(
       makeCache({ expires_at: new Date(Date.now() - 1000) }) // expired
     );
+    mockShippingRepo.deleteCache.mockResolvedValue({} as any);
     mockShippingRepo.upsertCache.mockResolvedValue({} as any);
     mockApiSuccess();
 
@@ -230,6 +231,7 @@ describe('shippingService.calculate', () => {
 
     expect(mockAxios.post).toHaveBeenCalledTimes(1);
     expect(mockShippingRepo.upsertCache).toHaveBeenCalledTimes(1);
+    expect(mockShippingRepo.deleteCache).toHaveBeenCalledTimes(1);
   });
 
   // ── Cache miss → API call ──────────────────────────────────────────────────

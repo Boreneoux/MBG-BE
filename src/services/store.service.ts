@@ -6,7 +6,7 @@ import { haversineKm } from '../helpers/geo.helper';
 
 export const storeService = {
   async findNearest(lat?: number, lng?: number) {
-    const stores = await storeRepository.findAllActive();
+    const stores = await storeRepository.findAllActiveForRouting();
 
     if (!stores.length) {
       throw new AppError('No stores available', 404);

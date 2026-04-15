@@ -8,6 +8,15 @@ const mockRepo = jest.mocked(storeRepository);
 
 const toDecimal = (n: number) => ({ toNumber: () => n }) as any;
 
+// Lean fixture — matches the shape returned by findAllActiveForRouting (used by findNearest)
+const makeLeanStore = (id: number, lat: number, lng: number) => ({
+  id,
+  name: `Store ${id}`,
+  latitude: toDecimal(lat),
+  longitude: toDecimal(lng)
+});
+
+// Full fixture — matches the shape returned by findAllActive (used by getAll)
 const makeStore = (id: number, lat: number, lng: number) => ({
   id,
   name: `Store ${id}`,
@@ -58,7 +67,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('storeService.findNearest', () => {
   it('throws 404 when no stores exist', async () => {
-    mockRepo.findAllActive.mockResolvedValue([]);
+    mockRepo.findAllActiveForRouting.mockResolvedValue([]);
 
     await expect(storeService.findNearest()).rejects.toThrow(
       new AppError('No stores available', 404)
@@ -67,10 +76,10 @@ describe('storeService.findNearest', () => {
 
   it('returns default store with distance_km null when no coordinates provided', async () => {
     const stores = [
-      makeStore(1, -6.1754, 106.8272),
-      makeStore(2, -7.2575, 112.7521)
+      makeLeanStore(1, -6.1754, 106.8272),
+      makeLeanStore(2, -7.2575, 112.7521)
     ];
-    mockRepo.findAllActive.mockResolvedValue(stores);
+    mockRepo.findAllActiveForRouting.mockResolvedValue(stores);
 
     const result = await storeService.findNearest();
 
@@ -80,8 +89,8 @@ describe('storeService.findNearest', () => {
 
   it('returns the only store with a calculated distance when one store exists', async () => {
     // Monas coords, user is ~2.7 km away in South Jakarta
-    const stores = [makeStore(1, -6.1754, 106.8272)];
-    mockRepo.findAllActive.mockResolvedValue(stores);
+    const stores = [makeLeanStore(1, -6.1754, 106.8272)];
+    mockRepo.findAllActiveForRouting.mockResolvedValue(stores);
 
     const result = await storeService.findNearest(-6.2, 106.8);
 
@@ -91,9 +100,9 @@ describe('storeService.findNearest', () => {
 
   it('returns the nearest store out of multiple stores', async () => {
     // Store 1: Monas (~2.7 km from user), Store 2: Surabaya (~664 km from user)
-    const storeNear = makeStore(1, -6.1754, 106.8272);
-    const storeFar = makeStore(2, -7.2575, 112.7521);
-    mockRepo.findAllActive.mockResolvedValue([storeFar, storeNear]);
+    const storeNear = makeLeanStore(1, -6.1754, 106.8272);
+    const storeFar = makeLeanStore(2, -7.2575, 112.7521);
+    mockRepo.findAllActiveForRouting.mockResolvedValue([storeFar, storeNear]);
 
     // User at South Jakarta
     const result = await storeService.findNearest(-6.2, 106.8);
@@ -103,8 +112,8 @@ describe('storeService.findNearest', () => {
   });
 
   it('returns distance_km of 0 when user is at the exact store location', async () => {
-    const stores = [makeStore(1, -6.2, 106.8)];
-    mockRepo.findAllActive.mockResolvedValue(stores);
+    const stores = [makeLeanStore(1, -6.2, 106.8)];
+    mockRepo.findAllActiveForRouting.mockResolvedValue(stores);
 
     const result = await storeService.findNearest(-6.2, 106.8);
 
@@ -114,10 +123,10 @@ describe('storeService.findNearest', () => {
   it('returns the store with lower ID when two stores are equidistant', async () => {
     // Both stores are exactly 1 longitude degree from user at (0, 0)
     // (0, 1) and (0, -1) produce the same Haversine distance
-    const store1 = makeStore(1, 0, 1);
-    const store2 = makeStore(2, 0, -1);
+    const store1 = makeLeanStore(1, 0, 1);
+    const store2 = makeLeanStore(2, 0, -1);
     // repo returns ordered by id asc — store1 comes first
-    mockRepo.findAllActive.mockResolvedValue([store1, store2]);
+    mockRepo.findAllActiveForRouting.mockResolvedValue([store1, store2]);
 
     const result = await storeService.findNearest(0, 0);
 
@@ -125,8 +134,8 @@ describe('storeService.findNearest', () => {
   });
 
   it('rounds distance_km to 2 decimal places', async () => {
-    const stores = [makeStore(1, -6.1754, 106.8272)];
-    mockRepo.findAllActive.mockResolvedValue(stores);
+    const stores = [makeLeanStore(1, -6.1754, 106.8272)];
+    mockRepo.findAllActiveForRouting.mockResolvedValue(stores);
 
     const result = await storeService.findNearest(-6.2, 106.8);
 

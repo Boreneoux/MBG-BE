@@ -91,11 +91,7 @@ export const authController = {
   }),
 
   logout: catchAsync(async (_req: Request, res: Response) => {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
+    res.clearCookie('access_token', COOKIE_OPTIONS);
 
     res.status(200).json({
       success: true,
