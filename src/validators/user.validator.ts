@@ -27,6 +27,36 @@ export const changeRoleSchema = z.object({
     })
 });
 
+const passwordField = z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    });
+
+export const updateProfileSchema = z
+    .object({
+        body: z
+            .object({
+                first_name: z.string().trim().min(1).max(50).optional(),
+                last_name: z.string().trim().max(50).optional(),
+                phone: z.string().trim().max(20).optional(),
+                email: z
+                    .string()
+                    .trim()
+                    .toLowerCase()
+                    .email('Invalid email address')
+                    .max(255)
+                    .optional(),
+                current_password: z.string().min(1).optional(),
+                new_password: passwordField.optional()
+            })
+            .refine(
+                (body) => !body.new_password || !!body.current_password,
+                { message: 'Current password is required to set a new password', path: ['current_password'] }
+            )
+    });
+
 export const getUsersQuerySchema = z.object({
     query: z.object({
         page: z.string().regex(/^\d+$/).optional(),
