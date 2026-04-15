@@ -23,6 +23,85 @@ const storeRepository = {
       include: { city: true }
     });
     return store?.deleted_at ? null : store;
+  },
+
+  findByIdWithDetails(id: number) {
+    return prisma.store.findUnique({
+      where: { id, deleted_at: null },
+      include: { province: true, city: true, district: true }
+    });
+  },
+
+  create(data: {
+    name: string;
+    address: string;
+    district_id: number;
+    city_id: number;
+    province_id: number;
+    postal_code?: string;
+    latitude: number;
+    longitude: number;
+    max_delivery_distance: number;
+  }) {
+    return prisma.store.create({
+      data,
+      include: { province: true, city: true, district: true }
+    });
+  },
+
+  update(id: number, data: {
+    name?: string;
+    address?: string;
+    district_id?: number;
+    city_id?: number;
+    province_id?: number;
+    postal_code?: string;
+    latitude?: number;
+    longitude?: number;
+    max_delivery_distance?: number;
+  }) {
+    return prisma.store.update({
+      where: { id },
+      data,
+      include: { province: true, city: true, district: true }
+    });
+  },
+
+  async softDelete(id: number): Promise<void> {
+    await prisma.store.update({
+      where: { id },
+      data: { deleted_at: new Date() }
+    });
+  },
+
+  findUserById(userId: number) {
+    return prisma.user.findUnique({
+      where: { id: userId, deleted_at: null },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        deleted_at: true
+      }
+    });
+  },
+
+  findAdminByStoreAndUser(storeId: number, userId: number) {
+    return prisma.storeAdmin.findUnique({
+      where: { store_id_user_id: { store_id: storeId, user_id: userId } }
+    });
+  },
+
+  createAdmin(storeId: number, userId: number) {
+    return prisma.storeAdmin.create({
+      data: { store_id: storeId, user_id: userId },
+      include: {
+        user: { select: { id: true, first_name: true, last_name: true, email: true } },
+        store: { select: { id: true, name: true } }
+      }
+    });
   }
 };
 
