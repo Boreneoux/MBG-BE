@@ -9,11 +9,20 @@ const storeRepository = {
     });
   },
 
-  findById(id: number) {
-    return prisma.store.findFirst({
-      where: { id, deleted_at: null },
+  findAllActiveForRouting() {
+    return prisma.store.findMany({
+      where: { deleted_at: null },
+      select: { id: true, name: true, latitude: true, longitude: true },
+      orderBy: { id: 'asc' }
+    });
+  },
+
+  async findById(id: number) {
+    const store = await prisma.store.findUnique({
+      where: { id },
       include: { city: true }
     });
+    return store?.deleted_at ? null : store;
   }
 };
 

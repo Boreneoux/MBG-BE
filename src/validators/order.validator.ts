@@ -24,8 +24,9 @@ export const createOrderSchema = z.object({
       .optional(),
 
     shipping_cost: z
-      .number()
-      .min(0)
+      .number({ error: 'shipping_cost must be a number' })
+      .int('shipping_cost must be an integer (in IDR cents / smallest unit)')
+      .min(1, 'shipping_cost must be at least 1')
       .optional()
   })
 });

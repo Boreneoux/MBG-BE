@@ -4,25 +4,19 @@ import storeRepository from '../repositories/store.repository';
 import shippingRepository from '../repositories/shipping.repository';
 import logger from '../config/logger.config';
 import { RAJAONGKIR_API_KEY, RAJAONGKIR_BASE_URL } from '../config/main.config';
-import type { CalculateInput, CalculateResult, ShippingOption } from '../types/shipping';
+import { haversineKm } from '../helpers/geo.helper';
+import type {
+  CalculateInput,
+  CalculateResult,
+  ShippingOption
+} from '../types/shipping';
 
-const EARTH_RADIUS_KM = 6371;
 const CACHE_TTL_HOURS = 24;
 const BASE_URL = RAJAONGKIR_BASE_URL ?? 'https://api.rajaongkir.com/starter';
 
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return EARTH_RADIUS_KM * 2 * Math.asin(Math.sqrt(a));
-}
-
-// Komerce response shape: data[] is already flat — one entry per service
+// RajaOngkir response : data[] is already flat — one entry per service
 function flattenResults(data: any[]): ShippingOption[] {
-  return data.map((item) => ({
+  return data.map(item => ({
     courier: item.code,
     service: item.service,
     description: item.description,
@@ -54,15 +48,31 @@ export const shippingService = {
     const distance_km = Math.round(rawKm * 100) / 100;
 
     if (distance_km > store.max_delivery_distance.toNumber()) {
-      throw new AppError("Delivery address is outside the store's delivery range", 422);
+      throw new AppError(
+        "Delivery address is outside the store's delivery range",
+        422
+      );
     }
 
     const originCityId = store.city.rajaongkir_city_id;
     const destCityId = address.city.rajaongkir_city_id;
 
-    const cached = await shippingRepository.findCachedCost(originCityId, destCityId, weight, courier);
-    if (cached && cached.expires_at > new Date()) {
-      return { distance_km, options: flattenResults(cached.result as any[]) };
+    const cached = await shippingRepository.findCachedCost(
+      originCityId,
+      destCityId,
+      weight,
+      courier
+    );
+    if (cached) {
+      if (cached.expires_at > new Date()) {
+        return { distance_km, options: flattenResults(cached.result as any[]) };
+      }
+      // Expired — delete proactively so stale rows don't accumulate
+      shippingRepository
+        .deleteCache(originCityId, destCityId, weight, courier)
+        .catch((err: unknown) =>
+          logger.warn('Failed to delete stale shipping cache', { err })
+        );
     }
 
     let results: any[];
@@ -91,7 +101,10 @@ export const shippingService = {
     } catch (err) {
       if (err instanceof AppError) throw err;
       logger.error('RajaOngkir API error', { err });
-      throw new AppError('Shipping cost service is temporarily unavailable', 502);
+      throw new AppError(
+        'Shipping cost service is temporarily unavailable',
+        502
+      );
     }
 
     const expiresAt = new Date(Date.now() + CACHE_TTL_HOURS * 60 * 60 * 1000);

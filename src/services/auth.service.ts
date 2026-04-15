@@ -126,12 +126,10 @@ export const authService = {
 
   async resendVerification(email: string) {
     const user = await authRepository.findUserByEmail(email);
-    if (!user || user.deleted_at)
+    if (!user || user.deleted_at || user.is_verified)
       return {
         message: 'If that email exists, a verification link has been sent'
       };
-    if (user.is_verified)
-      throw new AppError('Account is already verified', 400);
     await authRepository.invalidateUserTokens(user.id, 'email_verification');
     await issueVerificationToken(user.id, email, user.first_name ?? 'there');
     return {
@@ -172,14 +170,10 @@ export const authService = {
       provider_user_id
     );
     if (existingOAuth) {
-      const { password: _, ...user } = existingOAuth.user;
+      const { user } = existingOAuth;
       return {
         user,
-        token: buildCookieToken(
-          existingOAuth.user.id,
-          existingOAuth.user.email,
-          existingOAuth.user.role
-        ),
+        token: buildCookieToken(user.id, user.email, user.role),
         isNewUser: false
       };
     }

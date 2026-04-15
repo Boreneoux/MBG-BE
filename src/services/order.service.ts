@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Prisma } from '../../generated/prisma/client';
 import { prisma } from '../config/prisma-client.config';
 import { AppError } from '../utils/AppError';
@@ -7,12 +8,12 @@ import { CreateOrderInput, Tx } from '../types/order';
 import { haversineKm } from '../helpers/geo.helper';
 
 /**
- * Generates a unique order number: MBG-<timestamp><4-random-digits>
+ * Generates a unique order number: MBG-<8 random hex chars (upper)>
+ * Uses crypto.randomBytes so collisions are astronomically unlikely,
+ * removing the need for a timestamp which could repeat under concurrency.
  */
 function generateOrderNumber(): string {
-  const ts = Date.now().toString().slice(-8);
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `MBG-${ts}${rand}`;
+  return `MBG-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
 /**
@@ -33,8 +34,15 @@ export const orderService = {
       payment_method,
       voucher_code,
       shipping_method,
-      shipping_cost = 0
+      shipping_cost
     } = input;
+
+    // shipping_cost is required when a shipping method is provided;
+    // default to 0 only for in-store / pickup orders (no shipping_method)
+    const resolvedShippingCost =
+      shipping_method && !shipping_cost
+        ? (() => { throw new AppError('shipping_cost is required when shipping_method is set', 400); })()
+        : (shipping_cost ?? 0);
 
     // 1. Verify user is verified
     const user = await orderRepository.findUserById(userId);
@@ -55,10 +63,12 @@ export const orderService = {
       throw new AppError('Delivery address not found', 404);
     }
 
-    // 4. Pre-order global stock check across ALL warehouses
+    // 4. Pre-order global stock check — single groupBy query, no N+1
+    const cartProductIds = cart.cart_items.map((i) => i.product_id);
+    const globalStockMap = await orderRepository.findGlobalStockByProducts(cartProductIds);
+
     for (const item of cart.cart_items) {
-      const globalStock = await orderRepository.findGlobalStockByProduct(item.product_id);
-      const total = globalStock._sum.stock ?? 0;
+      const total = globalStockMap.get(item.product_id) ?? 0;
       if (total < item.quantity) {
         throw new AppError(
           `Insufficient global stock for "${item.product.name}". ` +
@@ -69,9 +79,7 @@ export const orderService = {
     }
 
     // 5. Nearest warehouse routing
-    //    Find the closest store that:
-    //      a) has enough stock for ALL items in the cart, OR
-    //      b) (fallback) is the geometrically nearest store within delivery range
+    //    Find the closest store that has enough stock for ALL items in the cart.
     const stores = await orderRepository.findAllActiveStores();
 
     const userLat = Number(address.latitude);
@@ -88,18 +96,19 @@ export const orderService = {
       }))
       .sort((a, b) => a.distance_km - b.distance_km);
 
-    // Pick the nearest store that can fulfil all items
+    // Bulk-fetch all inventories for every store × product in one query (no N+1)
+    const productIds = cart.cart_items.map((i) => i.product_id);
+    const storeIds = storesWithDistance.map((s) => s.id);
+    const inventoryMap = await orderRepository.findInventoriesBulk(storeIds, productIds);
+
+    // Pick the nearest store that can fulfil all items using the in-memory map
     let selectedStore: (typeof storesWithDistance)[0] | null = null;
 
     for (const store of storesWithDistance) {
-      let canFulfil = true;
-      for (const item of cart.cart_items) {
-        const inv = await orderRepository.findStoreInventory(store.id, item.product_id);
-        if (!inv || inv.stock < item.quantity) {
-          canFulfil = false;
-          break;
-        }
-      }
+      const canFulfil = cart.cart_items.every((item) => {
+        const inv = inventoryMap.get(`${store.id}:${item.product_id}`);
+        return inv && inv.stock >= item.quantity;
+      });
       if (canFulfil) {
         selectedStore = store;
         break;
@@ -206,7 +215,7 @@ export const orderService = {
 
       if (voucher.usage_type === 'shipping') {
         // Apply towards shipping cost
-        const shippingDec = new Prisma.Decimal(shipping_cost);
+        const shippingDec = new Prisma.Decimal(resolvedShippingCost);
         if (voucher.discount_type === 'percentage') {
           voucherDiscount = shippingDec.mul(voucher.discount_value.div(100));
         } else {
@@ -236,83 +245,105 @@ export const orderService = {
     }
 
     // 8. Grand total
-    const shippingDec = new Prisma.Decimal(shipping_cost);
-    const grandTotal = subtotal.add(shippingDec).sub(voucherDiscount).gt(0)
-      ? subtotal.add(shippingDec).sub(voucherDiscount)
-      : new Prisma.Decimal(0);
+    const shippingDec = new Prisma.Decimal(resolvedShippingCost);
+    const rawTotal = subtotal.add(shippingDec).sub(voucherDiscount);
+    const grandTotal = rawTotal.gt(0) ? rawTotal : new Prisma.Decimal(0);
 
-    // 9. Persist everything inside a transaction
-    const order = await prisma.$transaction(async (tx: Tx) => {
-      // Create the order
-      const newOrder = await orderRepository.createOrder(
-        {
-          user_id: userId,
-          store_id: selectedStore!.id,
-          order_number: generateOrderNumber(),
-          total_price: grandTotal,
-          total_discount: totalDiscount,
-          shipping_cost: shippingDec,
-          shipping_method,
-          address_id,
-          voucher_id: voucherId,
-          payment_method,
-          payment_deadline: buildPaymentDeadline()
-        },
-        tx
-      );
+    // 9. Persist everything inside a transaction.
+    // Retry up to 3 times on order_number unique constraint collision (P2002).
+    // With crypto.randomBytes(4) the odds of a collision are ~1 in 4 billion
+    // per attempt, so this is purely a safety net.
+    const cartId = cart.id;
+    const storeId = selectedStore.id;
+    let createdOrderId: number | undefined;
+    let createdOrderNumber: string | undefined;
 
-      // Create order items + deduct stock
-      for (const line of lineItems) {
-        await orderRepository.createOrderItem(
-          {
-            order_id: newOrder.id,
-            product_id: line.product_id,
-            quantity: line.quantity,
-            price: line.unit_price,
-            discount_amount: line.discount_amount,
-            discount_id: line.discount_id,
-            is_bogo_item: line.is_bogo_item,
-            total_price: line.total_price
-          },
-          tx
-        );
+    const MAX_ORDER_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_ORDER_RETRIES; attempt++) {
+      try {
+        const newOrder = await prisma.$transaction(async (tx: Tx) => {
+          const created = await orderRepository.createOrder(
+            {
+              user_id: userId,
+              store_id: storeId,
+              order_number: generateOrderNumber(),
+              total_price: grandTotal,
+              total_discount: totalDiscount,
+              shipping_cost: shippingDec,
+              shipping_method,
+              address_id,
+              voucher_id: voucherId,
+              payment_method,
+              payment_deadline: buildPaymentDeadline()
+            },
+            tx
+          );
 
-        // Deduct stock from selected store
-        const inv = await orderRepository.findStoreInventory(
-          selectedStore!.id,
-          line.product_id,
-          tx
-        );
+          // Create order items + deduct stock
+          for (const line of lineItems) {
+            await orderRepository.createOrderItem(
+              {
+                order_id: created.id,
+                product_id: line.product_id,
+                quantity: line.quantity,
+                price: line.unit_price,
+                discount_amount: line.discount_amount,
+                discount_id: line.discount_id,
+                is_bogo_item: line.is_bogo_item,
+                total_price: line.total_price
+              },
+              tx
+            );
 
-        await orderRepository.decrementStock(inv!.id, line.quantity, tx);
+            // Reuse inventory id from the routing pass — no extra query needed
+            const inv = inventoryMap.get(`${storeId}:${line.product_id}`)!;
 
-        await orderRepository.createStockJournal(
-          {
-            store_inventory_id: inv!.id,
-            quantity: line.quantity,
-            type: 'order_deduction',
-            description: `Order ${newOrder.order_number}`,
-            reference_id: newOrder.id
-          },
-          tx
-        );
+            await orderRepository.decrementStock(inv.id, line.quantity, tx);
+
+            await orderRepository.createStockJournal(
+              {
+                store_inventory_id: inv.id,
+                quantity: line.quantity,
+                type: 'order_deduction',
+                description: `Order ${created.order_number}`,
+                reference_id: created.id
+              },
+              tx
+            );
+          }
+
+          // Mark voucher as used
+          if (userVoucherId) {
+            await orderRepository.markVoucherUsed(userVoucherId, created.id, tx);
+          }
+
+          // Clear cart
+          await orderRepository.deleteCartItems(cartId, tx);
+          await orderRepository.deleteCart(cartId, tx);
+
+          return created;
+        });
+
+        createdOrderId = newOrder.id;
+        createdOrderNumber = newOrder.order_number;
+        break;
+      } catch (err) {
+        const isCollision =
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002' &&
+          Array.isArray((err.meta as any)?.target) &&
+          (err.meta as any).target.includes('order_number');
+        if (isCollision && attempt < MAX_ORDER_RETRIES) {
+          logger.warn(`order_number collision on attempt ${attempt}, retrying…`);
+          continue;
+        }
+        throw err;
       }
+    }
 
-      // Mark voucher as used
-      if (userVoucherId) {
-        await orderRepository.markVoucherUsed(userVoucherId, newOrder.id, tx);
-      }
-
-      // Clear cart
-      await orderRepository.deleteCartItems(cart.id, tx);
-      await orderRepository.deleteCart(cart.id, tx);
-
-      return newOrder;
-    });
-
-    logger.info(`Order created: id=${order.id}, number=${order.order_number}, user=${userId}`);
+    logger.info(`Order created: id=${createdOrderId}, number=${createdOrderNumber}, user=${userId}`);
 
     // Return full order with items
-    return orderRepository.findOrderById(order.id);
+    return orderRepository.findOrderById(createdOrderId!);
   }
 };
