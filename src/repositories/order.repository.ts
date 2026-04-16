@@ -245,15 +245,65 @@ export const orderRepository = {
       select: { id: true, order_number: true, user_id: true }
     });
   },
+
+  findOrdersToAutoApprove(now: Date, db: Db = prisma) {
+    return db.order.findMany({
+      where: {
+        status: 'waiting_for_confirmation',
+        updated_at: { lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) }
+      },
+      select: { id: true, order_number: true }
+    });
+  },
+
+  findOrdersToAutoConfirmReceipt(now: Date, db: Db = prisma) {
+    return db.order.findMany({
+      where: {
+        status: 'shipped',
+        shipped_at: { lt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) }
+      },
+      select: { id: true, order_number: true }
+    });
+  },
+
   confirmPayment(orderId: number, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
       data: {
-        status: 'processing',
+        status: 'waiting_for_confirmation'
+      }
+    });
+  },
+
+  approvePayment(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'processing'
+      }
+    });
+  },
+
+  shipOrder(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'shipped',
+        shipped_at: new Date()
+      }
+    });
+  },
+
+  confirmReceipt(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'confirmed',
         confirmed_at: new Date()
       }
     });
   },
+
   // ── Cart cleanup ─────────────────────────────────────────────────────────────
 
   deleteCartItems(cartId: number, db: Db = prisma) {
