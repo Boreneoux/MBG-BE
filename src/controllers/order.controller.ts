@@ -13,6 +13,50 @@ export const orderController = {
     });
   }),
 
+  cancelOrder: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await orderService.cancelOrder(req.user!.id, orderId);
+
+    res.json({
+      success: true,
+      message: 'Order cancelled successfully',
+      data: { order }
+    });
+  }),
+
+  confirmReceipt: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await orderService.confirmReceipt(req.user!.id, orderId);
+
+    res.json({
+      success: true,
+      message: 'Order receipt confirmed successfully',
+      data: { order }
+    });
+  }),
+
+  approvePayment: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await orderService.approvePayment(orderId);
+
+    res.json({
+      success: true,
+      message: 'Order payment approved and processing',
+      data: { order }
+    });
+  }),
+
+  shipOrder: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await orderService.shipOrder(orderId);
+
+    res.json({
+      success: true,
+      message: 'Order marked as shipped',
+      data: { order }
+    });
+  }),
+
   paymentWebhook: catchAsync(async (req: Request, res: Response) => {
     const { order_id, status, reference } = req.body;
 

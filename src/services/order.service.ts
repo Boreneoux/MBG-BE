@@ -355,7 +355,7 @@ export const orderService = {
     const now = new Date();
     const ordersToCancel = await orderRepository.findOrdersToCancel(now);
 
-    if (ordersToCancel.length === 0) return;
+    if (ordersToCancel.length === 0) return 0;
 
     for (const order of ordersToCancel) {
       await orderRepository.cancelOrder(order.id);
@@ -365,21 +365,94 @@ export const orderService = {
     return ordersToCancel.length;
   },
 
+  async cancelOrder(userId: number, orderId: number) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.user_id !== userId) throw new AppError('Forbidden: cannot cancel this order', 403);
+    if (order.status !== 'waiting_for_payment') {
+      throw new AppError('Order can only be cancelled before payment upload', 400);
+    }
+
+    const cancelled = await orderRepository.cancelOrder(orderId);
+    logger.info(`Order cancelled by user ${userId}: ${order.order_number}`);
+    return cancelled;
+  },
+
   async confirmPayment(orderId: number, gatewayReference?: string) {
-    // 1. Verify order exists
     const order = await orderRepository.findOrderById(orderId);
     if (!order) throw new AppError('Order not found', 404);
 
-    // 2. Check order status
     if (order.status !== 'waiting_for_payment') {
       throw new AppError('Order is not waiting for payment', 400);
     }
 
-    // 3. Confirm payment
     const updatedOrder = await orderRepository.confirmPayment(orderId);
-
     logger.info(`Payment confirmed for order ${order.order_number}`);
-
     return updatedOrder;
+  },
+
+  async approvePayment(orderId: number) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.status !== 'waiting_for_confirmation') {
+      throw new AppError('Order is not awaiting confirmation', 400);
+    }
+
+    const updatedOrder = await orderRepository.approvePayment(orderId);
+    logger.info(`Order approved for processing: ${order.order_number}`);
+    return updatedOrder;
+  },
+
+  async shipOrder(orderId: number) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.status !== 'processing') {
+      throw new AppError('Order is not ready to ship', 400);
+    }
+
+    const updatedOrder = await orderRepository.shipOrder(orderId);
+    logger.info(`Order marked shipped: ${order.order_number}`);
+    return updatedOrder;
+  },
+
+  async confirmReceipt(orderId: number, userId: number) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.user_id !== userId) throw new AppError('Forbidden: cannot confirm this order', 403);
+    if (order.status !== 'shipped') {
+      throw new AppError('Order is not shipped yet', 400);
+    }
+
+    const updatedOrder = await orderRepository.confirmReceipt(orderId);
+    logger.info(`Order receipt confirmed by customer: ${order.order_number}`);
+    return updatedOrder;
+  },
+
+  async autoApprovePendingConfirmations() {
+    const now = new Date();
+    const orders = await orderRepository.findOrdersToAutoApprove(now);
+
+    if (orders.length === 0) return 0;
+
+    for (const order of orders) {
+      await orderRepository.approvePayment(order.id);
+      logger.info(`Auto-approved order ${order.order_number} after 7 days awaiting confirmation`);
+    }
+
+    return orders.length;
+  },
+
+  async autoConfirmShippedOrders() {
+    const now = new Date();
+    const orders = await orderRepository.findOrdersToAutoConfirmReceipt(now);
+
+    if (orders.length === 0) return 0;
+
+    for (const order of orders) {
+      await orderRepository.confirmReceipt(order.id);
+      logger.info(`Auto-confirmed receipt for order ${order.order_number} after shipped grace period`);
+    }
+
+    return orders.length;
   }
 };

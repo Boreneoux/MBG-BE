@@ -30,3 +30,12 @@ export const createOrderSchema = z.object({
       .optional()
   })
 });
+
+export const orderIdParamsSchema = z.object({
+  params: z.object({
+    id: z.coerce
+      .number({ error: 'Order ID is required' })
+      .int()
+      .positive('Order ID must be a positive integer')
+  })
+});

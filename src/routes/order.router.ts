@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { orderController } from '../controllers/order.controller';
-import { authenticate } from '../middlewares/auth.middleware';
+import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
-import { createOrderSchema } from '../validators/order.validator';
+import { user_role } from '../../generated/prisma/client';
+import {
+  createOrderSchema,
+  orderIdParamsSchema
+} from '../validators/order.validator';
 
 const router = Router();
 
@@ -14,5 +18,20 @@ router.use(authenticate);
 
 // POST /api/orders
 router.post('/', validate(createOrderSchema), orderController.createOrder);
+
+router.post('/:id/cancel', validate(orderIdParamsSchema), orderController.cancelOrder);
+router.post('/:id/confirm-receipt', validate(orderIdParamsSchema), orderController.confirmReceipt);
+router.post(
+  '/:id/approve-payment',
+  authorize(user_role.super_admin, user_role.store_admin),
+  validate(orderIdParamsSchema),
+  orderController.approvePayment
+);
+router.post(
+  '/:id/ship',
+  authorize(user_role.super_admin, user_role.store_admin),
+  validate(orderIdParamsSchema),
+  orderController.shipOrder
+);
 
 export default router;

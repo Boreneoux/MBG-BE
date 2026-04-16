@@ -7,12 +7,22 @@ import { orderService } from './order.service';
  */
 export const schedulerService = {
   start() {
-    // Run every 5 minutes to check for expired orders
+    // Run every 5 minutes to check for order lifecycle transitions
     cron.schedule('*/5 * * * *', async () => {
       try {
         const cancelledCount = await orderService.cancelExpiredOrders();
-        if (cancelledCount && cancelledCount > 0) {
+        if (cancelledCount > 0) {
           logger.info(`Scheduler: Cancelled ${cancelledCount} expired orders`);
+        }
+
+        const autoApprovedCount = await orderService.autoApprovePendingConfirmations();
+        if (autoApprovedCount > 0) {
+          logger.info(`Scheduler: Auto-approved ${autoApprovedCount} pending confirmations`);
+        }
+
+        const autoConfirmedCount = await orderService.autoConfirmShippedOrders();
+        if (autoConfirmedCount > 0) {
+          logger.info(`Scheduler: Auto-confirmed ${autoConfirmedCount} shipped orders`);
         }
       } catch (error) {
         logger.error('Scheduler error:', error);
