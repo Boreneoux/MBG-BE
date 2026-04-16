@@ -15,6 +15,7 @@ import cartRouter from './routes/cart.router';
 import storeRouter from './routes/store.router';
 import orderRouter from './routes/order.router';
 import shippingRouter from './routes/shipping.router';
+import inventoryRouter from './routes/inventory.router';
 import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
@@ -46,6 +47,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/stores', storeRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/shipping', shippingRouter);
+app.use('/api/inventory', inventoryRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
