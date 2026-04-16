@@ -6,7 +6,7 @@ export type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
 
 export interface CreateOrderInput {
   address_id: number;
-  payment_method: 'manual_transfer' | 'payment_gateway';
+  payment_method: 'payment_gateway';
   voucher_code?: string;
   shipping_method?: string;
   shipping_cost?: number;

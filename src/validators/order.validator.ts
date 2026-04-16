@@ -7,8 +7,8 @@ export const createOrderSchema = z.object({
       .int()
       .positive('address_id must be a positive integer'),
 
-    payment_method: z.enum(['manual_transfer', 'payment_gateway'], {
-      error: 'payment_method must be manual_transfer or payment_gateway'
+    payment_method: z.literal('payment_gateway', {
+      error: 'payment_method must be payment_gateway'
     }),
 
     voucher_code: z

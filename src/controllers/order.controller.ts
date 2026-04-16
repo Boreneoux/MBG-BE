@@ -13,26 +13,6 @@ export const orderController = {
     });
   }),
 
-  uploadPaymentProof: catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const orderId = parseInt(id as string, 10);
-
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment proof image is required'
-      });
-    }
-
-    const order = await orderService.uploadPaymentProof(orderId, req.user!.id, req.file);
-
-    res.json({
-      success: true,
-      message: 'Payment proof uploaded successfully',
-      data: { order }
-    });
-  }),
-
   paymentWebhook: catchAsync(async (req: Request, res: Response) => {
     const { order_id, status, reference } = req.body;
 

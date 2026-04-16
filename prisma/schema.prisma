@@ -36,7 +36,6 @@ enum order_status {
 }
 
 enum payment_method {
-  manual_transfer
   payment_gateway
 }
 
@@ -462,8 +461,6 @@ model Order {
   address_id       Int
   voucher_id       Int?
   payment_method   payment_method
-  payment_proof           String?        @db.VarChar(255)
-  payment_proof_public_id String?        @db.VarChar(255)
   payment_deadline        DateTime?
   shipped_at       DateTime?
   confirmed_at     DateTime?
