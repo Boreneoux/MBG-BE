@@ -226,22 +226,6 @@ export const orderRepository = {
     });
   },
 
-  updatePaymentProof(
-    orderId: number,
-    paymentProof: string,
-    paymentProofPublicId: string,
-    db: Db = prisma
-  ) {
-    return db.order.update({
-      where: { id: orderId },
-      data: {
-        payment_proof: paymentProof,
-        payment_proof_public_id: paymentProofPublicId,
-        status: 'waiting_for_confirmation'
-      }
-    });
-  },
-
   cancelOrder(orderId: number, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
@@ -256,8 +240,7 @@ export const orderRepository = {
     return db.order.findMany({
       where: {
         status: 'waiting_for_payment',
-        payment_deadline: { lt: now },
-        payment_proof: null
+        payment_deadline: { lt: now }
       },
       select: { id: true, order_number: true, user_id: true }
     });

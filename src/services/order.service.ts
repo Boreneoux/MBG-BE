@@ -6,7 +6,6 @@ import logger from '../config/logger.config';
 import { orderRepository } from '../repositories/order.repository';
 import { CreateOrderInput, Tx } from '../types/order';
 import { haversineKm } from '../helpers/geo.helper';
-import { cloudinaryUpload } from '../helpers/cloudinary.helper';
 
 /**
  * Generates a unique order number: MBG-<8 random hex chars (upper)>
@@ -37,6 +36,10 @@ export const orderService = {
       shipping_method,
       shipping_cost
     } = input;
+
+    if (payment_method !== 'payment_gateway') {
+      throw new AppError('payment_method must be payment_gateway', 400);
+    }
 
     // shipping_cost is required when a shipping method is provided;
     // default to 0 only for in-store / pickup orders (no shipping_method)
@@ -348,38 +351,6 @@ export const orderService = {
     return orderRepository.findOrderById(createdOrderId!);
   },
 
-  async uploadPaymentProof(orderId: number, userId: number, file: Express.Multer.File) {
-    // 1. Verify order exists and belongs to user
-    const order = await orderRepository.findOrderById(orderId);
-    if (!order) throw new AppError('Order not found', 404);
-    if (order.user_id !== userId) throw new AppError('Access denied', 403);
-
-    // 2. Check order status
-    if (order.status !== 'waiting_for_payment') {
-      throw new AppError('Payment proof can only be uploaded for orders waiting for payment', 400);
-    }
-
-    // 3. Check payment deadline
-    if (order.payment_deadline && new Date() > order.payment_deadline) {
-      throw new AppError('Payment deadline has passed', 400);
-    }
-
-    // 4. Upload to Cloudinary
-    const folder = `orders/${orderId}/payment-proof`;
-    const uploadResult = await cloudinaryUpload(file.buffer, folder);
-
-    // 5. Update order
-    const updatedOrder = await orderRepository.updatePaymentProof(
-      orderId,
-      uploadResult.secureUrl,
-      uploadResult.publicId
-    );
-
-    logger.info(`Payment proof uploaded for order ${order.order_number}`);
-
-    return updatedOrder;
-  },
-
   async cancelExpiredOrders() {
     const now = new Date();
     const ordersToCancel = await orderRepository.findOrdersToCancel(now);
@@ -400,8 +371,8 @@ export const orderService = {
     if (!order) throw new AppError('Order not found', 404);
 
     // 2. Check order status
-    if (order.status !== 'waiting_for_confirmation') {
-      throw new AppError('Order is not waiting for confirmation', 400);
+    if (order.status !== 'waiting_for_payment') {
+      throw new AppError('Order is not waiting for payment', 400);
     }
 
     // 3. Confirm payment
