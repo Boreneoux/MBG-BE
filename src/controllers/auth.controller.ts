@@ -57,13 +57,13 @@ export const authController = {
   }),
 
   googleCallback: catchAsync(async (req: Request, res: Response) => {
-    const { token, isNewUser } = await authService.googleCallback(
+    const { token, user } = await authService.googleCallback(
       req.googleProfile!
     );
 
     res.cookie('access_token', token, COOKIE_OPTIONS);
 
-    const redirectUrl = isNewUser
+    const redirectUrl = !user.phone
       ? `${FRONTEND_URL}/auth/complete-profile`
       : `${FRONTEND_URL}/auth/callback?status=success`;
 
