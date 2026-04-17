@@ -378,6 +378,7 @@ export const orderService = {
     return cancelled;
   },
 
+
   async confirmPayment(orderId: number, gatewayReference?: string) {
     const order = await orderRepository.findOrderById(orderId);
     if (!order) throw new AppError('Order not found', 404);
@@ -388,30 +389,6 @@ export const orderService = {
 
     const updatedOrder = await orderRepository.confirmPayment(orderId);
     logger.info(`Payment confirmed for order ${order.order_number}`);
-    return updatedOrder;
-  },
-
-  async approvePayment(orderId: number) {
-    const order = await orderRepository.findOrderById(orderId);
-    if (!order) throw new AppError('Order not found', 404);
-    if (order.status !== 'waiting_for_confirmation') {
-      throw new AppError('Order is not awaiting confirmation', 400);
-    }
-
-    const updatedOrder = await orderRepository.approvePayment(orderId);
-    logger.info(`Order approved for processing: ${order.order_number}`);
-    return updatedOrder;
-  },
-
-  async shipOrder(orderId: number) {
-    const order = await orderRepository.findOrderById(orderId);
-    if (!order) throw new AppError('Order not found', 404);
-    if (order.status !== 'processing') {
-      throw new AppError('Order is not ready to ship', 400);
-    }
-
-    const updatedOrder = await orderRepository.shipOrder(orderId);
-    logger.info(`Order marked shipped: ${order.order_number}`);
     return updatedOrder;
   },
 

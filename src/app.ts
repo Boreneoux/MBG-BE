@@ -18,6 +18,7 @@ import shippingRouter from './routes/shipping.router';
 import inventoryRouter from './routes/inventory.router';
 import discountRouter from './routes/discount.router';
 import voucherRouter from './routes/voucher.router';
+import adminOrderRouter from './routes/admin.order.router';
 import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
@@ -48,6 +49,7 @@ app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/stores', storeRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/admin/orders', adminOrderRouter);
 app.use('/api/shipping', shippingRouter);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/discounts', discountRouter);
