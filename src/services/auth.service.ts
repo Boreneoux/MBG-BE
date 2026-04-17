@@ -170,7 +170,15 @@ export const authService = {
       provider_user_id
     );
     if (existingOAuth) {
-      const { user } = existingOAuth;
+      let { user } = existingOAuth;
+      if (!user.referral_code) {
+        const referralCode = await generateUniqueReferralCode(
+          user.first_name ?? first_name,
+          user.last_name ?? last_name
+        );
+        await authRepository.updateUser(user.id, { referral_code: referralCode });
+        user = { ...user, referral_code: referralCode };
+      }
       return {
         user,
         token: buildCookieToken(user.id, user.email, user.role),
@@ -188,6 +196,16 @@ export const authService = {
       });
       if (!existingUser.is_verified)
         await authRepository.updateUser(existingUser.id, { is_verified: true });
+
+      if (!existingUser.referral_code) {
+        const referralCode = await generateUniqueReferralCode(
+          existingUser.first_name ?? first_name,
+          existingUser.last_name ?? last_name
+        );
+        await authRepository.updateUser(existingUser.id, { referral_code: referralCode });
+        existingUser.referral_code = referralCode;
+      }
+
       const { password: _, ...user } = existingUser;
       return {
         user,
