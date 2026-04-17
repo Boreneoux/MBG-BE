@@ -125,11 +125,25 @@ export const orderRepository = {
     });
   },
 
+  incrementStock(inventoryId: number, quantity: number, db: Db = prisma) {
+    return db.storeInventory.update({
+      where: { id: inventoryId },
+      data: { stock: { increment: quantity } }
+    });
+  },
+
+  findStoreAdminByUserId(userId: number, db: Db = prisma) {
+    return db.storeAdmin.findFirst({
+      where: { user_id: userId, deleted_at: null },
+      select: { store_id: true }
+    });
+  },
+
   createStockJournal(
     data: {
       store_inventory_id: number;
       quantity: number;
-      type: 'order_deduction';
+      type: 'order_deduction' | 'order_cancellation_return';
       description?: string;
       reference_id?: number;
     },
@@ -222,6 +236,47 @@ export const orderRepository = {
         },
         address: true,
         store: { select: { id: true, name: true } }
+      }
+    });
+  },
+
+  findOrdersForAdmin(
+    params: {
+      where: Prisma.OrderWhereInput;
+      skip: number;
+      take: number;
+      orderBy: Prisma.OrderOrderByWithRelationInput;
+    },
+    db: Db = prisma
+  ) {
+    return db.order.findMany({
+      where: params.where,
+      skip: params.skip,
+      take: params.take,
+      orderBy: params.orderBy,
+      include: {
+        order_items: {
+          include: {
+            product: { select: { id: true, name: true } },
+            discount: { select: { id: true, type: true, value: true } }
+          }
+        },
+        address: true,
+        store: { select: { id: true, name: true } },
+        user: { select: { id: true, first_name: true, last_name: true, email: true } }
+      }
+    });
+  },
+
+  countOrders(where: Prisma.OrderWhereInput, db: Db = prisma) {
+    return db.order.count({ where });
+  },
+
+  rejectPaymentProof(orderId: number, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'waiting_for_payment'
       }
     });
   },

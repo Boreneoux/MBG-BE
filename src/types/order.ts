@@ -1,6 +1,17 @@
-import { PrismaClient } from '../../generated/prisma/client';
+import { PrismaClient, order_status } from '../../generated/prisma/client';
 
 export type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
+
+export interface AdminOrderQueryInput {
+  page?: number;
+  limit?: number;
+  sort?: 'asc' | 'desc';
+  warehouse_id?: number;
+  order_number?: string;
+  status?: order_status;
+  from?: string;
+  to?: string;
+}
 
 // ─── Input Types ─────────────────────────────────────────────────────────────
 

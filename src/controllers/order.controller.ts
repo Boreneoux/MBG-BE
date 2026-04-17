@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { orderService } from '../services/order.service';
+import { adminOrderService } from '../services/admin.order.service';
 import { catchAsync } from '../utils/catch-async';
 
 export const orderController = {
@@ -37,7 +38,7 @@ export const orderController = {
 
   approvePayment: catchAsync(async (req: Request, res: Response) => {
     const orderId = Number(req.params.id);
-    const order = await orderService.approvePayment(orderId);
+    const order = await adminOrderService.approvePayment(orderId, req.user!);
 
     res.json({
       success: true,
@@ -48,7 +49,7 @@ export const orderController = {
 
   shipOrder: catchAsync(async (req: Request, res: Response) => {
     const orderId = Number(req.params.id);
-    const order = await orderService.shipOrder(orderId);
+    const order = await adminOrderService.shipOrder(orderId, req.user!);
 
     res.json({
       success: true,
