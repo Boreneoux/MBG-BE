@@ -5,7 +5,12 @@ export const userAddressRepository = {
   findAllByUserId(userId: number) {
     return prisma.userAddress.findMany({
       where: { user_id: userId, deleted_at: null },
-      orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }]
+      orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+      include: {
+        province: { select: { id: true, name: true } },
+        city:     { select: { id: true, name: true, type: true } },
+        district: { select: { id: true, name: true } }
+      }
     });
   },
 
