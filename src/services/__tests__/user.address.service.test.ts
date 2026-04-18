@@ -34,7 +34,10 @@ const mockAddress = {
   is_primary: true,
   created_at: new Date(),
   updated_at: new Date(),
-  deleted_at: null
+  deleted_at: null,
+  province: { id: 1, name: 'DKI Jakarta' },
+  city: { id: 1, name: 'Jakarta Barat', type: 'Kota' },
+  district: { id: 1, name: 'Kebon Jeruk' }
 };
 
 const mockAddressSecondary = {

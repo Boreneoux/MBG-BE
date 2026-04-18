@@ -4,8 +4,18 @@ const storeRepository = {
   findAllActive() {
     return prisma.store.findMany({
       where: { deleted_at: null },
-      include: { province: true, city: true, district: true },
-      orderBy: { id: 'asc' }
+      include: {
+        province: true,
+        city: true,
+        district: true,
+        store_admins: {
+          where: { deleted_at: null },
+          include: {
+            user: { select: { id: true, first_name: true, last_name: true, email: true } },
+          },
+        },
+      },
+      orderBy: { id: 'asc' },
     });
   },
 
@@ -28,7 +38,17 @@ const storeRepository = {
   findByIdWithDetails(id: number) {
     return prisma.store.findUnique({
       where: { id, deleted_at: null },
-      include: { province: true, city: true, district: true }
+      include: {
+        province: true,
+        city: true,
+        district: true,
+        store_admins: {
+          where: { deleted_at: null },
+          include: {
+            user: { select: { id: true, first_name: true, last_name: true, email: true } },
+          },
+        },
+      },
     });
   },
 

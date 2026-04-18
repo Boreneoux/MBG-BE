@@ -59,7 +59,8 @@ const makeStore = (id: number, lat: number, lng: number) => ({
     created_at: new Date(),
     updated_at: new Date(),
     deleted_at: null
-  }
+  },
+  store_admins: []
 });
 
 beforeEach(() => jest.clearAllMocks());
