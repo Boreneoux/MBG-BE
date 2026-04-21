@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { orderService } from '../services/order.service';
 import { adminOrderService } from '../services/admin.order.service';
+import { paymentService } from '../services/payment.service';
 import { catchAsync } from '../utils/catch-async';
 
 export const orderController = {
@@ -11,6 +12,27 @@ export const orderController = {
       success: true,
       message: 'Order created successfully. Please complete payment within 1 hour.',
       data: { order }
+    });
+  }),
+
+  getPaymentUrl: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const result = await paymentService.createPaymentUrl(orderId, req.user!.id);
+
+    res.json({
+      success: true,
+      message: 'Payment URL generated successfully',
+      data: result
+    });
+  }),
+
+  getPaymentStatus: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const result = await paymentService.getPaymentStatus(orderId, req.user!.id);
+
+    res.json({
+      success: true,
+      data: result
     });
   }),
 
@@ -59,29 +81,12 @@ export const orderController = {
   }),
 
   paymentWebhook: catchAsync(async (req: Request, res: Response) => {
-    const { order_id, status, reference } = req.body;
+    // Handle Midtrans notification
+    const result = await paymentService.handlePaymentNotification(req.body);
 
-    // Basic validation - in production, verify webhook signature
-    if (!order_id || !status) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid webhook payload'
-      });
-    }
-
-    if (status === 'paid') {
-      const order = await orderService.confirmPayment(parseInt(order_id, 10), reference);
-
-      res.json({
-        success: true,
-        message: 'Payment confirmed',
-        data: { order }
-      });
-    } else {
-      res.json({
-        success: true,
-        message: 'Webhook received'
-      });
-    }
+    res.json({
+      success: result.success,
+      message: result.message
+    });
   })
 };

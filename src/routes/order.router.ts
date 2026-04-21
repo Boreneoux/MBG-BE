@@ -19,6 +19,10 @@ router.use(authenticate);
 // POST /api/orders
 router.post('/', validate(createOrderSchema), orderController.createOrder);
 
+// Payment routes
+router.get('/:id/payment-url', validate(orderIdParamsSchema), orderController.getPaymentUrl);
+router.get('/:id/payment-status', validate(orderIdParamsSchema), orderController.getPaymentStatus);
+
 router.post('/:id/cancel', validate(orderIdParamsSchema), orderController.cancelOrder);
 router.post('/:id/confirm-receipt', validate(orderIdParamsSchema), orderController.confirmReceipt);
 router.post(

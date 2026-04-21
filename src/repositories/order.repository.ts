@@ -374,7 +374,43 @@ export const orderRepository = {
   findUserById(userId: number, db: Db = prisma) {
     return db.user.findUnique({
       where: { id: userId },
-      select: { id: true, is_verified: true }
+      select: { id: true, is_verified: true, first_name: true, last_name: true, email: true, phone: true }
+    });
+  },
+
+  // ── Payment ─────────────────────────────────────────────────────────────────
+
+  findOrderByOrderNumber(orderNumber: string, db: Db = prisma) {
+    return db.order.findFirst({
+      where: { order_number: orderNumber }
+    });
+  },
+
+  findOrderItemsByOrderId(orderId: number, db: Db = prisma) {
+    return db.orderItem.findMany({
+      where: { order_id: orderId },
+      include: { product: { select: { name: true } } }
+    });
+  },
+
+  updatePaymentDetails(
+    orderId: number,
+    data: {
+      midtrans_order_id?: string;
+      midtrans_transaction_id?: string;
+      midtrans_status?: string;
+      payment_url?: string;
+    },
+    db: Db = prisma
+  ) {
+    return db.order.update({
+      where: { id: orderId },
+      data: {
+        midtrans_order_id: data.midtrans_order_id,
+        midtrans_transaction_id: data.midtrans_transaction_id,
+        midtrans_status: data.midtrans_status,
+        payment_url: data.payment_url,
+      }
     });
   }
 };
