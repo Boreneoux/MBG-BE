@@ -461,7 +461,12 @@ model Order {
   address_id       Int
   voucher_id       Int?
   payment_method   payment_method
-  payment_deadline        DateTime?
+  payment_deadline DateTime?
+  // Midtrans payment fields
+  midtrans_order_id        String?   @db.VarChar(255)
+  midtrans_transaction_id String?   @db.VarChar(255)
+  midtrans_status         String?   @db.VarChar(50)
+  payment_url             String?   @db.Text
   shipped_at       DateTime?
   confirmed_at     DateTime?
   cancelled_at     DateTime?
