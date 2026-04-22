@@ -31,9 +31,12 @@ export const storeService = {
     return withDistance[0];
   },
 
-  async getAll() {
-    const stores = await storeRepository.findAllActive();
-    return { stores };
+  async getAll(page: number = 1, limit: number = 10, search?: string) {
+    const { stores, total } = await storeRepository.findAllActivePaginated(page, limit, search);
+    return {
+      stores,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   async create(data: CreateStoreInput) {

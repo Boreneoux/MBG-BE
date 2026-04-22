@@ -155,7 +155,7 @@ describe('storeService.getAll', () => {
       makeStore(2, -6.2, 106.8),
       makeStore(3, -7.2575, 112.7521)
     ];
-    mockRepo.findAllActive.mockResolvedValue(stores);
+    mockRepo.findAllActivePaginated.mockResolvedValue({ stores, total: 3 });
 
     const result = await storeService.getAll();
 
@@ -164,7 +164,7 @@ describe('storeService.getAll', () => {
   });
 
   it('returns empty array when no stores exist', async () => {
-    mockRepo.findAllActive.mockResolvedValue([]);
+    mockRepo.findAllActivePaginated.mockResolvedValue({ stores: [], total: 0 });
 
     const result = await storeService.getAll();
 
