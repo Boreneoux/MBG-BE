@@ -16,6 +16,12 @@ router.post('/webhook/payment', orderController.paymentWebhook);
 // All order routes require authentication
 router.use(authenticate);
 
+// GET /api/orders  — paginated list for the logged-in user
+router.get('/', orderController.getOrders);
+
+// GET /api/orders/:id  — single order detail
+router.get('/:id', validate(orderIdParamsSchema), orderController.getOrder);
+
 // POST /api/orders
 router.post('/', validate(createOrderSchema), orderController.createOrder);
 
