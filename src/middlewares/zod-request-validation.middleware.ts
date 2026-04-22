@@ -17,7 +17,7 @@ export const validate =
         JSON.stringify(result.error.issues, null, 2)
       );
       const firstError = result.error.issues[0];
-      const field = firstError.path.join('.');
+      const field = firstError.path.slice(1).join('.');
       const message = field
         ? `${field}: ${firstError.message}`
         : firstError.message;

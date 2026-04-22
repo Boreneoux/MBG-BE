@@ -12,7 +12,10 @@ export const nearestStoreQuerySchema = z.object({
   query: z
     .object({
       lat: optionalFloat(-90, 90, 'lat'),
-      lng: optionalFloat(-180, 180, 'lng')
+      lng: optionalFloat(-180, 180, 'lng'),
+      page: z.coerce.number().int().positive().optional().default(1),
+      limit: z.coerce.number().int().positive().max(100).optional().default(10),
+      search: z.string().trim().optional(),
     })
     .refine(
       (q) => (q.lat === undefined) === (q.lng === undefined),

@@ -19,6 +19,34 @@ const storeRepository = {
     });
   },
 
+  async findAllActivePaginated(page: number, limit: number, search?: string) {
+    const where = {
+      deleted_at: null,
+      ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
+    };
+    const [stores, total] = await prisma.$transaction([
+      prisma.store.findMany({
+        where,
+        include: {
+          province: true,
+          city: true,
+          district: true,
+          store_admins: {
+            where: { deleted_at: null },
+            include: {
+              user: { select: { id: true, first_name: true, last_name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { id: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.store.count({ where }),
+    ]);
+    return { stores, total };
+  },
+
   findAllActiveForRouting() {
     return prisma.store.findMany({
       where: { deleted_at: null },

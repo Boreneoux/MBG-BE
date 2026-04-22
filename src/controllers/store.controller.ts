@@ -10,7 +10,8 @@ export const storeController = {
     const role = req.user?.role;
 
     if (role === 'super_admin' || role === 'store_admin') {
-      const result = await storeService.getAll();
+      const { page, limit, search } = req.query as { page?: string; limit?: string; search?: string };
+      const result = await storeService.getAll(Number(page) || 1, Number(limit) || 10, search);
       return res.json({ success: true, message: 'Stores retrieved', data: result });
     }
 
