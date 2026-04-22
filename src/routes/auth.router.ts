@@ -33,9 +33,12 @@ router.get('/google/failure', (_req: Request, res: Response) => {
   res.status(401).json({ success: false, message: 'Google authentication failed', data: null });
 });
 
+// Token refresh (no authenticate — access token may already be expired)
+router.post('/refresh', authController.refresh);
+
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
-router.post('/logout', authenticate, authController.logout);
+router.post('/logout', authController.logout);
 router.post('/complete-profile', authenticate, validate(completeProfileSchema), authController.completeProfile);
 router.post('/setup-password', authenticate, validate(setupPasswordSchema), authController.setupPassword);
 

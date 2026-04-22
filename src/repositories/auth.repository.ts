@@ -108,6 +108,29 @@ export const authRepository = {
     });
   },
 
+  createRefreshToken(
+    userId: number,
+    hash: string,
+    expiresAt: Date,
+    db: Db = prisma
+  ) {
+    return db.refreshToken.create({
+      data: { user_id: userId, token: hash, expires_at: expiresAt }
+    });
+  },
+
+  findRefreshTokenByHash(hash: string, db: Db = prisma) {
+    return db.refreshToken.findUnique({ where: { token: hash } });
+  },
+
+  deleteRefreshToken(id: number, db: Db = prisma) {
+    return db.refreshToken.delete({ where: { id } });
+  },
+
+  deleteUserRefreshTokens(userId: number, db: Db = prisma) {
+    return db.refreshToken.deleteMany({ where: { user_id: userId } });
+  },
+
   findActiveReferralVoucher(db: Db = prisma) {
     return db.voucher.findFirst({
       where: {
