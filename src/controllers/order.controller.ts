@@ -5,6 +5,30 @@ import { paymentService } from '../services/payment.service';
 import { catchAsync } from '../utils/catch-async';
 
 export const orderController = {
+  getOrders: catchAsync(async (req: Request, res: Response) => {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+    const search = req.query.search as string | undefined;
+
+    const result = await orderService.getUserOrders(req.user!.id, page, limit, search);
+
+    res.json({
+      success: true,
+      data: result.data,
+      meta: result.meta,
+    });
+  }),
+
+  getOrder: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await orderService.getOrderForUser(req.user!.id, orderId);
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  }),
+
   createOrder: catchAsync(async (req: Request, res: Response) => {
     const order = await orderService.createOrder(req.user!.id, req.body);
 

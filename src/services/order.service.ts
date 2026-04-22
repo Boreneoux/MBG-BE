@@ -351,6 +351,35 @@ export const orderService = {
     return orderRepository.findOrderById(createdOrderId!);
   },
 
+  async getUserOrders(
+    userId: number,
+    page: number,
+    limit: number,
+    search?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const [orders, total] = await Promise.all([
+      orderRepository.findUserOrders({ userId, search, skip, take: limit }),
+      orderRepository.countUserOrders({ userId, search }),
+    ]);
+    return {
+      data: orders,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
+
+  async getOrderForUser(userId: number, orderId: number) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.user_id !== userId) throw new AppError('Forbidden', 403);
+    return order;
+  },
+
   async cancelExpiredOrders() {
     const now = new Date();
     const ordersToCancel = await orderRepository.findOrdersToCancel(now);

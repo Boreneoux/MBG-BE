@@ -230,14 +230,73 @@ export const orderRepository = {
       include: {
         order_items: {
           include: {
-            product: { select: { id: true, name: true } },
+            product: {
+              select: {
+                id: true,
+                name: true,
+                product_images: {
+                  select: { id: true, image_url: true, is_primary: true },
+                  orderBy: { is_primary: 'desc' },
+                  take: 1
+                }
+              }
+            },
             discount: { select: { id: true, type: true, value: true } }
           }
         },
-        address: true,
+        address: {
+          include: {
+            city: { select: { name: true } },
+            province: { select: { name: true } },
+            district: { select: { name: true } }
+          }
+        },
         store: { select: { id: true, name: true } }
       }
     });
+  },
+
+  findUserOrders(
+    params: {
+      userId: number;
+      search?: string;
+      skip: number;
+      take: number;
+    },
+    db: Db = prisma
+  ) {
+    const where: Prisma.OrderWhereInput = {
+      user_id: params.userId,
+      ...(params.search
+        ? { order_number: { contains: params.search, mode: 'insensitive' } }
+        : {})
+    };
+    return db.order.findMany({
+      where,
+      skip: params.skip,
+      take: params.take,
+      orderBy: { created_at: 'desc' },
+      include: {
+        order_items: {
+          include: {
+            product: { select: { id: true, name: true } }
+          }
+        }
+      }
+    });
+  },
+
+  countUserOrders(
+    params: { userId: number; search?: string },
+    db: Db = prisma
+  ) {
+    const where: Prisma.OrderWhereInput = {
+      user_id: params.userId,
+      ...(params.search
+        ? { order_number: { contains: params.search, mode: 'insensitive' } }
+        : {})
+    };
+    return db.order.count({ where });
   },
 
   findOrdersForAdmin(
