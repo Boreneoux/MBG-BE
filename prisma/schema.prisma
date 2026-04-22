@@ -88,6 +88,7 @@ model User {
   referrals           User[]               @relation("UserReferral")
   user_oauth_accounts UserOAuthAccount[]
   verification_tokens VerificationToken[]
+  refresh_tokens      RefreshToken[]
   user_addresses      UserAddress[]
   store_admins        StoreAdmin[]
   user_vouchers       UserVoucher[]
@@ -129,6 +130,18 @@ model VerificationToken {
   user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("verification_tokens")
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  token      String   @unique @db.VarChar(255)
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }
 
 model Province {

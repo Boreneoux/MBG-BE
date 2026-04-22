@@ -1,10 +1,14 @@
 import { PrismaClient } from '../../generated/prisma/client';
+import {
+  EMAIL_VERIFICATION_EXPIRY_MINUTES,
+  PASSWORD_RESET_EXPIRY_MINUTES
+} from '../config/main.config';
 
 export type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
 
 export const TOKEN_EXPIRY = {
-  email_verification: 60, // minutes
-  password_reset: 15
+  email_verification: EMAIL_VERIFICATION_EXPIRY_MINUTES,
+  password_reset: PASSWORD_RESET_EXPIRY_MINUTES
 } as const;
 
 export type TokenType = keyof typeof TOKEN_EXPIRY;

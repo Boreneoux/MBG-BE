@@ -4,6 +4,7 @@ import path from 'path';
 import handlebars, { TemplateDelegate } from 'handlebars';
 import {
   JWT_SECRET_TOKEN,
+  JWT_ACCESS_TOKEN_EXPIRY,
   FRONTEND_URL,
   USER_EMAILER
 } from '../config/main.config';
@@ -34,14 +35,32 @@ export function hashToken(raw: string): string {
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
-export function buildCookieToken(
+export function buildTokenPair(
   userId: number,
   email: string,
   role: user_role
-): string {
-  return jwtCreateToken({ id: userId, email, role }, JWT_SECRET_TOKEN!, {
-    expiresIn: '7d'
-  });
+): { accessToken: string; refreshToken: { raw: string; hashed: string } } {
+  const accessToken = jwtCreateToken(
+    { id: userId, email, role },
+    JWT_SECRET_TOKEN!,
+    { expiresIn: JWT_ACCESS_TOKEN_EXPIRY as any }
+  );
+  const refreshToken = generateToken();
+  return { accessToken, refreshToken };
+}
+
+export function parseDurationMs(duration: string): number {
+  const match = duration.match(/^(\d+)(ms|s|m|h|d)$/);
+  if (!match) throw new Error(`Invalid duration format: ${duration}`);
+  const value = parseInt(match[1], 10);
+  const multipliers: Record<string, number> = {
+    ms: 1,
+    s: 1_000,
+    m: 60 * 1_000,
+    h: 60 * 60 * 1_000,
+    d: 24 * 60 * 60 * 1_000
+  };
+  return value * multipliers[match[2]];
 }
 
 export function generateReferralCode(

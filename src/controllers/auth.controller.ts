@@ -1,14 +1,40 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/auth.service';
 import { catchAsync } from '../utils/catch-async';
-import { FRONTEND_URL } from '../config/main.config';
+import { AppError } from '../utils/AppError';
+import {
+  FRONTEND_URL,
+  JWT_ACCESS_TOKEN_EXPIRY,
+  JWT_REFRESH_TOKEN_EXPIRY
+} from '../config/main.config';
+import { parseDurationMs } from '../services/auth.helpers';
 
-const COOKIE_OPTIONS = {
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: IS_PROD,
   sameSite: 'lax' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  maxAge: parseDurationMs(JWT_ACCESS_TOKEN_EXPIRY)
 };
+
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: 'lax' as const,
+  maxAge: parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY)
+};
+
+const REFRESH_COOKIE_CLEAR_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: 'lax' as const,
+};
+
+function setAuthCookies(res: Response, accessToken: string, rawRefreshToken: string) {
+  res.cookie('access_token', accessToken, ACCESS_COOKIE_OPTIONS);
+  res.cookie('refresh_token', rawRefreshToken, REFRESH_COOKIE_OPTIONS);
+}
 
 export const authController = {
   register: catchAsync(async (req: Request, res: Response) => {
@@ -45,9 +71,9 @@ export const authController = {
   }),
 
   login: catchAsync(async (req: Request, res: Response) => {
-    const { user, token } = await authService.login(req.body);
+    const { user, accessToken, rawRefreshToken } = await authService.login(req.body);
 
-    res.cookie('access_token', token, COOKIE_OPTIONS);
+    setAuthCookies(res, accessToken, rawRefreshToken);
 
     res.status(200).json({
       success: true,
@@ -57,11 +83,11 @@ export const authController = {
   }),
 
   googleCallback: catchAsync(async (req: Request, res: Response) => {
-    const { token, user } = await authService.googleCallback(
+    const { user, accessToken, rawRefreshToken } = await authService.googleCallback(
       req.googleProfile!
     );
 
-    res.cookie('access_token', token, COOKIE_OPTIONS);
+    setAuthCookies(res, accessToken, rawRefreshToken);
 
     const redirectUrl = !user.phone
       ? `${FRONTEND_URL}/auth/complete-profile`
@@ -90,8 +116,27 @@ export const authController = {
     });
   }),
 
-  logout: catchAsync(async (_req: Request, res: Response) => {
-    res.clearCookie('access_token', COOKIE_OPTIONS);
+  refresh: catchAsync(async (req: Request, res: Response) => {
+    const rawToken = req.cookies?.refresh_token as string | undefined;
+    if (!rawToken) throw new AppError('Refresh token missing', 401);
+
+    const { accessToken, rawRefreshToken } = await authService.refreshToken(rawToken);
+
+    setAuthCookies(res, accessToken, rawRefreshToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'Token refreshed',
+      data: null
+    });
+  }),
+
+  logout: catchAsync(async (req: Request, res: Response) => {
+    const rawToken = req.cookies?.refresh_token as string | undefined;
+    if (rawToken) await authService.logout(rawToken);
+
+    res.clearCookie('access_token', ACCESS_COOKIE_OPTIONS);
+    res.clearCookie('refresh_token', REFRESH_COOKIE_CLEAR_OPTIONS);
 
     res.status(200).json({
       success: true,

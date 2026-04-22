@@ -13,11 +13,13 @@ import {
 import {
   generateToken,
   hashToken,
-  buildCookieToken,
+  buildTokenPair,
+  parseDurationMs,
   generateReferralCode,
   sendVerificationEmail,
   sendResetEmail
 } from './auth.helpers';
+import { JWT_REFRESH_TOKEN_EXPIRY } from '../config/main.config';
 
 // ─── Private helpers ─────────────────────────────────────────────────────────
 
@@ -67,6 +69,13 @@ async function validateToken(rawToken: string, expectedType: string) {
   if (new Date(record.expires_at) < new Date())
     throw new AppError('This link has expired', 400);
   return record;
+}
+
+async function issueTokenPair(userId: number, email: string, role: string) {
+  const { accessToken, refreshToken } = buildTokenPair(userId, email, role as any);
+  const expiresAt = new Date(Date.now() + parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY));
+  await authRepository.createRefreshToken(userId, refreshToken.hashed, expiresAt);
+  return { accessToken, rawRefreshToken: refreshToken.raw };
 }
 
 async function applyReferralVoucher(userId: number, tx: Tx): Promise<void> {
@@ -156,10 +165,8 @@ export const authService = {
       );
     logger.info(`User logged in: ${email}`);
     const { password: _, ...userWithoutPassword } = user;
-    return {
-      user: userWithoutPassword,
-      token: buildCookieToken(user.id, user.email, user.role)
-    };
+    const tokens = await issueTokenPair(user.id, user.email, user.role);
+    return { user: userWithoutPassword, ...tokens };
   },
 
   async googleCallback(profile: GoogleProfile) {
@@ -179,11 +186,8 @@ export const authService = {
         await authRepository.updateUser(user.id, { referral_code: referralCode });
         user = { ...user, referral_code: referralCode };
       }
-      return {
-        user,
-        token: buildCookieToken(user.id, user.email, user.role),
-        isNewUser: false
-      };
+      const tokens = await issueTokenPair(user.id, user.email, user.role);
+      return { user, ...tokens, isNewUser: false };
     }
 
     const existingUser = await authRepository.findUserByEmail(provider_email);
@@ -207,15 +211,8 @@ export const authService = {
       }
 
       const { password: _, ...user } = existingUser;
-      return {
-        user,
-        token: buildCookieToken(
-          existingUser.id,
-          existingUser.email,
-          existingUser.role
-        ),
-        isNewUser: false
-      };
+      const tokens = await issueTokenPair(existingUser.id, existingUser.email, existingUser.role);
+      return { user, ...tokens, isNewUser: false };
     }
 
     logger.info(`New user via Google OAuth: ${provider_email}`);
@@ -246,11 +243,8 @@ export const authService = {
       return created;
     });
     const { password: _, ...user } = newUser;
-    return {
-      user,
-      token: buildCookieToken(newUser.id, newUser.email, newUser.role),
-      isNewUser: true
-    };
+    const tokens = await issueTokenPair(newUser.id, newUser.email, newUser.role);
+    return { user, ...tokens, isNewUser: true };
   },
 
   async completeProfile(
@@ -327,6 +321,33 @@ export const authService = {
     );
     sendResetEmail(email, user.first_name ?? 'there', raw);
     return { message: 'If that email exists, a reset link has been sent' };
+  },
+
+  async refreshToken(rawToken: string) {
+    const hashed = hashToken(rawToken);
+    const record = await authRepository.findRefreshTokenByHash(hashed);
+
+    if (!record) throw new AppError('Invalid refresh token', 401);
+    if (new Date(record.expires_at) < new Date())
+      throw new AppError('Refresh token expired, please log in again', 401);
+
+    const user = await authRepository.findUserById(record.user_id, {
+      id: true,
+      email: true,
+      role: true
+    });
+    if (!user) throw new AppError('User not found', 404);
+
+    // Rotate: revoke old token, issue a new pair
+    await authRepository.deleteRefreshToken(record.id);
+    const tokens = await issueTokenPair(user.id, user.email, user.role);
+    return tokens;
+  },
+
+  async logout(rawToken: string) {
+    const hashed = hashToken(rawToken);
+    const record = await authRepository.findRefreshTokenByHash(hashed);
+    if (record) await authRepository.deleteRefreshToken(record.id);
   },
 
   async resetPassword(rawToken: string, newPassword: string) {
