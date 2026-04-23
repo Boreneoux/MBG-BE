@@ -25,6 +25,7 @@ export const getProductsQuerySchema = z.object({
         page: z.string().regex(/^\d+$/).optional(),
         limit: z.string().regex(/^\d+$/).optional(),
         search: z.string().optional(),
-        category: z.string().regex(/^\d+$/).optional()
+        category: z.string().regex(/^\d+$/).optional(),
+        sort: z.enum(['price_asc', 'price_desc', 'newest']).optional()
     })
 });

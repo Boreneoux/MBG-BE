@@ -10,6 +10,7 @@ export const productService = {
         limit?: number;
         search?: string;
         categoryId?: number;
+        sort?: string;
     }) {
         const page = params.page || 1;
         const limit = params.limit || 10;
@@ -19,7 +20,8 @@ export const productService = {
             skip,
             take: limit,
             search: params.search,
-            categoryId: params.categoryId
+            categoryId: params.categoryId,
+            sort: params.sort
         });
 
         return {
