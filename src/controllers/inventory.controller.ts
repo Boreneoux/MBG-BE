@@ -26,6 +26,13 @@ export const inventoryController = {
         res.status(200).json({ success: true, message: 'Stock adjusted successfully', data: result });
     }),
 
+    // POST /inventory/journal
+    createJournal: catchAsync(async (req: Request, res: Response) => {
+        const user = req.user as JwtPayload;
+        const result = await inventoryService.createJournal(req.body, user);
+        res.status(201).json({ success: true, message: 'Journal entry created successfully', data: result });
+    }),
+
     // GET /inventory/journal
     getJournals: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as JwtPayload;

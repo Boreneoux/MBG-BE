@@ -3,6 +3,7 @@ import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
 import {
     adjustStockSchema,
+    createJournalSchema,
     journalQuerySchema,
     inventoryQuerySchema,
     createInventorySchema,
@@ -37,6 +38,15 @@ inventoryRouter.post(
     authorize('super_admin', 'store_admin'),
     validate(adjustStockSchema),
     inventoryController.adjustStock
+);
+
+// POST /inventory/journal — super_admin + store_admin
+inventoryRouter.post(
+    '/journal',
+    authenticate,
+    authorize('super_admin', 'store_admin'),
+    validate(createJournalSchema),
+    inventoryController.createJournal
 );
 
 // GET /inventory/journal — super_admin + store_admin (store_admin auto-scoped)
