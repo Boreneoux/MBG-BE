@@ -183,7 +183,8 @@ export const inventoryService = {
     },
 
     async getJournals(query: JournalQueryInput, user: JwtPayload) {
-        let storeId: number | undefined = query.store_id;
+        let storeId: number | undefined = query.store_id ? Number(query.store_id) : undefined;
+        let productId: number | undefined = query.product_id ? Number(query.product_id) : undefined;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
@@ -191,14 +192,14 @@ export const inventoryService = {
             storeId = storeAdmin.store_id; // always override — ignore client-provided value
         }
 
-        const page = query.page ?? 1;
-        const limit = query.limit ?? 10;
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
         const sort = query.sort ?? 'desc';
 
         // Build nested where for store_inventory relation filters
         const inventoryWhere: Prisma.StoreInventoryWhereInput = {
             ...(storeId !== undefined && { store_id: storeId }),
-            ...(query.product_id !== undefined && { product_id: query.product_id }),
+            ...(productId !== undefined && { product_id: productId }),
         };
 
         const where: Prisma.StockJournalWhereInput = {
@@ -235,7 +236,8 @@ export const inventoryService = {
     },
 
     async getInventories(query: InventoryQueryInput, user: JwtPayload) {
-        let storeId: number | undefined = query.store_id;
+        let storeId: number | undefined = query.store_id ? Number(query.store_id) : undefined;
+        let productId: number | undefined = query.product_id ? Number(query.product_id) : undefined;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
@@ -245,7 +247,7 @@ export const inventoryService = {
 
         const where: Prisma.StoreInventoryWhereInput = {
             ...(storeId !== undefined && { store_id: storeId }),
-            ...(query.product_id !== undefined && { product_id: query.product_id }),
+            ...(productId !== undefined && { product_id: productId }),
         };
 
         const inventories = await inventoryRepository.findInventories({ where });
