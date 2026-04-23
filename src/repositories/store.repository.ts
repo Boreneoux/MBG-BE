@@ -50,7 +50,7 @@ const storeRepository = {
   findAllActiveForRouting() {
     return prisma.store.findMany({
       where: { deleted_at: null },
-      select: { id: true, name: true, latitude: true, longitude: true },
+      select: { id: true, name: true, latitude: true, longitude: true, max_delivery_distance: true },
       orderBy: { id: 'asc' }
     });
   },

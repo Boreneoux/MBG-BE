@@ -10,11 +10,13 @@ const mockRepo = jest.mocked(storeRepository);
 const toDecimal = (n: number) => ({ toNumber: () => n }) as any;
 
 // Lean fixture — matches the shape returned by findAllActiveForRouting (used by findNearest)
+// max_delivery_distance is set high so tests focus on distance logic, not range rejection
 const makeLeanStore = (id: number, lat: number, lng: number) => ({
   id,
   name: `Store ${id}`,
   latitude: toDecimal(lat),
-  longitude: toDecimal(lng)
+  longitude: toDecimal(lng),
+  max_delivery_distance: toDecimal(200)
 });
 
 // Full fixture — matches the shape returned by findAllActive (used by getAll)

@@ -95,17 +95,21 @@ export function sendVerificationEmail(
   firstName: string,
   rawToken: string
 ): void {
-  const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
-  const html = compileTemplate('verify-email.html', {
-    firstName,
-    verifyLink,
-    expirationTime: '1 hour'
-  });
-  sendEmailAsync({
-    to: email,
-    subject: 'Verify your MalesBeliGrocery email address',
-    html
-  });
+  try {
+    const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
+    const html = compileTemplate('verify-email.html', {
+      firstName,
+      verifyLink,
+      expirationTime: '1 hour'
+    });
+    sendEmailAsync({
+      to: email,
+      subject: 'Verify your MagerBeliGrocery email address',
+      html
+    });
+  } catch (err) {
+    logger.error('Failed to send verification email', { err });
+  }
 }
 
 export function sendResetEmail(
@@ -113,15 +117,19 @@ export function sendResetEmail(
   firstName: string,
   rawToken: string
 ): void {
-  const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
-  const html = compileTemplate('reset-password.html', {
-    firstName,
-    resetLink,
-    expirationTime: `${TOKEN_EXPIRY.password_reset} minutes`
-  });
-  sendEmailAsync({
-    to: email,
-    subject: 'Reset your MalesBeliGrocery password',
-    html
-  });
+  try {
+    const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+    const html = compileTemplate('reset-password.html', {
+      firstName,
+      resetLink,
+      expirationTime: `${TOKEN_EXPIRY.password_reset} minutes`
+    });
+    sendEmailAsync({
+      to: email,
+      subject: 'Reset your MagerBeliGrocery password',
+      html
+    });
+  } catch (err) {
+    logger.error('Failed to send reset email', { err });
+  }
 }

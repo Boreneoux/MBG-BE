@@ -22,6 +22,13 @@ storeRouter.get(
   storeController.getStores
 );
 
+// GET /stores/:id/products — public
+storeRouter.get(
+  '/:id/products',
+  validate(storeParamsSchema),
+  storeController.getStoreProducts
+);
+
 // GET /stores/:id — Super Admin + Store Admin
 storeRouter.get(
   '/:id',

@@ -8,15 +8,19 @@ export const productRepository = {
         take?: number;
         search?: string;
         categoryId?: number;
+        storeId?: number;
         sort?: string;
     }) {
-        const { skip, take, search, categoryId, sort } = params;
+        const { skip, take, search, categoryId, storeId, sort } = params;
 
         const where: Prisma.ProductWhereInput = {
             deleted_at: null,
             ...(categoryId && { category_id: categoryId }),
             ...(search && {
                 name: { contains: search, mode: 'insensitive' }
+            }),
+            ...(storeId && {
+                store_inventories: { some: { store_id: storeId, stock: { gt: 0 } } }
             })
         };
 

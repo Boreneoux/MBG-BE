@@ -28,7 +28,16 @@ export const storeService = {
 
     withDistance.sort((a, b) => a.distance_km - b.distance_km);
 
-    return withDistance[0];
+    const nearest = withDistance[0];
+
+    if (nearest.distance_km > nearest.store.max_delivery_distance.toNumber()) {
+      throw new AppError(
+        `No store delivers to your location. The nearest store is "${nearest.store.name}" (${nearest.distance_km.toFixed(1)} km away).`,
+        404
+      );
+    }
+
+    return nearest;
   },
 
   async getAll(page: number = 1, limit: number = 10, search?: string) {

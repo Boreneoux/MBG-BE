@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../utils/catch-async';
 import { storeService } from '../services/store.service';
+import { productService } from '../services/product.service';
 
 export const storeController = {
   // GET /stores
@@ -49,6 +50,16 @@ export const storeController = {
     const id = Number(req.params.id);
     await storeService.delete(id);
     res.status(204).send();
+  }),
+
+  // GET /stores/:id/products — public
+  getStoreProducts: catchAsync(async (req: Request, res: Response) => {
+    const storeId = Number(req.params.id);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 8;
+
+    const result = await productService.getProducts({ page, limit, storeId });
+    res.json({ success: true, message: 'Store products retrieved', data: result.data, meta: result.meta });
   }),
 
   // POST /stores/:id/admins

@@ -10,6 +10,7 @@ export const productService = {
         limit?: number;
         search?: string;
         categoryId?: number;
+        storeId?: number;
         sort?: string;
     }) {
         const page = params.page || 1;
@@ -21,6 +22,7 @@ export const productService = {
             take: limit,
             search: params.search,
             categoryId: params.categoryId,
+            storeId: params.storeId,
             sort: params.sort
         });
 
