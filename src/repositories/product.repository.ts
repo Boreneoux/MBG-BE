@@ -7,8 +7,9 @@ export const productRepository = {
         take?: number;
         search?: string;
         categoryId?: number;
+        sort?: string;
     }) {
-        const { skip, take, search, categoryId } = params;
+        const { skip, take, search, categoryId, sort } = params;
 
         const where: Prisma.ProductWhereInput = {
             deleted_at: null,
@@ -18,12 +19,19 @@ export const productRepository = {
             })
         };
 
+        let orderBy: Prisma.ProductOrderByWithRelationInput = { created_at: 'desc' };
+        if (sort === 'price_asc') {
+            orderBy = { price: 'asc' };
+        } else if (sort === 'price_desc') {
+            orderBy = { price: 'desc' };
+        }
+
         return Promise.all([
             prisma.product.findMany({
                 where,
                 skip,
                 take,
-                orderBy: { created_at: 'desc' },
+                orderBy,
                 include: {
                     category: true,
                     product_images: true,
