@@ -8,7 +8,7 @@ export const productController = {
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;
         const categoryId = req.query.category ? parseInt(req.query.category as string) : undefined;
-        const sort = req.query.sort as string | undefined; require("fs").appendFileSync("test_log.txt", "sort is: " + sort + "\n");
+        const sort = req.query.sort as string | undefined;
 
         const result = await productService.getProducts({ page, limit, search, categoryId, sort });
 

@@ -69,7 +69,8 @@ export const productService = {
                 category: { connect: { id: data.category_id } }
             };
 
-            return await productRepository.create(createData, uploadedImages);
+            const primaryIndex = data.primaryIndex !== undefined ? parseInt(data.primaryIndex) : 0;
+            return await productRepository.create(createData, uploadedImages, primaryIndex);
         } catch (error) {
             if (uploadedImages.length > 0) {
                 await Promise.all(
@@ -115,7 +116,10 @@ export const productService = {
                 ...(data.category_id && { category: { connect: { id: data.category_id } } })
             };
 
-            return await productRepository.update(id, updateData, uploadedImages);
+            const primaryIndex = data.primaryIndex !== undefined ? parseInt(data.primaryIndex) : undefined;
+            const deleteImageIds = data.deleteImageIds ? data.deleteImageIds.map((id: string) => parseInt(id)) : undefined;
+
+            return await productRepository.update(id, updateData, uploadedImages, primaryIndex, deleteImageIds);
         } catch (error) {
             if (uploadedImages.length > 0) {
                 await Promise.all(

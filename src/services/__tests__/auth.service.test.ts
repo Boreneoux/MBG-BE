@@ -121,7 +121,7 @@ describe('authService.login', () => {
     mockBcrypt.hashMatch.mockResolvedValue(true);
     const result = await authService.login(input);
     expect(result).toHaveProperty('user');
-    expect(result).toHaveProperty('token');
+    expect(result).toHaveProperty('accessToken');
     expect((result.user as any).password).toBeUndefined();
   });
 });
