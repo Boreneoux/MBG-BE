@@ -121,6 +121,67 @@ export const inventoryService = {
         };
     },
 
+    async createJournal(input: AdjustStockInput & { type: stock_journal_type }, user: JwtPayload) {
+        let storeId: number;
+
+        if (user.role === 'store_admin') {
+            const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
+            if (!storeAdmin) throw new AppError('Store admin is not assigned to any store', 400);
+            storeId = storeAdmin.store_id;
+        } else {
+            if (!input.store_id) throw new AppError('store_id is required for super admin', 400);
+            storeId = input.store_id;
+        }
+
+        const store = await inventoryRepository.findStoreById(storeId);
+        if (!store) throw new AppError('Store not found', 404);
+
+        const product = await inventoryRepository.findProductById(input.product_id);
+        if (!product) throw new AppError('Product not found', 404);
+
+        const inventory = await inventoryRepository.upsertInventory(storeId, input.product_id);
+
+        let newStock = inventory.stock;
+        if (input.type === 'addition') {
+            newStock += input.quantity;
+        } else if (input.type === 'reduction') {
+            if (newStock < input.quantity) {
+                throw new AppError(
+                    `Insufficient stock. Current: ${newStock}, requested reduction: ${input.quantity}`,
+                    400
+                );
+            }
+            newStock -= input.quantity;
+        }
+        // For other types, don't update stock
+
+        const journal = await prisma.stockJournal.create({
+            data: {
+                store_inventory_id: inventory.id,
+                quantity: input.quantity,
+                type: input.type,
+                description: input.description,
+            },
+        });
+
+        let updatedInventory = inventory;
+        if (input.type === 'addition' || input.type === 'reduction') {
+            updatedInventory = await prisma.storeInventory.update({
+                where: { id: inventory.id },
+                data: { stock: newStock, updated_at: new Date() },
+            });
+        }
+
+        return {
+            inventory: {
+                ...updatedInventory,
+                store: { id: store.id, name: store.name },
+                product: { id: product.id, name: product.name },
+            },
+            journal,
+        };
+    },
+
     async getJournals(query: JournalQueryInput, user: JwtPayload) {
         let storeId: number | undefined = query.store_id;
 

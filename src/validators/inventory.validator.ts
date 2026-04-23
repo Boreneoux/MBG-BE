@@ -21,6 +21,18 @@ export const adjustStockSchema = z.object({
     }),
 });
 
+export const createJournalSchema = z.object({
+    body: z.object({
+        store_id: z.number().int().positive('store_id must be a positive integer').optional(),
+        product_id: z.number().int().positive('product_id must be a positive integer'),
+        quantity: z.number().int().positive('quantity must be a positive integer'),
+        type: z.enum(JOURNAL_TYPES, {
+            error: 'type must be a valid journal type',
+        }),
+        description: z.string().trim().max(500).optional(),
+    }),
+});
+
 export const journalQuerySchema = z.object({
     query: z.object({
         store_id: z.coerce.number().int().positive().optional(),
