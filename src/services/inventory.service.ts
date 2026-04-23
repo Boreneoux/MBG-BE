@@ -95,20 +95,21 @@ export const inventoryService = {
         }
 
         // Transaction: create journal entry first, then update stock atomically
-        const [journal, updatedInventory] = await prisma.$transaction([
-            prisma.stockJournal.create({
+        const [journal, updatedInventory] = await prisma.$transaction(async (tx) => {
+            const j = await tx.stockJournal.create({
                 data: {
                     store_inventory_id: inventory.id,
                     quantity: input.quantity,
                     type: input.type as stock_journal_type,
                     description: input.description,
                 },
-            }),
-            prisma.storeInventory.update({
+            });
+            const inv = await tx.storeInventory.update({
                 where: { id: inventory.id },
                 data: { stock: newStock, updated_at: new Date() },
-            }),
-        ]);
+            });
+            return [j, inv] as const;
+        });
 
         return {
             inventory: {

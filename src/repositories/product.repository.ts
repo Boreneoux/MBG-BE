@@ -18,7 +18,7 @@ export const productRepository = {
             })
         };
 
-        return prisma.$transaction([
+        return Promise.all([
             prisma.product.findMany({
                 where,
                 skip,

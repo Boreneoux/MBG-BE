@@ -12,7 +12,7 @@ export const voucherRepository = {
             ...(usage_type && { usage_type })
         };
 
-        return prisma.$transaction([
+        return Promise.all([
             prisma.voucher.count({ where }),
             prisma.voucher.findMany({
                 where,

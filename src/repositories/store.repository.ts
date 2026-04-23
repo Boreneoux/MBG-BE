@@ -24,7 +24,7 @@ const storeRepository = {
       deleted_at: null,
       ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
     };
-    const [stores, total] = await prisma.$transaction([
+    const [stores, total] = await Promise.all([
       prisma.store.findMany({
         where,
         include: {

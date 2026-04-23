@@ -22,7 +22,7 @@ export const userRepository = {
       })
     };
 
-    return prisma.$transaction([
+    return Promise.all([
       prisma.user.findMany({
         where,
         skip,

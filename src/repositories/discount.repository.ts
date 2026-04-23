@@ -14,7 +14,7 @@ export const discountRepository = {
             ...(is_active !== undefined && { is_active })
         };
 
-        return prisma.$transaction([
+        return Promise.all([
             prisma.discount.count({ where }),
             prisma.discount.findMany({
                 where,

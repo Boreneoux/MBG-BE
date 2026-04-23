@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { authRepository } from '../repositories/auth.repository';
+import storeRepository from '../repositories/store.repository';
 import { AppError } from '../utils/AppError';
 import { Prisma, user_role } from '../../generated/prisma/client';
 import { TOKEN_EXPIRY } from '../types/auth';
@@ -52,6 +53,11 @@ export const userService = {
       throw new AppError('Email is already registered', 400);
     }
 
+    if (data.role === user_role.store_admin && data.store_id) {
+      const store = await storeRepository.findByIdWithDetails(data.store_id);
+      if (!store) throw new AppError('Store not found', 404);
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const userData: Prisma.UserCreateInput = {
@@ -64,7 +70,13 @@ export const userService = {
       is_verified: true
     };
 
-    return userRepository.create(userData);
+    const user = await userRepository.create(userData);
+
+    if (data.role === user_role.store_admin && data.store_id) {
+      await storeRepository.createAdmin(data.store_id, user.id);
+    }
+
+    return user;
   },
 
   async updateUser(id: number, data: any) {
