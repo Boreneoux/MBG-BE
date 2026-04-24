@@ -119,7 +119,7 @@ export function sendStoreAdminInviteEmail(
   rawToken: string
 ): void {
   try {
-    const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
+    const verifyLink = `${FRONTEND_URL}/admin/setup-password?token=${rawToken}`;
     const html = compileTemplate('store-admin-invite.html', {
       firstName,
       storeName,
