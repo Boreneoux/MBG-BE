@@ -68,5 +68,13 @@ export const storeController = {
     const { user_id } = req.body;
     const result = await storeService.assignAdmin(storeId, user_id);
     res.status(201).json({ success: true, message: 'Admin assigned to store', data: result });
+  }),
+
+  // DELETE /stores/:id/admins/:userId
+  unassignAdmin: catchAsync(async (req: Request, res: Response) => {
+    const storeId = Number(req.params.id);
+    const userId = Number(req.params.userId);
+    await storeService.unassignAdmin(storeId, userId);
+    res.status(200).json({ success: true, message: 'Admin unassigned from store', data: null });
   })
 };

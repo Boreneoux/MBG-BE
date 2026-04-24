@@ -137,8 +137,14 @@ const storeRepository = {
   },
 
   findAdminByStoreAndUser(storeId: number, userId: number) {
-    return prisma.storeAdmin.findUnique({
-      where: { store_id_user_id: { store_id: storeId, user_id: userId } }
+    return prisma.storeAdmin.findFirst({
+      where: { store_id: storeId, user_id: userId, deleted_at: null }
+    });
+  },
+
+  removeAdmin(storeId: number, userId: number) {
+    return prisma.storeAdmin.deleteMany({
+      where: { store_id: storeId, user_id: userId }
     });
   },
 

@@ -112,6 +112,30 @@ export function sendVerificationEmail(
   }
 }
 
+export function sendStoreAdminInviteEmail(
+  email: string,
+  firstName: string,
+  storeName: string,
+  rawToken: string
+): void {
+  try {
+    const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
+    const html = compileTemplate('store-admin-invite.html', {
+      firstName,
+      storeName,
+      verifyLink,
+      expirationTime: '24 hours'
+    });
+    sendEmailAsync({
+      to: email,
+      subject: "You've been invited as a Store Admin — Set up your password",
+      html
+    });
+  } catch (err) {
+    logger.error('Failed to send store admin invite email', { err });
+  }
+}
+
 export function sendResetEmail(
   email: string,
   firstName: string,
