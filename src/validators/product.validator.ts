@@ -16,7 +16,9 @@ export const updateProductSchema = z.object({
         description: z.string().optional(),
         price: z.preprocess((val) => Number(val), z.number().min(0)).optional(),
         weight: z.preprocess((val) => Number(val), z.number().min(0)).optional(),
-        category_id: z.preprocess((val) => Number(val), z.number().int().positive()).optional()
+        category_id: z.preprocess((val) => Number(val), z.number().int().positive()).optional(),
+        primaryIndex: z.preprocess((val) => Number(val), z.number().int().min(0)).optional(),
+        deleteImageIds: z.union([z.array(z.string()), z.string()]).optional()
     })
 });
 
