@@ -119,7 +119,12 @@ export const productService = {
             };
 
             const primaryIndex = data.primaryIndex !== undefined ? parseInt(data.primaryIndex) : undefined;
-            const deleteImageIds = data.deleteImageIds ? data.deleteImageIds.map((id: string) => parseInt(id)) : undefined;
+            
+            let deleteImageIds: number[] | undefined = undefined;
+            if (data.deleteImageIds) {
+                const idsArray = Array.isArray(data.deleteImageIds) ? data.deleteImageIds : [data.deleteImageIds];
+                deleteImageIds = idsArray.map((id: string) => parseInt(id));
+            }
 
             return await productRepository.update(id, updateData, uploadedImages, primaryIndex, deleteImageIds);
         } catch (error) {
