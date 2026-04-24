@@ -48,10 +48,11 @@ export const paymentService = {
       midtrans_status: 'pending',
     });
 
-    logger.info(`Payment URL created for order ${order.order_number}`);
+    logger.info(`Payment URL and Snap Token created for order ${order.order_number}`);
     return {
       order: updatedOrder,
       payment_url: midtransResponse.redirect_url,
+      snap_token: midtransResponse.token,
     };
   },
 
