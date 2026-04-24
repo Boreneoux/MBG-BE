@@ -392,3 +392,53 @@ describe('storeService.assignAdmin', () => {
     expect(mockRepo.createAdmin).not.toHaveBeenCalled();
   });
 });
+
+// ─── storeService.unassignAdmin ───────────────────────────────────────────────
+
+describe('storeService.unassignAdmin', () => {
+  it('removes the admin assignment when store, user, and assignment all exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(mockStoreAdminUser);
+    mockRepo.findAdminByStoreAndUser.mockResolvedValue(mockStoreAdminRecord);
+    mockRepo.removeAdmin.mockResolvedValue({ count: 1 });
+
+    await expect(storeService.unassignAdmin(1, 10)).resolves.toBeUndefined();
+
+    expect(mockRepo.findByIdWithDetails).toHaveBeenCalledWith(1);
+    expect(mockRepo.findUserById).toHaveBeenCalledWith(10);
+    expect(mockRepo.findAdminByStoreAndUser).toHaveBeenCalledWith(1, 10);
+    expect(mockRepo.removeAdmin).toHaveBeenCalledWith(1, 10);
+  });
+
+  it('throws 404 when store does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(null);
+
+    await expect(storeService.unassignAdmin(99, 10)).rejects.toThrow(
+      new AppError('Store not found', 404)
+    );
+    expect(mockRepo.findUserById).not.toHaveBeenCalled();
+    expect(mockRepo.removeAdmin).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when user does not exist', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(null);
+
+    await expect(storeService.unassignAdmin(1, 99)).rejects.toThrow(
+      new AppError('User not found', 404)
+    );
+    expect(mockRepo.findAdminByStoreAndUser).not.toHaveBeenCalled();
+    expect(mockRepo.removeAdmin).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when user is not assigned to this store', async () => {
+    mockRepo.findByIdWithDetails.mockResolvedValue(fullStore);
+    mockRepo.findUserById.mockResolvedValue(mockStoreAdminUser);
+    mockRepo.findAdminByStoreAndUser.mockResolvedValue(null);
+
+    await expect(storeService.unassignAdmin(1, 10)).rejects.toThrow(
+      new AppError('User is not assigned to this store', 404)
+    );
+    expect(mockRepo.removeAdmin).not.toHaveBeenCalled();
+  });
+});

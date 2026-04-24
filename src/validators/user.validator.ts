@@ -6,9 +6,9 @@ export const createUserSchema = z.object({
         first_name: z.string().min(1, 'First name is required').max(50),
         last_name: z.string().max(50).optional(),
         email: z.string().email('Invalid email address').max(255),
-        password: z.string().min(8, 'Password must be at least 8 characters').max(255),
         phone: z.string().max(20).optional(),
-        role: z.enum([user_role.store_admin, user_role.user, user_role.super_admin]).default(user_role.store_admin)
+        role: z.enum([user_role.store_admin, user_role.user]).default(user_role.store_admin),
+        store_id: z.number().int().positive().optional(),
     })
 });
 

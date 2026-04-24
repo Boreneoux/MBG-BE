@@ -72,6 +72,19 @@ export const storeService = {
     await storeRepository.softDelete(id);
   },
 
+  async unassignAdmin(storeId: number, userId: number) {
+    const store = await storeRepository.findByIdWithDetails(storeId);
+    if (!store) throw new AppError('Store not found', 404);
+
+    const user = await storeRepository.findUserById(userId);
+    if (!user) throw new AppError('User not found', 404);
+
+    const existing = await storeRepository.findAdminByStoreAndUser(storeId, userId);
+    if (!existing) throw new AppError('User is not assigned to this store', 404);
+
+    await storeRepository.removeAdmin(storeId, userId);
+  },
+
   async assignAdmin(storeId: number, userId: number) {
     const store = await storeRepository.findByIdWithDetails(storeId);
     if (!store) throw new AppError('Store not found', 404);

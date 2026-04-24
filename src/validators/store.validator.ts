@@ -73,3 +73,10 @@ export const assignAdminSchema = z.object({
     user_id: z.number().int().positive('user_id must be a positive integer')
   })
 });
+
+export const unassignAdminSchema = z.object({
+  params: z.object({
+    id: z.coerce.number().int().positive('Store ID must be a positive integer'),
+    userId: z.coerce.number().int().positive('User ID must be a positive integer')
+  })
+});

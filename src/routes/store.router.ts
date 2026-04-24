@@ -6,7 +6,8 @@ import {
   createStoreSchema,
   updateStoreSchema,
   storeParamsSchema,
-  assignAdminSchema
+  assignAdminSchema,
+  unassignAdminSchema
 } from '../validators/store.validator';
 import { storeController } from '../controllers/store.controller';
 
@@ -72,6 +73,15 @@ storeRouter.post(
   authorize('super_admin'),
   validate(assignAdminSchema),
   storeController.assignAdmin
+);
+
+// DELETE /stores/:id/admins/:userId — Super Admin only
+storeRouter.delete(
+  '/:id/admins/:userId',
+  authenticate,
+  authorize('super_admin'),
+  validate(unassignAdminSchema),
+  storeController.unassignAdmin
 );
 
 export default storeRouter;

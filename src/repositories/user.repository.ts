@@ -39,7 +39,8 @@ export const userRepository = {
           created_at: true,
           profile_image: true,
           store_admins: {
-            select: { store: true }
+            where: { deleted_at: null },
+            select: { store: { select: { id: true, name: true } } }
           }
         }
       }),
@@ -62,7 +63,8 @@ export const userRepository = {
         profile_image: true,
         profile_image_public_id: true,
         store_admins: {
-          select: { store: true }
+          where: { deleted_at: null },
+          select: { store: { select: { id: true, name: true } } }
         }
       }
     });

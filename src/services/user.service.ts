@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { authRepository } from '../repositories/auth.repository';
 import storeRepository from '../repositories/store.repository';
@@ -53,27 +52,38 @@ export const userService = {
       throw new AppError('Email is already registered', 400);
     }
 
+    let storeName: string | undefined;
     if (data.role === user_role.store_admin && data.store_id) {
       const store = await storeRepository.findByIdWithDetails(data.store_id);
       if (!store) throw new AppError('Store not found', 404);
+      storeName = store.name;
     }
-
-    const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const userData: Prisma.UserCreateInput = {
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
-      password: hashedPassword,
       phone: data.phone,
       role: data.role || user_role.store_admin,
-      is_verified: true
+      is_verified: false,
     };
 
     const user = await userRepository.create(userData);
 
     if (data.role === user_role.store_admin && data.store_id) {
       await storeRepository.createAdmin(data.store_id, user.id);
+    }
+
+    // Issue a 24-hour verification token and send invitation email
+    const { raw, hashed } = authHelpers.generateToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await authRepository.invalidateUserTokens(user.id, 'email_verification');
+    await authRepository.createVerificationToken(user.id, hashed, 'email_verification', expiresAt);
+
+    if (storeName) {
+      authHelpers.sendStoreAdminInviteEmail(data.email, data.first_name ?? '', storeName, raw);
+    } else {
+      authHelpers.sendVerificationEmail(data.email, data.first_name ?? '', raw);
     }
 
     return user;
