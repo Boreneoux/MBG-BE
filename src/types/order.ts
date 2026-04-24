@@ -21,6 +21,7 @@ export interface CreateOrderInput {
   voucher_code?: string;
   shipping_method?: string;
   shipping_cost?: number;
+  cart_item_ids?: number[];
 }
 
 // ─── Internal Types ───────────────────────────────────────────────────────────

@@ -34,7 +34,8 @@ export const orderService = {
       payment_method,
       voucher_code,
       shipping_method,
-      shipping_cost
+      shipping_cost,
+      cart_item_ids
     } = input;
 
     if (payment_method !== 'payment_gateway') {
@@ -55,10 +56,18 @@ export const orderService = {
       throw new AppError('Please verify your email before placing an order', 403);
     }
 
-    // 2. Load cart
+    // 2. Load cart and filter items if cart_item_ids provided
     const cart = await orderRepository.findCartWithItems(userId);
     if (!cart || cart.cart_items.length === 0) {
       throw new AppError('Your cart is empty', 400);
+    }
+
+    let itemsToProcess = cart.cart_items;
+    if (cart_item_ids && cart_item_ids.length > 0) {
+      itemsToProcess = cart.cart_items.filter(item => cart_item_ids.includes(item.id));
+      if (itemsToProcess.length === 0) {
+        throw new AppError('No valid cart items selected', 400);
+      }
     }
 
     // 3. Validate delivery address (must belong to user)
@@ -68,10 +77,10 @@ export const orderService = {
     }
 
     // 4. Pre-order global stock check — single groupBy query, no N+1
-    const cartProductIds = cart.cart_items.map((i) => i.product_id);
+    const cartProductIds = itemsToProcess.map((i) => i.product_id);
     const globalStockMap = await orderRepository.findGlobalStockByProducts(cartProductIds);
 
-    for (const item of cart.cart_items) {
+    for (const item of itemsToProcess) {
       const total = globalStockMap.get(item.product_id) ?? 0;
       if (total < item.quantity) {
         throw new AppError(
@@ -101,7 +110,7 @@ export const orderService = {
       .sort((a, b) => a.distance_km - b.distance_km);
 
     // Bulk-fetch all inventories for every store × product in one query (no N+1)
-    const productIds = cart.cart_items.map((i) => i.product_id);
+    const productIds = itemsToProcess.map((i) => i.product_id);
     const storeIds = storesWithDistance.map((s) => s.id);
     const inventoryMap = await orderRepository.findInventoriesBulk(storeIds, productIds);
 
@@ -109,7 +118,7 @@ export const orderService = {
     let selectedStore: (typeof storesWithDistance)[0] | null = null;
 
     for (const store of storesWithDistance) {
-      const canFulfil = cart.cart_items.every((item) => {
+      const canFulfil = itemsToProcess.every((item) => {
         const inv = inventoryMap.get(`${store.id}:${item.product_id}`);
         return inv && inv.stock >= item.quantity;
       });
@@ -148,7 +157,7 @@ export const orderService = {
     let subtotal = new Prisma.Decimal(0);
     let totalDiscount = new Prisma.Decimal(0);
 
-    for (const item of cart.cart_items) {
+    for (const item of itemsToProcess) {
       const unitPrice = item.product.price;
       let discountAmount = new Prisma.Decimal(0);
       let discountId: number | undefined;
@@ -321,9 +330,20 @@ export const orderService = {
             await orderRepository.markVoucherUsed(userVoucherId, created.id, tx);
           }
 
-          // Clear cart
-          await orderRepository.deleteCartItems(cartId, tx);
-          await orderRepository.deleteCart(cartId, tx);
+          // Clear processed items from cart
+          const itemIdsProcessed = itemsToProcess.map(i => i.id);
+          await tx.cartItem.deleteMany({
+            where: { id: { in: itemIdsProcessed } }
+          });
+
+          // If cart is now empty, delete the cart itself
+          const remainingItemsCount = await tx.cartItem.count({
+            where: { cart_id: cartId }
+          });
+          
+          if (remainingItemsCount === 0) {
+            await orderRepository.deleteCart(cartId, tx);
+          }
 
           return created;
         });
