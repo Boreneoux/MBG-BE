@@ -11,6 +11,7 @@ router.use(authenticate);
 router.use(authorize(user_role.super_admin, user_role.store_admin));
 
 router.get('/', validate(getAdminOrdersQuerySchema), adminOrderController.getOrders);
+router.get('/:id', validate(orderIdParamsSchema), adminOrderController.getOrder);
 router.post('/:id/confirm-payment-proof', validate(orderIdParamsSchema), adminOrderController.confirmPaymentProof);
 router.post('/:id/reject-payment-proof', validate(orderIdParamsSchema), adminOrderController.rejectPaymentProof);
 router.post('/:id/ship', validate(orderIdParamsSchema), adminOrderController.shipOrder);

@@ -21,7 +21,17 @@ export const adminOrderController = {
     res.json({
       success: true,
       message: 'Orders retrieved successfully',
-      data: result
+      ...result
+    });
+  }),
+
+  getOrder: catchAsync(async (req: Request, res: Response) => {
+    const orderId = Number(req.params.id);
+    const order = await adminOrderService.getAdminOrderDetail(orderId, req.user!);
+
+    res.json({
+      success: true,
+      data: order
     });
   }),
 

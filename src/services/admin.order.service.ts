@@ -48,7 +48,7 @@ export const adminOrderService = {
     ]);
 
     return {
-      orders,
+      data: orders,
       meta: {
         total,
         page,
@@ -56,6 +56,20 @@ export const adminOrderService = {
         totalPages: Math.ceil(total / limit)
       }
     };
+  },
+
+  async getAdminOrderDetail(orderId: number, user: JwtPayload) {
+    const order = await orderRepository.findOrderById(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+
+    if (user.role === 'store_admin') {
+      const storeAdmin = await orderRepository.findStoreAdminByUserId(user.id);
+      if (!storeAdmin || storeAdmin.store_id !== order.store_id) {
+        throw new AppError('Forbidden: cannot view this order', 403);
+      }
+    }
+
+    return order;
   },
 
   async rejectPaymentProof(orderId: number, user: JwtPayload) {
