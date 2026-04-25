@@ -1,7 +1,7 @@
 import { discount_type } from '../../generated/prisma/client';
 
 export interface CreateDiscountInput {
-    store_id: number;
+    store_id?: number | 'all' | null;
     product_id?: number | null;
     type: discount_type;
     value?: number | null;

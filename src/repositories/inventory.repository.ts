@@ -107,7 +107,11 @@ const inventoryRepository = {
         where: Prisma.StoreInventoryWhereInput;
     }) {
         return prisma.storeInventory.findMany({
-            where: { ...params.where, deleted_at: null },
+            where: { 
+                ...params.where, 
+                deleted_at: null,
+                product: { deleted_at: null }
+            },
             include: {
                 store: { select: { id: true, name: true } },
                 product: {

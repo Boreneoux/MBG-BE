@@ -9,7 +9,7 @@ const discountTypeEnum = z.enum([
 
 export const createDiscountSchema = z.object({
     body: z.object({
-        store_id: z.number().int().positive(),
+        store_id: z.union([z.number().int().positive(), z.literal('all')]).optional().nullable(),
         product_id: z.number().int().positive().optional().nullable(),
         type: discountTypeEnum,
         value: z.number().min(0).optional().nullable(),

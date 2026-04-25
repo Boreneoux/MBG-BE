@@ -32,7 +32,8 @@ export const discountController = {
     }),
 
     createDiscount: catchAsync(async (req: Request, res: Response) => {
-        const discount = await discountService.createDiscount(req.body);
+        // We will pass req.user down to the service for role-based store_id logic
+        const discount = await discountService.createDiscount(req.body, req.user);
 
         res.status(201).json({
             success: true,
