@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { voucherController } from '../controllers/voucher.controller';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
-import { createVoucherSchema, getVouchersQuerySchema, applyVoucherSchema } from '../validators/voucher.validator';
+import { createVoucherSchema, updateVoucherSchema, getVouchersQuerySchema, applyVoucherSchema } from '../validators/voucher.validator';
 import { user_role } from '../../generated/prisma/client';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.get('/:id', authenticate, authorize(user_role.super_admin, user_role.stor
 
 // Super admin only routes
 router.post('/', authenticate, authorize(user_role.super_admin), validate(createVoucherSchema), voucherController.createVoucher);
-router.put('/:id', authenticate, authorize(user_role.super_admin), validate(createVoucherSchema), voucherController.updateVoucher);
+router.put('/:id', authenticate, authorize(user_role.super_admin), validate(updateVoucherSchema), voucherController.updateVoucher);
 router.delete('/:id', authenticate, authorize(user_role.super_admin), voucherController.deleteVoucher);
 
 // User-facing `/apply`

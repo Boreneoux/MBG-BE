@@ -1,6 +1,8 @@
 import { discountRepository } from '../repositories/discount.repository';
+import storeRepository from '../repositories/store.repository';
 import { AppError } from '../utils/AppError';
 import { CreateDiscountInput, UpdateDiscountInput, GetDiscountsQuery } from '../types/discount';
+import { prisma } from '../config/prisma-client.config';
 
 export const discountService = {
     async getDiscounts(query: GetDiscountsQuery) {
@@ -26,7 +28,61 @@ export const discountService = {
         return discount;
     },
 
-    async createDiscount(data: CreateDiscountInput) {
+    async createDiscount(data: CreateDiscountInput, user?: any) {
+        // Enforce store_id constraints based on role
+        if (user?.role === 'store_admin') {
+            // JWT doesn't carry store_id — look it up from DB
+            const storeAdmin = await prisma.storeAdmin.findFirst({
+                where: { user_id: user.id, deleted_at: null },
+                select: { store_id: true }
+            });
+            if (!storeAdmin) throw new AppError('Store admin must be assigned to a store', 403);
+            data.store_id = storeAdmin.store_id;
+        }
+
+        // Global discount creation (Super Admin only)
+        if (data.store_id === 'all' || !data.store_id) {
+            if (user?.role !== 'super_admin') {
+                throw new AppError('Only super admins can create global discounts', 403);
+            }
+            
+            // Get all stores
+            const stores = await storeRepository.findAllActive();
+            
+            if (stores.length === 0) {
+                throw new AppError('No stores found to apply discount', 400);
+            }
+
+            // Create duplicate discounts for every store
+            const discountsData = stores.map((store: any) => ({
+                store_id: store.id,
+                product_id: data.product_id || null,
+                type: data.type,
+                value: data.value,
+                min_purchase_amount: data.min_purchase_amount,
+                max_discount_value: data.max_discount_value,
+                started_at: data.started_at ? new Date(data.started_at) : null,
+                expired_at: data.expired_at ? new Date(data.expired_at) : null,
+            }));
+
+            // Since repository pattern usually creates one, let's bypass to prisma if possible, or loop
+            // In Prisma, we could use prisma.discount.createMany, but if we don't have direct access here, we can loop
+            const createdDiscounts = [];
+            for (const d of discountsData) {
+                createdDiscounts.push(await discountRepository.create({
+                    type: d.type,
+                    value: d.value,
+                    min_purchase_amount: d.min_purchase_amount,
+                    max_discount_value: d.max_discount_value,
+                    started_at: d.started_at,
+                    expired_at: d.expired_at,
+                    store: { connect: { id: d.store_id } },
+                    ...(d.product_id && { product: { connect: { id: d.product_id } } })
+                }));
+            }
+            return createdDiscounts[0]; // Just return one for the controller response
+        }
+
         return await discountRepository.create({
             type: data.type,
             value: data.value,
@@ -34,7 +90,7 @@ export const discountService = {
             max_discount_value: data.max_discount_value,
             started_at: data.started_at ? new Date(data.started_at) : null,
             expired_at: data.expired_at ? new Date(data.expired_at) : null,
-            store: { connect: { id: data.store_id } },
+            store: { connect: { id: data.store_id as number } },
             ...(data.product_id && { product: { connect: { id: data.product_id } } })
         });
     },

@@ -34,6 +34,19 @@ export const createVoucherSchema = z.object({
     })
 });
 
+export const updateVoucherSchema = z.object({
+    body: z.object({
+        code: z.string().min(3).max(50).optional(),
+        discount_type: discountTypeEnum.optional(),
+        discount_value: z.number().min(0).optional(),
+        max_discount_amount: z.number().min(0).optional().nullable(),
+        min_purchase_amount: z.number().min(0).optional().nullable(),
+        usage_type: voucherTypeEnum.optional(),
+        product_id: z.number().int().positive().optional().nullable(),
+        expired_at: z.string().datetime().optional()
+    })
+});
+
 export const getVouchersQuerySchema = z.object({
     query: z.object({
         page: z.string().regex(/^\d+$/).optional(),
