@@ -251,7 +251,7 @@ export const orderRepository = {
             district: { select: { name: true } }
           }
         },
-        store: { select: { id: true, name: true } }
+        store: { select: { id: true, name: true, city: { select: { name: true } } } }
       }
     });
   },
@@ -321,7 +321,7 @@ export const orderRepository = {
           }
         },
         address: true,
-        store: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true, city: { select: { name: true } } } },
         user: { select: { id: true, first_name: true, last_name: true, email: true } }
       }
     });
