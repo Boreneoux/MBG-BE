@@ -27,9 +27,33 @@ export const paymentService = {
     // Get user info
     const user = await orderRepository.findUserById(userId);
 
-    // Create Midtrans Snap transaction
+    // Create Midtrans Snap transaction with a unique order_id to avoid "transaction already exists" errors on retry.
+    // We append a timestamp to the order_number.
+    const midtransOrderId = `${order.order_number}-${Date.now()}`;
+
+    // Add shipping cost and discounts as separate items so gross_amount matches the sum of items.
+    const midtransItems = [...items];
+
+    if (Number(order.shipping_cost) > 0) {
+      midtransItems.push({
+        id: 'SHIPPING',
+        name: `Shipping (${order.shipping_method || 'Standard'})`,
+        price: Number(order.shipping_cost),
+        quantity: 1,
+      });
+    }
+
+    if (Number(order.total_discount) > 0) {
+      midtransItems.push({
+        id: 'DISCOUNT',
+        name: 'Discounts & Vouchers',
+        price: -Number(order.total_discount),
+        quantity: 1,
+      });
+    }
+
     const midtransResponse = await createSnapTransaction({
-      order_id: order.order_number,
+      order_id: midtransOrderId,
       order_number: order.order_number,
       gross_amount: Number(order.total_price),
       customer: {
@@ -38,7 +62,7 @@ export const paymentService = {
         email: user?.email || '',
         phone: user?.phone || '',
       },
-      items,
+      items: midtransItems,
     });
 
     // Persist Midtrans details on the order
@@ -74,10 +98,15 @@ export const paymentService = {
       }
     }
 
-    // Find order by order_number (Midtrans sends order_number as order_id)
-    const order = await orderRepository.findOrderByOrderNumber(order_id);
+    // Find order by order_number. Midtrans sends the suffixed order_id (e.g. MBG-XXXX-1714...).
+    // We extract the original order_number by splitting at the last dash.
+    const orderNumber = order_id.includes('-') && order_id.split('-').length > 2
+      ? order_id.split('-').slice(0, 2).join('-') // MBG-XXXX
+      : order_id;
+
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) {
-      logger.warn('Order not found for Midtrans notification', { order_id });
+      logger.warn('Order not found for Midtrans notification', { order_id, parsed_order_number: orderNumber });
       return { success: false, message: 'Order not found' };
     }
 
