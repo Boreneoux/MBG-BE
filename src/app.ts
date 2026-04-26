@@ -21,6 +21,7 @@ import voucherRouter from './routes/voucher.router';
 import adminOrderRouter from './routes/admin.order.router';
 import regionRouter from './routes/region.router';
 import mutationRouter from './routes/mutation.router';
+import reportRouter from './routes/report.router';
 import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
@@ -58,6 +59,7 @@ app.use('/api/discounts', discountRouter);
 app.use('/api/vouchers', voucherRouter);
 app.use('/api/regions', regionRouter);
 app.use('/api/mutations', mutationRouter);
+app.use('/api/reports', reportRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
