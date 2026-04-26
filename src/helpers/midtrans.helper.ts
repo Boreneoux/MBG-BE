@@ -131,7 +131,9 @@ export async function createSnapTransaction(
   } catch (error: any) {
     logger.error('Failed to create Midtrans transaction', {
       error: error.message,
+      status: error.response?.status,
       data: error.response?.data,
+      payload, 
     });
     throw new Error(`Failed to create payment transaction: ${error.message}`);
   }
