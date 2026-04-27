@@ -1,4 +1,4 @@
-# MalesBeliGrocery — Backend API
+# MagerBeliGrocery — Backend API
 
 REST API for an online grocery platform built with Express, TypeScript, Prisma, and PostgreSQL.
 

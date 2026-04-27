@@ -62,6 +62,7 @@ export const userRepository = {
         created_at: true,
         profile_image: true,
         profile_image_public_id: true,
+        referral_code: true,
         store_admins: {
           where: { deleted_at: null },
           select: { store: { select: { id: true, name: true } } }
