@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "MalesBeliGrocery API",
-    "_postman_id": "malesbeligrocery-api-v1",
-    "description": "MalesBeliGrocery backend API",
+    "name": "MagerBeliGrocery API",
+    "_postman_id": "magerbeligrocery-api-v1",
+    "description": "MagerBeliGrocery backend API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

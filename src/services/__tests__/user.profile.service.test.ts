@@ -36,6 +36,7 @@ const mockProfile = {
   is_verified: true,
   profile_image: null,
   profile_image_public_id: null,
+  referral_code: null,
   created_at: new Date(),
   updated_at: new Date(),
   store_admins: []
