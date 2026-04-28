@@ -27,7 +27,7 @@ const mockBcrypt = jest.mocked(bcryptHelper);
 // Fixtures
 
 const mockProfile = {
-  id: 1,
+  id: '1',
   first_name: 'John',
   last_name: 'Doe',
   email: 'john@test.com',
@@ -43,7 +43,7 @@ const mockProfile = {
 };
 
 const mockUserWithPassword = {
-  id: 1,
+  id: '1',
   email: 'john@test.com',
   first_name: 'John',
   last_name: 'Doe',
@@ -58,7 +58,7 @@ describe('userService.getProfile', () => {
   it('throws 404 when user does not exist', async () => {
     mockRepo.findById.mockResolvedValue(null);
 
-    await expect(userService.getProfile(1)).rejects.toThrow(
+    await expect(userService.getProfile('1')).rejects.toThrow(
       new AppError('User not found', 404)
     );
   });
@@ -66,10 +66,10 @@ describe('userService.getProfile', () => {
   it('returns user profile data for existing user', async () => {
     mockRepo.findById.mockResolvedValue(mockProfile);
 
-    const result = await userService.getProfile(1);
+    const result = await userService.getProfile('1');
 
     expect(result).toEqual(mockProfile);
-    expect(mockRepo.findById).toHaveBeenCalledWith(1);
+    expect(mockRepo.findById).toHaveBeenCalledWith('1');
   });
 });
 
@@ -80,7 +80,7 @@ describe('userService.updateProfile — basic info update', () => {
     mockRepo.findById.mockResolvedValue(null);
 
     await expect(
-      userService.updateProfile(99, { first_name: 'Jane' })
+      userService.updateProfile('99', { first_name: 'Jane' })
     ).rejects.toThrow(new AppError('User not found', 404));
   });
 
@@ -91,14 +91,14 @@ describe('userService.updateProfile — basic info update', () => {
       first_name: 'Jane'
     } as never);
 
-    await userService.updateProfile(1, {
+    await userService.updateProfile('1', {
       first_name: 'Jane',
       last_name: 'Smith',
       phone: '08999999999'
     });
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      1,
+      '1',
       expect.objectContaining({
         first_name: 'Jane',
         last_name: 'Smith',
@@ -111,7 +111,7 @@ describe('userService.updateProfile — basic info update', () => {
     mockRepo.findById.mockResolvedValue(mockProfile);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { first_name: 'Jane' });
+    await userService.updateProfile('1', { first_name: 'Jane' });
 
     const updatePayload = mockRepo.update.mock.calls[0][1];
     expect(updatePayload).not.toHaveProperty('last_name');
@@ -126,7 +126,7 @@ describe('userService.updateProfile — password change', () => {
     mockRepo.findById.mockResolvedValue(mockProfile);
 
     await expect(
-      userService.updateProfile(1, { new_password: 'NewPass1!' })
+      userService.updateProfile('1', { new_password: 'NewPass1!' })
     ).rejects.toThrow(new AppError('Current password is required', 400));
   });
 
@@ -139,7 +139,7 @@ describe('userService.updateProfile — password change', () => {
     });
 
     await expect(
-      userService.updateProfile(1, {
+      userService.updateProfile('1', {
         current_password: 'OldPass1!',
         new_password: 'NewPass1!'
       })
@@ -160,7 +160,7 @@ describe('userService.updateProfile — password change', () => {
     mockBcrypt.hashMatch.mockResolvedValue(false);
 
     await expect(
-      userService.updateProfile(1, {
+      userService.updateProfile('1', {
         current_password: 'WrongPass1!',
         new_password: 'NewPass1!'
       })
@@ -177,14 +177,14 @@ describe('userService.updateProfile — password change', () => {
     mockBcrypt.hashing.mockResolvedValue('new_hashed_pw');
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, {
+    await userService.updateProfile('1', {
       current_password: 'OldPass1!',
       new_password: 'NewPass1!'
     });
 
     expect(mockBcrypt.hashing).toHaveBeenCalledWith('NewPass1!');
     expect(mockRepo.update).toHaveBeenCalledWith(
-      1,
+      '1',
       expect.objectContaining({ password: 'new_hashed_pw' })
     );
   });
@@ -196,12 +196,12 @@ describe('userService.updateProfile — email change', () => {
   it('throws 409 when new email is already registered by another user', async () => {
     mockRepo.findById.mockResolvedValue(mockProfile);
     mockRepo.findByEmail.mockResolvedValue({
-      id: 99,
+      id: '99',
       email: 'taken@test.com'
     } as never);
 
     await expect(
-      userService.updateProfile(1, { email: 'taken@test.com' })
+      userService.updateProfile('1', { email: 'taken@test.com' })
     ).rejects.toThrow(new AppError('Email is already in use', 409));
   });
 
@@ -212,10 +212,10 @@ describe('userService.updateProfile — email change', () => {
     mockAuthRepo.createVerificationToken.mockResolvedValue({} as never);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { email: 'new@test.com' });
+    await userService.updateProfile('1', { email: 'new@test.com' });
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      1,
+      '1',
       expect.objectContaining({
         email: 'new@test.com',
         is_verified: false
@@ -230,10 +230,10 @@ describe('userService.updateProfile — email change', () => {
     mockAuthRepo.createVerificationToken.mockResolvedValue({} as never);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { email: 'new@test.com' });
+    await userService.updateProfile('1', { email: 'new@test.com' });
 
     expect(mockAuthRepo.invalidateUserTokens).toHaveBeenCalledWith(
-      1,
+      '1',
       'email_verification'
     );
   });
@@ -245,10 +245,10 @@ describe('userService.updateProfile — email change', () => {
     mockAuthRepo.createVerificationToken.mockResolvedValue({} as never);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { email: 'new@test.com' });
+    await userService.updateProfile('1', { email: 'new@test.com' });
 
     expect(mockAuthRepo.createVerificationToken).toHaveBeenCalledWith(
-      1,
+      '1',
       'hashed_token',
       'email_verification',
       expect.any(Date)
@@ -262,7 +262,7 @@ describe('userService.updateProfile — email change', () => {
     mockAuthRepo.createVerificationToken.mockResolvedValue({} as never);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { email: 'new@test.com' });
+    await userService.updateProfile('1', { email: 'new@test.com' });
 
     expect(authHelpers.sendVerificationEmail).toHaveBeenCalledWith(
       'new@test.com',
@@ -275,7 +275,7 @@ describe('userService.updateProfile — email change', () => {
     mockRepo.findById.mockResolvedValue(mockProfile);
     mockRepo.update.mockResolvedValue(mockProfile as never);
 
-    await userService.updateProfile(1, { email: 'john@test.com' }); // same email
+    await userService.updateProfile('1', { email: 'john@test.com' }); // same email
 
     expect(mockRepo.findByEmail).not.toHaveBeenCalled();
     expect(mockAuthRepo.invalidateUserTokens).not.toHaveBeenCalled();
@@ -298,13 +298,13 @@ describe('userService.updateProfile — photo update', () => {
       profile_image: imageUrl
     } as never);
 
-    await userService.updateProfile(1, {
+    await userService.updateProfile('1', {
       profile_image: imageUrl,
       profile_image_public_id: publicId
     });
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      1,
+      '1',
       expect.objectContaining({
         profile_image: imageUrl,
         profile_image_public_id: publicId

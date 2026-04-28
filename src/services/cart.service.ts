@@ -7,7 +7,7 @@ import { AddToCartInput, UpdateCartItemInput, Tx } from '../types/cart';
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const cartService = {
-  async getCart(userId: number) {
+  async getCart(userId: string) {
     const cart = await cartRepository.findCartByUserId(userId);
 
     if (!cart) {
@@ -17,7 +17,7 @@ export const cartService = {
     return cart;
   },
 
-  async addItem(userId: number, input: AddToCartInput) {
+  async addItem(userId: string, input: AddToCartInput) {
     const { product_id, quantity, store_id } = input;
 
     // Verify user is verified
@@ -92,7 +92,7 @@ export const cartService = {
     return cartItem;
   },
 
-  async updateItem(userId: number, cartItemId: number, input: UpdateCartItemInput) {
+  async updateItem(userId: string, cartItemId: string, input: UpdateCartItemInput) {
     const { quantity } = input;
 
     const cartItem = await cartRepository.findCartItemById(cartItemId);
@@ -122,7 +122,7 @@ export const cartService = {
     return updated;
   },
 
-  async deleteItem(userId: number, cartItemId: number) {
+  async deleteItem(userId: string, cartItemId: string) {
     const cartItem = await cartRepository.findCartItemById(cartItemId);
     if (!cartItem) throw new AppError('Cart item not found', 404);
 

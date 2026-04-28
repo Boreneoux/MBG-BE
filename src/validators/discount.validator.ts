@@ -9,8 +9,8 @@ const discountTypeEnum = z.enum([
 
 export const createDiscountSchema = z.object({
     body: z.object({
-        store_id: z.union([z.number().int().positive(), z.literal('all')]).optional().nullable(),
-        product_id: z.number().int().positive().optional().nullable(),
+        store_id: z.union([z.string().uuid(), z.literal('all')]).optional().nullable(),
+        product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
         type: discountTypeEnum,
         value: z.number().min(0).optional().nullable(),
         min_purchase_amount: z.number().min(0).optional().nullable(),
@@ -31,7 +31,7 @@ export const createDiscountSchema = z.object({
 export const updateDiscountSchema = z.object({
     body: z.object({
         is_active: z.boolean().optional(),
-        product_id: z.number().int().positive().optional().nullable(),
+        product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
         type: discountTypeEnum.optional(),
         value: z.number().min(0).optional().nullable(),
         min_purchase_amount: z.number().min(0).optional().nullable(),
@@ -45,8 +45,8 @@ export const getDiscountsQuerySchema = z.object({
     query: z.object({
         page: z.string().regex(/^\d+$/).optional(),
         limit: z.string().regex(/^\d+$/).optional(),
-        store_id: z.string().regex(/^\d+$/).optional(),
-        product_id: z.string().regex(/^\d+$/).optional(),
+        store_id: z.string().uuid().optional(),
+        product_id: z.string().uuid().optional(),
         is_active: z.enum(['true', 'false']).optional()
     })
 });

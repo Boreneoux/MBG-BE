@@ -1,8 +1,8 @@
 import { discount_type } from '../../generated/prisma/client';
 
 export interface CreateDiscountInput {
-    store_id?: number | 'all' | null;
-    product_id?: number | null;
+    store_id?: string | 'all' | null;
+    product_id?: string | null;
     type: discount_type;
     value?: number | null;
     min_purchase_amount?: number | null;
@@ -18,7 +18,7 @@ export interface UpdateDiscountInput extends Partial<CreateDiscountInput> {
 export interface GetDiscountsQuery {
     page?: number;
     limit?: number;
-    store_id?: number;
-    product_id?: number;
+    store_id?: string;
+    product_id?: string;
     is_active?: boolean;
 }

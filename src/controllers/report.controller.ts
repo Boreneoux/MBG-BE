@@ -12,7 +12,7 @@ import {
 export const reportController = {
   getSalesMonthly: catchAsync(async (req: Request, res: Response) => {
     const query: SalesMonthlyReportQuery = {
-      store_id: req.query.store_id ? Number(req.query.store_id) : undefined,
+      store_id: req.query.store_id as string | undefined,
       from: req.query.from as string | undefined,
       to: req.query.to as string | undefined,
       page: req.query.page ? Number(req.query.page) : undefined,
@@ -32,8 +32,8 @@ export const reportController = {
 
   getSalesByCategory: catchAsync(async (req: Request, res: Response) => {
     const query: SalesCategoryReportQuery = {
-      store_id: req.query.store_id ? Number(req.query.store_id) : undefined,
-      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
+      store_id: req.query.store_id as string | undefined,
+      category_id: req.query.category_id as string | undefined,
       search: req.query.search as string | undefined,
       from: req.query.from as string | undefined,
       to: req.query.to as string | undefined,
@@ -54,9 +54,9 @@ export const reportController = {
 
   getSalesByProduct: catchAsync(async (req: Request, res: Response) => {
     const query: SalesProductReportQuery = {
-      store_id: req.query.store_id ? Number(req.query.store_id) : undefined,
-      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
-      product_id: req.query.product_id ? Number(req.query.product_id) : undefined,
+      store_id: req.query.store_id as string | undefined,
+      category_id: req.query.category_id as string | undefined,
+      product_id: req.query.product_id as string | undefined,
       search: req.query.search as string | undefined,
       from: req.query.from as string | undefined,
       to: req.query.to as string | undefined,
@@ -77,8 +77,8 @@ export const reportController = {
 
   getStockMonthly: catchAsync(async (req: Request, res: Response) => {
     const query: StockMonthlyReportQuery = {
-      store_id: req.query.store_id ? Number(req.query.store_id) : undefined,
-      product_id: req.query.product_id ? Number(req.query.product_id) : undefined,
+      store_id: req.query.store_id as string | undefined,
+      product_id: req.query.product_id as string | undefined,
       type: req.query.type as StockMonthlyReportQuery['type'],
       from: req.query.from as string | undefined,
       to: req.query.to as string | undefined,
@@ -99,9 +99,9 @@ export const reportController = {
 
   getStockHistory: catchAsync(async (req: Request, res: Response) => {
     const query: StockHistoryReportQuery = {
-      store_id: req.query.store_id ? Number(req.query.store_id) : undefined,
-      product_id: req.query.product_id ? Number(req.query.product_id) : undefined,
-      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
+      store_id: req.query.store_id as string | undefined,
+      product_id: req.query.product_id as string | undefined,
+      category_id: req.query.category_id as string | undefined,
       type: req.query.type as StockHistoryReportQuery['type'],
       search: req.query.search as string | undefined,
       from: req.query.from as string | undefined,

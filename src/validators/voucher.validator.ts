@@ -21,7 +21,7 @@ export const createVoucherSchema = z.object({
         max_discount_amount: z.number().min(0).optional().nullable(),
         min_purchase_amount: z.number().min(0).optional().nullable(),
         usage_type: voucherTypeEnum,
-        product_id: z.number().int().positive().optional().nullable(),
+        product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
         expired_at: z.string().datetime()
     }).refine((data) => {
         if (data.usage_type === 'product_specific') {
@@ -42,7 +42,7 @@ export const updateVoucherSchema = z.object({
         max_discount_amount: z.number().min(0).optional().nullable(),
         min_purchase_amount: z.number().min(0).optional().nullable(),
         usage_type: voucherTypeEnum.optional(),
-        product_id: z.number().int().positive().optional().nullable(),
+        product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
         expired_at: z.string().datetime().optional()
     })
 });
@@ -60,7 +60,7 @@ export const applyVoucherSchema = z.object({
     body: z.object({
         code: z.string().min(1, 'Voucher code is required'),
         cart_total: z.number().min(0),
-        store_id: z.number().int().positive(),
-        product_ids: z.array(z.number().int().positive()).optional()
+        store_id: z.string().uuid('store_id must be a valid UUID'),
+        product_ids: z.array(z.string().uuid()).optional()
     })
 });

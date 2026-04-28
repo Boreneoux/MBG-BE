@@ -3,10 +3,7 @@ import { order_status } from '../../generated/prisma/client';
 
 export const createOrderSchema = z.object({
   body: z.object({
-    address_id: z
-      .number({ error: 'address_id is required' })
-      .int()
-      .positive('address_id must be a positive integer'),
+    address_id: z.string().uuid('address_id must be a valid UUID'),
 
     payment_method: z.literal('payment_gateway', {
       error: 'payment_method must be payment_gateway'
@@ -37,7 +34,7 @@ export const getAdminOrdersQuerySchema = z.object({
     page: z.coerce.number().int().positive().optional(),
     limit: z.coerce.number().int().positive().max(100).optional(),
     sort: z.enum(['asc', 'desc']).optional(),
-    warehouse_id: z.coerce.number().int().positive().optional(),
+    warehouse_id: z.string().uuid().optional(),
     order_number: z.string().trim().min(1).optional(),
     status: z.nativeEnum(order_status).optional(),
     from: z.string().datetime().optional(),
@@ -47,9 +44,6 @@ export const getAdminOrdersQuerySchema = z.object({
 
 export const orderIdParamsSchema = z.object({
   params: z.object({
-    id: z.coerce
-      .number({ error: 'Order ID is required' })
-      .int()
-      .positive('Order ID must be a positive integer')
+    orderNumber: z.string().min(1, 'Order number is required')
   })
 });

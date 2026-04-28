@@ -7,7 +7,7 @@ export const productController = {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;
-        const categoryId = req.query.category ? parseInt(req.query.category as string) : undefined;
+        const categoryId = req.query.category as string | undefined;
         const sort = req.query.sort as string | undefined;
 
         const result = await productService.getProducts({ page, limit, search, categoryId, sort });
@@ -20,9 +20,8 @@ export const productController = {
         });
     }),
 
-    getProductById: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const product = await productService.getProductById(id);
+    getProductBySlug: catchAsync(async (req: Request, res: Response) => {
+        const product = await productService.getProductBySlug(req.params.slug as string);
 
         res.status(200).json({
             success: true,
@@ -43,9 +42,8 @@ export const productController = {
     }),
 
     updateProduct: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
         const files = req.files as Express.Multer.File[];
-        const product = await productService.updateProduct(id, req.body, files);
+        const product = await productService.updateProduct(req.params.slug as string, req.body, files);
 
         res.status(200).json({
             success: true,
@@ -55,8 +53,7 @@ export const productController = {
     }),
 
     deleteProduct: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        await productService.deleteProduct(id);
+        await productService.deleteProduct(req.params.slug as string);
 
         res.status(200).json({
             success: true,

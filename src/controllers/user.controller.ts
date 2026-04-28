@@ -26,8 +26,7 @@ export const userController = {
   }),
 
   getUserById: catchAsync(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
-    const user = await userService.getUserById(id);
+    const user = await userService.getUserById(req.params.id as string);
 
     res.status(200).json({
       success: true,
@@ -47,8 +46,7 @@ export const userController = {
   }),
 
   updateUser: catchAsync(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
-    const user = await userService.updateUser(id, req.body);
+    const user = await userService.updateUser(req.params.id as string, req.body);
 
     res.status(200).json({
       success: true,
@@ -58,9 +56,8 @@ export const userController = {
   }),
 
   changeRole: catchAsync(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
     const { role } = req.body;
-    const user = await userService.changeRole(id, role);
+    const user = await userService.changeRole(req.params.id as string, role);
 
     res.status(200).json({
       success: true,
@@ -70,8 +67,7 @@ export const userController = {
   }),
 
   deleteUser: catchAsync(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
-    await userService.deleteUser(id);
+    await userService.deleteUser(req.params.id as string);
 
     res.status(200).json({
       success: true,

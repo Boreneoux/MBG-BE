@@ -9,8 +9,8 @@ export const getProvinces = catchAsync(async (_req: Request, res: Response) => {
 });
 
 export const getCities = catchAsync(async (req: Request, res: Response) => {
-  const province_id = Number(req.query.province_id);
-  if (!province_id || isNaN(province_id)) {
+  const province_id = req.query.province_id as string | undefined;
+  if (!province_id) {
     throw new AppError('province_id query param is required', 400);
   }
   const data = await regionService.getCities(province_id);
@@ -18,8 +18,8 @@ export const getCities = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getDistricts = catchAsync(async (req: Request, res: Response) => {
-  const city_id = Number(req.query.city_id);
-  if (!city_id || isNaN(city_id)) {
+  const city_id = req.query.city_id as string | undefined;
+  if (!city_id) {
     throw new AppError('city_id query param is required', 400);
   }
   const data = await regionService.getDistricts(city_id);

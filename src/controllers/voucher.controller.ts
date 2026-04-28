@@ -19,8 +19,7 @@ export const voucherController = {
     }),
 
     getVoucherById: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const voucher = await voucherService.getVoucherById(id);
+        const voucher = await voucherService.getVoucherById(req.params.id as string);
 
         res.status(200).json({
             success: true,
@@ -40,8 +39,7 @@ export const voucherController = {
     }),
 
     updateVoucher: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const voucher = await voucherService.updateVoucher(id, req.body);
+        const voucher = await voucherService.updateVoucher(req.params.id as string, req.body);
 
         res.status(200).json({
             success: true,
@@ -51,8 +49,7 @@ export const voucherController = {
     }),
 
     deleteVoucher: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        await voucherService.deleteVoucher(id);
+        await voucherService.deleteVoucher(req.params.id as string);
 
         res.status(200).json({
             success: true,

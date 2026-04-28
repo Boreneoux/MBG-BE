@@ -11,7 +11,7 @@ beforeEach(() => jest.clearAllMocks());
 describe('voucherService', () => {
     describe('applyVoucher', () => {
         const mockVoucher = {
-            id: 1,
+            id: '1',
             code: 'TEST10',
             discount_type: discount_type.percentage,
             discount_value: 10,
@@ -24,29 +24,29 @@ describe('voucherService', () => {
         const applyInput = {
             code: 'TEST10',
             cart_total: 100000,
-            store_id: 1
+            store_id: '1'
         };
 
         it('throws 400 if voucher not found', async () => {
             mockRepo.findByCode.mockResolvedValue(null);
-            await expect(voucherService.applyVoucher(1, applyInput)).rejects.toThrow(new AppError('Invalid voucher code', 400));
+            await expect(voucherService.applyVoucher('1', applyInput)).rejects.toThrow(new AppError('Invalid voucher code', 400));
         });
 
         it('throws 400 if voucher is expired', async () => {
             mockRepo.findByCode.mockResolvedValue({ ...mockVoucher, expired_at: new Date(Date.now() - 86400000) }); // Yesterday
-            await expect(voucherService.applyVoucher(1, applyInput)).rejects.toThrow(new AppError('Voucher has expired', 400));
+            await expect(voucherService.applyVoucher('1', applyInput)).rejects.toThrow(new AppError('Voucher has expired', 400));
         });
 
         it('throws 400 if already used', async () => {
             mockRepo.findByCode.mockResolvedValue(mockVoucher);
-            mockRepo.checkUserUsage.mockResolvedValue({ id: 1 } as any);
-            await expect(voucherService.applyVoucher(1, applyInput)).rejects.toThrow(new AppError('You have already used this voucher', 400));
+            mockRepo.checkUserUsage.mockResolvedValue({ id: '1' } as any);
+            await expect(voucherService.applyVoucher('1', applyInput)).rejects.toThrow(new AppError('You have already used this voucher', 400));
         });
 
         it('throws 400 if min purchase not met', async () => {
             mockRepo.findByCode.mockResolvedValue(mockVoucher);
             mockRepo.checkUserUsage.mockResolvedValue(null);
-            await expect(voucherService.applyVoucher(1, { ...applyInput, cart_total: 40000 })).rejects.toThrow(new AppError('Minimum purchase amount not met', 400));
+            await expect(voucherService.applyVoucher('1', { ...applyInput, cart_total: 40000 })).rejects.toThrow(new AppError('Minimum purchase amount not met', 400));
         });
 
         it('calculates correct percentage discount bounded by max', async () => {
@@ -54,7 +54,7 @@ describe('voucherService', () => {
             mockRepo.checkUserUsage.mockResolvedValue(null);
 
             // 10% of 200,000 = 20,000, but max is 15,000
-            const result = await voucherService.applyVoucher(1, { ...applyInput, cart_total: 200000 });
+            const result = await voucherService.applyVoucher('1', { ...applyInput, cart_total: 200000 });
             expect(result.calculatedDiscount).toBe(15000);
         });
 
@@ -67,7 +67,7 @@ describe('voucherService', () => {
             });
             mockRepo.checkUserUsage.mockResolvedValue(null);
 
-            const result = await voucherService.applyVoucher(1, { ...applyInput, cart_total: 30000 });
+            const result = await voucherService.applyVoucher('1', { ...applyInput, cart_total: 30000 });
             expect(result.calculatedDiscount).toBe(30000); // Exceeds cart, so discounts exactly 30000
         });
 
@@ -75,11 +75,11 @@ describe('voucherService', () => {
             mockRepo.findByCode.mockResolvedValue({
                 ...mockVoucher,
                 usage_type: voucher_type.product_specific,
-                product_id: 99
+                product_id: '99'
             });
             mockRepo.checkUserUsage.mockResolvedValue(null);
 
-            await expect(voucherService.applyVoucher(1, { ...applyInput, product_ids: [1, 2] })).rejects.toThrow(new AppError('This voucher is not applicable for items in your cart', 400));
+            await expect(voucherService.applyVoucher('1', { ...applyInput, product_ids: ['1', '2'] })).rejects.toThrow(new AppError('This voucher is not applicable for items in your cart', 400));
         });
     });
 });

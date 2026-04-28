@@ -2,28 +2,19 @@ import { z } from 'zod';
 
 export const addToCartSchema = z.object({
   body: z.object({
-    product_id: z
-      .number({ error: 'Product ID is required' })
-      .int()
-      .positive('Product ID must be a positive integer'),
+    product_id: z.string().uuid('Product ID must be a valid UUID'),
     quantity: z
       .number()
       .int()
       .positive('Quantity must be at least 1')
       .default(1),
-    store_id: z
-      .number({ error: 'Store ID is required' })
-      .int()
-      .positive('Store ID must be a positive integer')
+    store_id: z.string().uuid('Store ID must be a valid UUID')
   })
 });
 
 export const updateCartItemSchema = z.object({
   params: z.object({
-    id: z.coerce
-      .number({ error: 'Cart item ID is required' })
-      .int()
-      .positive('Cart item ID must be a positive integer')
+    id: z.string().uuid('Cart item ID must be a valid UUID')
   }),
   body: z.object({
     quantity: z
@@ -35,9 +26,6 @@ export const updateCartItemSchema = z.object({
 
 export const deleteCartItemSchema = z.object({
   params: z.object({
-    id: z.coerce
-      .number({ error: 'Cart item ID is required' })
-      .int()
-      .positive('Cart item ID must be a positive integer')
+    id: z.string().uuid('Cart item ID must be a valid UUID')
   })
 });

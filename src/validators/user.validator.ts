@@ -8,7 +8,7 @@ export const createUserSchema = z.object({
         email: z.string().email('Invalid email address').max(255),
         phone: z.string().max(20).optional(),
         role: z.enum([user_role.store_admin, user_role.user]).default(user_role.store_admin),
-        store_id: z.number().int().positive().optional(),
+        store_id: z.string().uuid().optional(),
     })
 });
 

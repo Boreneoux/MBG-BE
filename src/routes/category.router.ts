@@ -11,7 +11,7 @@ const uploadImage = multerUpload('categories', 'CAT', ['jpg', 'jpeg', 'png', 'gi
 
 // Public read endpoints
 router.get('/', validate(getCategoriesQuerySchema), categoryController.getCategories);
-router.get('/:id', categoryController.getCategoryById);
+router.get('/:slug', categoryController.getCategoryBySlug);
 
 // Protected mutation endpoints
 router.use(authenticate);
@@ -26,7 +26,7 @@ router.post(
 );
 
 router.put(
-    '/:id',
+    '/:slug',
     authorize(user_role.super_admin),
     uploadImage,
     validate(updateCategorySchema),
@@ -34,7 +34,7 @@ router.put(
 );
 
 router.delete(
-    '/:id',
+    '/:slug',
     authorize(user_role.super_admin),
     categoryController.deleteCategory
 );

@@ -26,8 +26,8 @@ export const discountRepository = {
         ]);
     },
 
-    findById(id: number) {
-        return prisma.discount.findUnique({
+    findById(id: string) {
+        return prisma.discount.findFirst({
             where: { id, deleted_at: null },
             include: { product: true, store: true }
         });
@@ -37,7 +37,7 @@ export const discountRepository = {
         return prisma.discount.create({ data, include: { product: true, store: true } });
     },
 
-    update(id: number, data: Prisma.DiscountUpdateInput) {
+    update(id: string, data: Prisma.DiscountUpdateInput) {
         return prisma.discount.update({
             where: { id },
             data,
@@ -45,7 +45,7 @@ export const discountRepository = {
         });
     },
 
-    softDelete(id: number) {
+    softDelete(id: string) {
         return prisma.discount.update({
             where: { id },
             data: { deleted_at: new Date() }

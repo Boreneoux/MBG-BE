@@ -33,12 +33,13 @@ const FAR_LAT = -7.2575;
 const FAR_LNG = 112.7521;
 
 const makeStore = (overrides: Record<string, any> = {}) => ({
-  id: 1,
+  id: '1',
   name: 'Store Pusat',
+  slug: 'store-pusat',
   address: 'Jl. Monas No. 1',
-  district_id: 1,
-  city_id: 1,
-  province_id: 1,
+  district_id: '1',
+  city_id: '1',
+  province_id: '1',
   postal_code: '10110',
   latitude: toDecimal(STORE_LAT),
   longitude: toDecimal(STORE_LNG),
@@ -47,8 +48,8 @@ const makeStore = (overrides: Record<string, any> = {}) => ({
   updated_at: new Date(),
   deleted_at: null,
   city: {
-    id: 1,
-    province_id: 1,
+    id: '1',
+    province_id: '1',
     rajaongkir_city_id: 151,
     type: 'Kota',
     name: 'Jakarta Pusat',
@@ -61,15 +62,15 @@ const makeStore = (overrides: Record<string, any> = {}) => ({
 });
 
 const makeAddress = (overrides: Record<string, any> = {}) => ({
-  id: 1,
-  user_id: 10,
+  id: '1',
+  user_id: '10',
   label: 'Rumah',
   recipient_name: 'John Doe',
   phone: '08123456789',
   address: 'Jl. Dekat No. 5',
-  district_id: 2,
-  city_id: 2,
-  province_id: 1,
+  district_id: '2',
+  city_id: '2',
+  province_id: '1',
   postal_code: '12345',
   latitude: toDecimal(NEAR_LAT),
   longitude: toDecimal(NEAR_LNG),
@@ -81,8 +82,8 @@ const makeAddress = (overrides: Record<string, any> = {}) => ({
   updated_at: new Date(),
   deleted_at: null,
   city: {
-    id: 2,
-    province_id: 1,
+    id: '2',
+    province_id: '1',
     rajaongkir_city_id: 154,
     type: 'Kota',
     name: 'Jakarta Selatan',
@@ -101,7 +102,7 @@ const CACHED_RESULTS = [
 ];
 
 const makeCache = (overrides: Record<string, any> = {}) => ({
-  id: 1,
+  id: '1',
   origin_city_id: 151,
   destination_city_id: 154,
   weight: 1000,
@@ -118,9 +119,9 @@ const komerceSuccessBody = {
 };
 
 const defaultInput = {
-  store_id: 1,
-  address_id: 1,
-  user_id: 10,
+  store_id: '1',
+  address_id: '1',
+  user_id: '10',
   weight: 1000,
   courier: 'jne'
 };
@@ -165,7 +166,7 @@ describe('shippingService.calculate', () => {
 
   it('throws 403 when the address does not belong to the requesting user', async () => {
     mockStoreRepo.findById.mockResolvedValue(makeStore());
-    mockShippingRepo.findUserAddress.mockResolvedValue(makeAddress({ user_id: 99 }));
+    mockShippingRepo.findUserAddress.mockResolvedValue(makeAddress({ user_id: '99' }));
 
     await expect(shippingService.calculate(defaultInput)).rejects.toThrow(
       new AppError('Address does not belong to this user', 403)

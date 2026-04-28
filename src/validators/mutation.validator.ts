@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 export const createMutationSchema = z.object({
     body: z.object({
-        source_store_id: z.number().int().positive('source_store_id must be a positive integer'),
-        destination_store_id: z.number().int().positive('destination_store_id must be a positive integer'),
-        product_id: z.number().int().positive('product_id must be a positive integer'),
+        source_store_id: z.string().uuid('source_store_id must be a valid UUID'),
+        destination_store_id: z.string().uuid('destination_store_id must be a valid UUID'),
+        product_id: z.string().uuid('product_id must be a valid UUID'),
         quantity: z.number().int().positive('quantity must be a positive integer'),
     }),
 });

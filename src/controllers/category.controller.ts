@@ -14,9 +14,8 @@ export const categoryController = {
         });
     }),
 
-    getCategoryById: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const category = await categoryService.getCategoryById(id);
+    getCategoryBySlug: catchAsync(async (req: Request, res: Response) => {
+        const category = await categoryService.getCategoryBySlug(req.params.slug as string);
 
         res.status(200).json({
             success: true,
@@ -38,10 +37,9 @@ export const categoryController = {
     }),
 
     updateCategory: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
         const { name } = req.body;
         const file = req.file;
-        const category = await categoryService.updateCategory(id, name, file);
+        const category = await categoryService.updateCategory(req.params.slug as string, name, file);
 
         res.status(200).json({
             success: true,
@@ -51,8 +49,7 @@ export const categoryController = {
     }),
 
     deleteCategory: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        await categoryService.deleteCategory(id);
+        await categoryService.deleteCategory(req.params.slug as string);
 
         res.status(200).json({
             success: true,

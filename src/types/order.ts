@@ -6,7 +6,7 @@ export interface AdminOrderQueryInput {
   page?: number;
   limit?: number;
   sort?: 'asc' | 'desc';
-  warehouse_id?: number;
+  warehouse_id?: string;
   order_number?: string;
   status?: order_status;
   from?: string;
@@ -16,22 +16,22 @@ export interface AdminOrderQueryInput {
 // ─── Input Types ─────────────────────────────────────────────────────────────
 
 export interface CreateOrderInput {
-  address_id: number;
+  address_id: string;
   payment_method: 'payment_gateway';
   voucher_code?: string;
   shipping_method?: string;
   shipping_cost?: number;
-  cart_item_ids?: number[];
+  cart_item_ids?: string[];
 }
 
 // ─── Internal Types ───────────────────────────────────────────────────────────
 
 export interface CartItemWithProduct {
-  id: number;
-  product_id: number;
+  id: string;
+  product_id: string;
   quantity: number;
   product: {
-    id: number;
+    id: string;
     name: string;
     price: import('../../generated/prisma/client').Prisma.Decimal;
     weight: import('../../generated/prisma/client').Prisma.Decimal;
@@ -39,6 +39,6 @@ export interface CartItemWithProduct {
 }
 
 export interface NearestStoreResult {
-  store_id: number;
+  store_id: string;
   distance_km: number;
 }

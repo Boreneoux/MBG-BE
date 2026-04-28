@@ -10,7 +10,7 @@ const JOURNAL_TYPES = [
 ] as const;
 
 const baseQuerySchema = z.object({
-  store_id: z.coerce.number().int().positive().optional(),
+  store_id: z.string().uuid().optional(),
   from: z
     .string()
     .refine((value) => !Number.isNaN(Date.parse(value)), 'from must be a valid ISO date')
@@ -32,7 +32,7 @@ export const salesMonthlyReportQuerySchema = z.object({
 
 export const salesCategoryReportQuerySchema = z.object({
   query: baseQuerySchema.extend({
-    category_id: z.coerce.number().int().positive().optional(),
+    category_id: z.string().uuid().optional(),
     search: z.string().trim().min(1).max(100).optional(),
     sort_by: z
       .enum(['category_name', 'total_sales', 'total_quantity', 'total_orders'])
@@ -42,8 +42,8 @@ export const salesCategoryReportQuerySchema = z.object({
 
 export const salesProductReportQuerySchema = z.object({
   query: baseQuerySchema.extend({
-    category_id: z.coerce.number().int().positive().optional(),
-    product_id: z.coerce.number().int().positive().optional(),
+    category_id: z.string().uuid().optional(),
+    product_id: z.string().uuid().optional(),
     search: z.string().trim().min(1).max(100).optional(),
     sort_by: z
       .enum([
@@ -59,7 +59,7 @@ export const salesProductReportQuerySchema = z.object({
 
 export const stockMonthlyReportQuerySchema = z.object({
   query: baseQuerySchema.extend({
-    product_id: z.coerce.number().int().positive().optional(),
+    product_id: z.string().uuid().optional(),
     type: z.enum(JOURNAL_TYPES).optional(),
     sort_by: z
       .enum(['month', 'total_in', 'total_out', 'net_change', 'total_entries'])
@@ -69,8 +69,8 @@ export const stockMonthlyReportQuerySchema = z.object({
 
 export const stockHistoryReportQuerySchema = z.object({
   query: baseQuerySchema.extend({
-    product_id: z.coerce.number().int().positive().optional(),
-    category_id: z.coerce.number().int().positive().optional(),
+    product_id: z.string().uuid().optional(),
+    category_id: z.string().uuid().optional(),
     type: z.enum(JOURNAL_TYPES).optional(),
     search: z.string().trim().min(1).max(100).optional(),
     sort_by: z

@@ -2,7 +2,7 @@ import { prisma } from '../config/prisma-client.config';
 import { stock_journal_type, Prisma } from '../../generated/prisma/client';
 
 const inventoryRepository = {
-    findInventory(storeId: number, productId: number) {
+    findInventory(storeId: string, productId: string) {
         return prisma.storeInventory.findUnique({
             where: {
                 store_id_product_id: { store_id: storeId, product_id: productId },
@@ -11,8 +11,8 @@ const inventoryRepository = {
         });
     },
 
-    findInventoryById(id: number) {
-        return prisma.storeInventory.findUnique({
+    findInventoryById(id: string) {
+        return prisma.storeInventory.findFirst({
             where: { id, deleted_at: null },
             include: {
                 store: { select: { id: true, name: true } },
@@ -22,8 +22,8 @@ const inventoryRepository = {
     },
 
     async createInventoryWithStock(
-        storeId: number,
-        productId: number,
+        storeId: string,
+        productId: string,
         initialStock: number,
         journalDescription?: string
     ) {
@@ -43,14 +43,14 @@ const inventoryRepository = {
         });
     },
 
-    softDeleteInventory(id: number) {
+    softDeleteInventory(id: string) {
         return prisma.storeInventory.update({
             where: { id },
             data: { deleted_at: new Date() },
         });
     },
 
-    upsertInventory(storeId: number, productId: number) {
+    upsertInventory(storeId: string, productId: string) {
         return prisma.storeInventory.upsert({
             where: {
                 store_id_product_id: { store_id: storeId, product_id: productId },
@@ -60,7 +60,7 @@ const inventoryRepository = {
         });
     },
 
-    updateStock(inventoryId: number, newStock: number) {
+    updateStock(inventoryId: string, newStock: number) {
         return prisma.storeInventory.update({
             where: { id: inventoryId },
             data: { stock: newStock, updated_at: new Date() },
@@ -68,11 +68,11 @@ const inventoryRepository = {
     },
 
     createJournal(data: {
-        store_inventory_id: number;
+        store_inventory_id: string;
         quantity: number;
         type: stock_journal_type;
         description?: string;
-        reference_id?: number;
+        reference_id?: string;
     }) {
         return prisma.stockJournal.create({ data });
     },
@@ -107,8 +107,8 @@ const inventoryRepository = {
         where: Prisma.StoreInventoryWhereInput;
     }) {
         return prisma.storeInventory.findMany({
-            where: { 
-                ...params.where, 
+            where: {
+                ...params.where,
                 deleted_at: null,
                 product: { deleted_at: null }
             },
@@ -132,22 +132,22 @@ const inventoryRepository = {
         });
     },
 
-    findStoreAdminByUserId(userId: number) {
+    findStoreAdminByUserId(userId: string) {
         return prisma.storeAdmin.findFirst({
             where: { user_id: userId, deleted_at: null },
             select: { store_id: true },
         });
     },
 
-    findStoreById(storeId: number) {
-        return prisma.store.findUnique({
+    findStoreById(storeId: string) {
+        return prisma.store.findFirst({
             where: { id: storeId, deleted_at: null },
             select: { id: true, name: true },
         });
     },
 
-    findProductById(productId: number) {
-        return prisma.product.findUnique({
+    findProductById(productId: string) {
+        return prisma.product.findFirst({
             where: { id: productId, deleted_at: null },
             select: { id: true, name: true },
         });

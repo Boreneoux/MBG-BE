@@ -7,7 +7,7 @@ import { prisma } from '../config/prisma-client.config';
 
 export const inventoryService = {
     async createInventory(input: CreateInventoryInput, user: JwtPayload) {
-        let storeId: number;
+        let storeId: string;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
@@ -45,7 +45,7 @@ export const inventoryService = {
         };
     },
 
-    async deleteInventory(id: number, user: JwtPayload) {
+    async deleteInventory(id: string, user: JwtPayload) {
         const inventory = await inventoryRepository.findInventoryById(id);
         if (!inventory) throw new AppError('Inventory not found', 404);
 
@@ -62,7 +62,7 @@ export const inventoryService = {
     },
 
     async adjustStock(input: AdjustStockInput, user: JwtPayload) {
-        let storeId: number;
+        let storeId: string;
 
         if (user.role === 'store_admin') {
             // Auto-resolve store from StoreAdmin assignment — ignore any client-provided store_id
@@ -122,7 +122,7 @@ export const inventoryService = {
     },
 
     async createJournal(input: AdjustStockInput & { type: stock_journal_type }, user: JwtPayload) {
-        let storeId: number;
+        let storeId: string;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
@@ -183,8 +183,8 @@ export const inventoryService = {
     },
 
     async getJournals(query: JournalQueryInput, user: JwtPayload) {
-        let storeId: number | undefined = query.store_id ? Number(query.store_id) : undefined;
-        let productId: number | undefined = query.product_id ? Number(query.product_id) : undefined;
+        let storeId: string | undefined = query.store_id;
+        let productId: string | undefined = query.product_id;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);
@@ -236,8 +236,8 @@ export const inventoryService = {
     },
 
     async getInventories(query: InventoryQueryInput, user: JwtPayload) {
-        let storeId: number | undefined = query.store_id ? Number(query.store_id) : undefined;
-        let productId: number | undefined = query.product_id ? Number(query.product_id) : undefined;
+        let storeId: string | undefined = query.store_id;
+        let productId: string | undefined = query.product_id;
 
         if (user.role === 'store_admin') {
             const storeAdmin = await inventoryRepository.findStoreAdminByUserId(user.id);

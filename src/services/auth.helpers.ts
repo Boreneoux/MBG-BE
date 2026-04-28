@@ -36,7 +36,7 @@ export function hashToken(raw: string): string {
 }
 
 export function buildTokenPair(
-  userId: number,
+  userId: string,
   email: string,
   role: user_role
 ): { accessToken: string; refreshToken: { raw: string; hashed: string } } {

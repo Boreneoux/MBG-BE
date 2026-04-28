@@ -6,8 +6,8 @@ export const discountController = {
     getDiscounts: catchAsync(async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
-        const store_id = req.query.store_id ? parseInt(req.query.store_id as string) : undefined;
-        const product_id = req.query.product_id ? parseInt(req.query.product_id as string) : undefined;
+        const store_id = req.query.store_id as string | undefined;
+        const product_id = req.query.product_id as string | undefined;
         const is_active = req.query.is_active === 'true' ? true : req.query.is_active === 'false' ? false : undefined;
 
         const result = await discountService.getDiscounts({ page, limit, store_id, product_id, is_active });
@@ -21,8 +21,7 @@ export const discountController = {
     }),
 
     getDiscountById: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const discount = await discountService.getDiscountById(id);
+        const discount = await discountService.getDiscountById(req.params.id as string);
 
         res.status(200).json({
             success: true,
@@ -43,8 +42,7 @@ export const discountController = {
     }),
 
     updateDiscount: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        const discount = await discountService.updateDiscount(id, req.body);
+        const discount = await discountService.updateDiscount(req.params.id as string, req.body);
 
         res.status(200).json({
             success: true,
@@ -54,8 +52,7 @@ export const discountController = {
     }),
 
     deleteDiscount: catchAsync(async (req: Request, res: Response) => {
-        const id = parseInt(req.params.id as string);
-        await discountService.deleteDiscount(id);
+        await discountService.deleteDiscount(req.params.id as string);
 
         res.status(200).json({
             success: true,

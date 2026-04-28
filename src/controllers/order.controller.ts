@@ -20,8 +20,7 @@ export const orderController = {
   }),
 
   getOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await orderService.getOrderForUser(req.user!.id, orderId);
+    const order = await orderService.getOrderForUser(req.user!.id, req.params.orderNumber as string);
 
     res.json({
       success: true,
@@ -40,8 +39,7 @@ export const orderController = {
   }),
 
   getPaymentUrl: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const result = await paymentService.createPaymentUrl(orderId, req.user!.id);
+    const result = await paymentService.createPaymentUrl(req.params.orderNumber as string, req.user!.id);
 
     res.json({
       success: true,
@@ -51,8 +49,7 @@ export const orderController = {
   }),
 
   getPaymentStatus: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const result = await paymentService.getPaymentStatus(orderId, req.user!.id);
+    const result = await paymentService.getPaymentStatus(req.params.orderNumber as string, req.user!.id);
 
     res.json({
       success: true,
@@ -61,8 +58,7 @@ export const orderController = {
   }),
 
   cancelOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await orderService.cancelOrder(req.user!.id, orderId);
+    const order = await orderService.cancelOrder(req.user!.id, req.params.orderNumber as string);
 
     res.json({
       success: true,
@@ -72,8 +68,7 @@ export const orderController = {
   }),
 
   confirmReceipt: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await orderService.confirmReceipt(req.user!.id, orderId);
+    const order = await orderService.confirmReceipt(req.user!.id, req.params.orderNumber as string);
 
     res.json({
       success: true,
@@ -83,8 +78,7 @@ export const orderController = {
   }),
 
   approvePayment: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.approvePayment(orderId, req.user!);
+    const order = await adminOrderService.approvePayment(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,
@@ -94,8 +88,7 @@ export const orderController = {
   }),
 
   shipOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.shipOrder(orderId, req.user!);
+    const order = await adminOrderService.shipOrder(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,

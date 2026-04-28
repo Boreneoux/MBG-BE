@@ -5,11 +5,11 @@ export const regionService = {
     return regionRepository.findAllProvinces();
   },
 
-  getCities(provinceId: number) {
+  getCities(provinceId: string) {
     return regionRepository.findCitiesByProvince(provinceId);
   },
 
-  getDistricts(cityId: number) {
+  getDistricts(cityId: string) {
     return regionRepository.findDistrictsByCity(cityId);
   }
 };

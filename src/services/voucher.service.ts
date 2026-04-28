@@ -18,7 +18,7 @@ export const voucherService = {
         };
     },
 
-    async getVoucherById(id: number) {
+    async getVoucherById(id: string) {
         const voucher = await voucherRepository.findById(id);
         if (!voucher) {
             throw new AppError('Voucher not found', 404);
@@ -44,7 +44,7 @@ export const voucherService = {
         });
     },
 
-    async updateVoucher(id: number, data: Partial<CreateVoucherInput>) {
+    async updateVoucher(id: string, data: Partial<CreateVoucherInput>) {
         const voucher = await voucherRepository.findById(id);
         if (!voucher) {
             throw new AppError('Voucher not found', 404);
@@ -74,7 +74,7 @@ export const voucherService = {
         return await voucherRepository.update(id, updateData);
     },
 
-    async deleteVoucher(id: number) {
+    async deleteVoucher(id: string) {
         const voucher = await voucherRepository.findById(id);
         if (!voucher) {
             throw new AppError('Voucher not found', 404);
@@ -82,7 +82,7 @@ export const voucherService = {
         return voucherRepository.softDelete(id);
     },
 
-    async applyVoucher(userId: number, applyData: ApplyVoucherInput) {
+    async applyVoucher(userId: string, applyData: ApplyVoucherInput) {
         const voucher = await voucherRepository.findByCode(applyData.code);
 
         if (!voucher) {

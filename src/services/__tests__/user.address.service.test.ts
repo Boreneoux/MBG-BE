@@ -16,15 +16,15 @@ const mockRepo = jest.mocked(userAddressRepository);
 // Fixtures
 
 const mockAddress = {
-  id: 1,
-  user_id: 10,
+  id: '1',
+  user_id: '10',
   label: 'Home',
   recipient_name: 'John Doe',
   phone: '08123456789',
   address: 'Jl. Kebon Jeruk No. 1',
-  district_id: 1,
-  city_id: 1,
-  province_id: 1,
+  district_id: '1',
+  city_id: '1',
+  province_id: '1',
   postal_code: '11530',
   latitude: new Prisma.Decimal(106.7896),
   longitude: new Prisma.Decimal(-6.2088),
@@ -35,14 +35,14 @@ const mockAddress = {
   created_at: new Date(),
   updated_at: new Date(),
   deleted_at: null,
-  province: { id: 1, name: 'DKI Jakarta' },
-  city: { id: 1, name: 'Jakarta Barat', type: 'Kota' },
-  district: { id: 1, name: 'Kebon Jeruk' }
+  province: { id: '1', name: 'DKI Jakarta' },
+  city: { id: '1', name: 'Jakarta Barat', type: 'Kota' },
+  district: { id: '1', name: 'Kebon Jeruk' }
 };
 
 const mockAddressSecondary = {
   ...mockAddress,
-  id: 2,
+  id: '2',
   label: 'Office',
   is_primary: false
 };
@@ -52,9 +52,9 @@ const createAddressInput = {
   recipient_name: 'John Doe',
   phone: '08123456789',
   address: 'Jl. Kebon Jeruk No. 1',
-  district_id: 1,
-  city_id: 1,
-  province_id: 1,
+  district_id: '1',
+  city_id: '1',
+  province_id: '1',
   postal_code: '11530',
   latitude: 106.7896 as unknown as number,
   longitude: -6.2088 as unknown as number
@@ -71,19 +71,19 @@ describe('userAddressService.getAddresses', () => {
       mockAddressSecondary
     ]);
 
-    const result = await userAddressService.getAddresses(10);
+    const result = await userAddressService.getAddresses('10');
 
     expect(result).toEqual([mockAddress, mockAddressSecondary]);
-    expect(mockRepo.findAllByUserId).toHaveBeenCalledWith(10);
+    expect(mockRepo.findAllByUserId).toHaveBeenCalledWith('10');
   });
 
   it('returns an empty array when user has no addresses', async () => {
     mockRepo.findAllByUserId.mockResolvedValue([]);
 
-    const result = await userAddressService.getAddresses(10);
+    const result = await userAddressService.getAddresses('10');
 
     expect(result).toEqual([]);
-    expect(mockRepo.findAllByUserId).toHaveBeenCalledWith(10);
+    expect(mockRepo.findAllByUserId).toHaveBeenCalledWith('10');
   });
 });
 
@@ -94,10 +94,10 @@ describe('userAddressService.createAddress — first address', () => {
     mockRepo.countByUserId.mockResolvedValue(0);
     mockRepo.create.mockResolvedValue({ ...mockAddress, is_primary: true });
 
-    await userAddressService.createAddress(10, createAddressInput);
+    await userAddressService.createAddress('10', createAddressInput);
 
     expect(mockRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 10, is_primary: true })
+      expect.objectContaining({ user_id: '10', is_primary: true })
     );
   });
 
@@ -105,7 +105,7 @@ describe('userAddressService.createAddress — first address', () => {
     mockRepo.countByUserId.mockResolvedValue(0);
     mockRepo.create.mockResolvedValue(mockAddress);
 
-    await userAddressService.createAddress(10, createAddressInput);
+    await userAddressService.createAddress('10', createAddressInput);
 
     expect(mockRepo.unsetAllPrimary).not.toHaveBeenCalled();
   });
@@ -116,10 +116,10 @@ describe('userAddressService.createAddress — subsequent address', () => {
     mockRepo.countByUserId.mockResolvedValue(1);
     mockRepo.create.mockResolvedValue({ ...mockAddressSecondary });
 
-    await userAddressService.createAddress(10, createAddressInput);
+    await userAddressService.createAddress('10', createAddressInput);
 
     expect(mockRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 10, is_primary: false })
+      expect.objectContaining({ user_id: '10', is_primary: false })
     );
   });
 
@@ -131,14 +131,14 @@ describe('userAddressService.createAddress — subsequent address', () => {
       is_primary: true
     });
 
-    await userAddressService.createAddress(10, {
+    await userAddressService.createAddress('10', {
       ...createAddressInput,
       is_primary: true
     });
 
-    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith(10);
+    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith('10');
     expect(mockRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 10, is_primary: true })
+      expect.objectContaining({ user_id: '10', is_primary: true })
     );
   });
 
@@ -146,7 +146,7 @@ describe('userAddressService.createAddress — subsequent address', () => {
     mockRepo.countByUserId.mockResolvedValue(2);
     mockRepo.create.mockResolvedValue(mockAddressSecondary);
 
-    await userAddressService.createAddress(10, createAddressInput);
+    await userAddressService.createAddress('10', createAddressInput);
 
     expect(mockRepo.unsetAllPrimary).not.toHaveBeenCalled();
   });
@@ -159,7 +159,7 @@ describe('userAddressService.updateAddress', () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(null);
 
     await expect(
-      userAddressService.updateAddress(10, 99, { label: 'Work' })
+      userAddressService.updateAddress('10', '99', { label: 'Work' })
     ).rejects.toThrow(new AppError('Address not found', 404));
   });
 
@@ -167,7 +167,7 @@ describe('userAddressService.updateAddress', () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(null);
 
     await expect(
-      userAddressService.updateAddress(99, 1, { label: 'Work' })
+      userAddressService.updateAddress('99', '1', { label: 'Work' })
     ).rejects.toThrow(new AppError('Address not found', 404));
   });
 
@@ -178,10 +178,10 @@ describe('userAddressService.updateAddress', () => {
       label: 'Work'
     });
 
-    await userAddressService.updateAddress(10, 2, { label: 'Work' });
+    await userAddressService.updateAddress('10', '2', { label: 'Work' });
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      2,
+      '2',
       expect.objectContaining({ label: 'Work' })
     );
   });
@@ -190,7 +190,7 @@ describe('userAddressService.updateAddress', () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(mockAddressSecondary);
     mockRepo.update.mockResolvedValue(mockAddressSecondary);
 
-    await userAddressService.updateAddress(10, 2, { label: 'Work' });
+    await userAddressService.updateAddress('10', '2', { label: 'Work' });
 
     const updatePayload = mockRepo.update.mock.calls[0][1];
     expect(updatePayload).not.toHaveProperty('phone');
@@ -205,11 +205,11 @@ describe('userAddressService.updateAddress', () => {
       is_primary: true
     });
 
-    await userAddressService.updateAddress(10, 2, { is_primary: true });
+    await userAddressService.updateAddress('10', '2', { is_primary: true });
 
-    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith(10);
+    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith('10');
     expect(mockRepo.update).toHaveBeenCalledWith(
-      2,
+      '2',
       expect.objectContaining({ is_primary: true })
     );
   });
@@ -221,7 +221,7 @@ describe('userAddressService.updateAddress', () => {
       label: 'Work'
     });
 
-    await userAddressService.updateAddress(10, 2, { label: 'Work' });
+    await userAddressService.updateAddress('10', '2', { label: 'Work' });
 
     expect(mockRepo.unsetAllPrimary).not.toHaveBeenCalled();
   });
@@ -233,7 +233,7 @@ describe('userAddressService.deleteAddress', () => {
   it('throws 404 when address does not exist or belongs to another user', async () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(null);
 
-    await expect(userAddressService.deleteAddress(10, 99)).rejects.toThrow(
+    await expect(userAddressService.deleteAddress('10', '99')).rejects.toThrow(
       new AppError('Address not found', 404)
     );
   });
@@ -242,9 +242,9 @@ describe('userAddressService.deleteAddress', () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(mockAddressSecondary);
     mockRepo.softDelete.mockResolvedValue(mockAddressSecondary);
 
-    await userAddressService.deleteAddress(10, 2);
+    await userAddressService.deleteAddress('10', '2');
 
-    expect(mockRepo.softDelete).toHaveBeenCalledWith(2);
+    expect(mockRepo.softDelete).toHaveBeenCalledWith('2');
     expect(mockRepo.setFirstAddressAsPrimary).not.toHaveBeenCalled();
   });
 
@@ -253,17 +253,17 @@ describe('userAddressService.deleteAddress', () => {
     mockRepo.softDelete.mockResolvedValue(mockAddress);
     mockRepo.setFirstAddressAsPrimary.mockResolvedValue(undefined);
 
-    await userAddressService.deleteAddress(10, 1);
+    await userAddressService.deleteAddress('10', '1');
 
-    expect(mockRepo.softDelete).toHaveBeenCalledWith(1);
-    expect(mockRepo.setFirstAddressAsPrimary).toHaveBeenCalledWith(10);
+    expect(mockRepo.softDelete).toHaveBeenCalledWith('1');
+    expect(mockRepo.setFirstAddressAsPrimary).toHaveBeenCalledWith('10');
   });
 
   it('does not call setFirstAddressAsPrimary when deleting a non-primary address', async () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(mockAddressSecondary); // is_primary: false
     mockRepo.softDelete.mockResolvedValue(mockAddressSecondary);
 
-    await userAddressService.deleteAddress(10, 2);
+    await userAddressService.deleteAddress('10', '2');
 
     expect(mockRepo.setFirstAddressAsPrimary).not.toHaveBeenCalled();
   });
@@ -275,7 +275,7 @@ describe('userAddressService.setPrimaryAddress', () => {
   it('throws 404 when address does not exist or belongs to another user', async () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(null);
 
-    await expect(userAddressService.setPrimaryAddress(10, 99)).rejects.toThrow(
+    await expect(userAddressService.setPrimaryAddress('10', '99')).rejects.toThrow(
       new AppError('Address not found', 404)
     );
   });
@@ -283,7 +283,7 @@ describe('userAddressService.setPrimaryAddress', () => {
   it('throws 400 when the address is already primary', async () => {
     mockRepo.findByIdAndUserId.mockResolvedValue(mockAddress); // is_primary: true
 
-    await expect(userAddressService.setPrimaryAddress(10, 1)).rejects.toThrow(
+    await expect(userAddressService.setPrimaryAddress('10', '1')).rejects.toThrow(
       new AppError('Address is already set as primary', 400)
     );
   });
@@ -296,10 +296,10 @@ describe('userAddressService.setPrimaryAddress', () => {
       is_primary: true
     });
 
-    await userAddressService.setPrimaryAddress(10, 2);
+    await userAddressService.setPrimaryAddress('10', '2');
 
-    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith(10);
-    expect(mockRepo.update).toHaveBeenCalledWith(2, { is_primary: true });
+    expect(mockRepo.unsetAllPrimary).toHaveBeenCalledWith('10');
+    expect(mockRepo.update).toHaveBeenCalledWith('2', { is_primary: true });
   });
 
   it('calls unsetAllPrimary before update to avoid having two primaries', async () => {
@@ -310,7 +310,7 @@ describe('userAddressService.setPrimaryAddress', () => {
       is_primary: true
     });
 
-    await userAddressService.setPrimaryAddress(10, 2);
+    await userAddressService.setPrimaryAddress('10', '2');
 
     const unsetOrder = mockRepo.unsetAllPrimary.mock.invocationCallOrder[0];
     const updateOrder = mockRepo.update.mock.invocationCallOrder[0];

@@ -23,16 +23,16 @@ storeRouter.get(
   storeController.getStores
 );
 
-// GET /stores/:id/products — public
+// GET /stores/:slug/products — public
 storeRouter.get(
-  '/:id/products',
+  '/:slug/products',
   validate(storeParamsSchema),
   storeController.getStoreProducts
 );
 
-// GET /stores/:id — Super Admin + Store Admin
+// GET /stores/:slug — Super Admin + Store Admin
 storeRouter.get(
-  '/:id',
+  '/:slug',
   authenticate,
   authorize('super_admin', 'store_admin'),
   validate(storeParamsSchema),
@@ -48,36 +48,36 @@ storeRouter.post(
   storeController.create
 );
 
-// PUT /stores/:id — Super Admin only
+// PUT /stores/:slug — Super Admin only
 storeRouter.put(
-  '/:id',
+  '/:slug',
   authenticate,
   authorize('super_admin'),
   validate(updateStoreSchema),
   storeController.update
 );
 
-// DELETE /stores/:id — Super Admin only
+// DELETE /stores/:slug — Super Admin only
 storeRouter.delete(
-  '/:id',
+  '/:slug',
   authenticate,
   authorize('super_admin'),
   validate(storeParamsSchema),
   storeController.delete
 );
 
-// POST /stores/:id/admins — Super Admin only
+// POST /stores/:slug/admins — Super Admin only
 storeRouter.post(
-  '/:id/admins',
+  '/:slug/admins',
   authenticate,
   authorize('super_admin'),
   validate(assignAdminSchema),
   storeController.assignAdmin
 );
 
-// DELETE /stores/:id/admins/:userId — Super Admin only
+// DELETE /stores/:slug/admins/:userId — Super Admin only
 storeRouter.delete(
-  '/:id/admins/:userId',
+  '/:slug/admins/:userId',
   authenticate,
   authorize('super_admin'),
   validate(unassignAdminSchema),

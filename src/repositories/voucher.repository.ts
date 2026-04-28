@@ -1,4 +1,4 @@
-import { Prisma, voucher_type } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { prisma } from '../config/prisma-client.config';
 import { GetVouchersQuery } from '../types/voucher';
 
@@ -24,8 +24,8 @@ export const voucherRepository = {
         ]);
     },
 
-    findById(id: number) {
-        return prisma.voucher.findUnique({
+    findById(id: string) {
+        return prisma.voucher.findFirst({
             where: { id, deleted_at: null },
             include: { product: true }
         });
@@ -42,27 +42,27 @@ export const voucherRepository = {
         return prisma.voucher.create({ data });
     },
 
-    update(id: number, data: Prisma.VoucherUpdateInput) {
+    update(id: string, data: Prisma.VoucherUpdateInput) {
         return prisma.voucher.update({
             where: { id },
             data
         });
     },
 
-    softDelete(id: number) {
+    softDelete(id: string) {
         return prisma.voucher.update({
             where: { id },
             data: { deleted_at: new Date() }
         });
     },
 
-    checkUserUsage(userId: number, voucherId: number) {
+    checkUserUsage(userId: string, voucherId: string) {
         return prisma.userVoucher.findFirst({
             where: { user_id: userId, voucher_id: voucherId }
         });
     },
 
-    recordUsage(userId: number, voucherId: number, orderId: number, tx?: Prisma.TransactionClient) {
+    recordUsage(userId: string, voucherId: string, orderId: string, tx?: Prisma.TransactionClient) {
         const db = tx || prisma;
         return db.userVoucher.create({
             data: {

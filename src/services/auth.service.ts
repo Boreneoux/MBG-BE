@@ -42,7 +42,7 @@ async function generateUniqueReferralCode(
 }
 
 async function issueVerificationToken(
-  userId: number,
+  userId: string,
   email: string,
   firstName: string
 ): Promise<void> {
@@ -71,14 +71,14 @@ async function validateToken(rawToken: string, expectedType: string) {
   return record;
 }
 
-async function issueTokenPair(userId: number, email: string, role: string) {
+async function issueTokenPair(userId: string, email: string, role: string) {
   const { accessToken, refreshToken } = buildTokenPair(userId, email, role as any);
   const expiresAt = new Date(Date.now() + parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY));
   await authRepository.createRefreshToken(userId, refreshToken.hashed, expiresAt);
   return { accessToken, rawRefreshToken: refreshToken.raw };
 }
 
-async function applyReferralVoucher(userId: number, tx: Tx): Promise<void> {
+async function applyReferralVoucher(userId: string, tx: Tx): Promise<void> {
   const voucher = await authRepository.findActiveReferralVoucher(tx);
   if (voucher) await authRepository.assignVoucherToUser(userId, voucher.id, tx);
 }
@@ -248,7 +248,7 @@ export const authService = {
   },
 
   async completeProfile(
-    userId: number,
+    userId: string,
     input: { phone: string; referral_code?: string }
   ) {
     const { phone, referral_code } = input;
@@ -273,7 +273,7 @@ export const authService = {
     return { user: updatedUser };
   },
 
-  async setupPassword(userId: number, password: string) {
+  async setupPassword(userId: string, password: string) {
     const user = await authRepository.findUserById(userId, {
       id: true,
       password: true
@@ -286,7 +286,7 @@ export const authService = {
     return { message: 'Password set successfully' };
   },
 
-  async getMe(userId: number) {
+  async getMe(userId: string) {
     const user = await authRepository.findUserById(userId, {
       id: true,
       first_name: true,

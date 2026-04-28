@@ -38,7 +38,7 @@ export const userService = {
     };
   },
 
-  async getUserById(id: number) {
+  async getUserById(id: string) {
     const user = await userRepository.findById(id);
     if (!user) {
       throw new AppError('User not found', 404);
@@ -89,7 +89,7 @@ export const userService = {
     return user;
   },
 
-  async updateUser(id: number, data: any) {
+  async updateUser(id: string, data: any) {
     const user = await userRepository.findById(id);
     if (!user) {
       throw new AppError('User not found', 404);
@@ -106,7 +106,7 @@ export const userService = {
     return userRepository.update(id, updateData);
   },
 
-  async changeRole(id: number, newRole: user_role) {
+  async changeRole(id: string, newRole: user_role) {
     const user = await userRepository.findById(id);
     if (!user) {
       throw new AppError('User not found', 404);
@@ -119,7 +119,7 @@ export const userService = {
     return userRepository.update(id, { role: newRole });
   },
 
-  async deleteUser(id: number) {
+  async deleteUser(id: string) {
     const user = await userRepository.findById(id);
     if (!user) {
       throw new AppError('User not found', 404);
@@ -127,7 +127,8 @@ export const userService = {
 
     return userRepository.softDelete(id);
   },
-  async getProfile(userId: number) {
+
+  async getProfile(userId: string) {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new AppError('User not found', 404);
@@ -135,7 +136,7 @@ export const userService = {
     return user;
   },
 
-  async updateProfile(userId: number, data: UpdateProfileInput) {
+  async updateProfile(userId: string, data: UpdateProfileInput) {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new AppError('User not found', 404);

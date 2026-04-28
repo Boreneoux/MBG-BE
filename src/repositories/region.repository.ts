@@ -9,7 +9,7 @@ export const regionRepository = {
     });
   },
 
-  findCitiesByProvince(provinceId: number) {
+  findCitiesByProvince(provinceId: string) {
     return prisma.city.findMany({
       where: { province_id: provinceId, deleted_at: null },
       orderBy: { name: 'asc' },
@@ -17,7 +17,7 @@ export const regionRepository = {
     });
   },
 
-  findDistrictsByCity(cityId: number) {
+  findDistrictsByCity(cityId: string) {
     return prisma.district.findMany({
       where: { city_id: cityId, deleted_at: null },
       orderBy: { name: 'asc' },

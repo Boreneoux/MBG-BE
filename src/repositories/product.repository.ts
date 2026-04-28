@@ -7,8 +7,8 @@ export const productRepository = {
         skip?: number;
         take?: number;
         search?: string;
-        categoryId?: number;
-        storeId?: number;
+        categoryId?: string;
+        storeId?: string;
         sort?: string;
     }) {
         const { skip, take, search, categoryId, storeId, sort } = params;
@@ -51,7 +51,7 @@ export const productRepository = {
         ]);
     },
 
-    findById(id: number) {
+    findById(id: string) {
         return prisma.product.findUnique({
             where: { id, deleted_at: null },
             include: {
@@ -69,6 +69,21 @@ export const productRepository = {
     findByName(name: string) {
         return prisma.product.findUnique({
             where: { name, deleted_at: null }
+        });
+    },
+
+    findBySlug(slug: string) {
+        return prisma.product.findFirst({
+            where: { slug, deleted_at: null },
+            include: {
+                category: true,
+                product_images: true,
+                store_inventories: {
+                    include: {
+                        store: true
+                    }
+                }
+            }
         });
     },
 
@@ -90,7 +105,7 @@ export const productRepository = {
         });
     },
 
-    update(id: number, data: Prisma.ProductUpdateInput, newImages?: { secureUrl: string; publicId: string }[], primaryIndex?: number, deleteImageIds?: number[]) {
+    update(id: string, data: Prisma.ProductUpdateInput, newImages?: { secureUrl: string; publicId: string }[], primaryIndex?: number, deleteImageIds?: string[]) {
         return prisma.$transaction(async (tx) => {
             // Delete images from Cloudinary first
             if (deleteImageIds && deleteImageIds.length > 0) {
@@ -158,7 +173,7 @@ export const productRepository = {
         });
     },
 
-    softDelete(id: number) {
+    softDelete(id: string) {
         return prisma.product.update({
             where: { id },
             data: { deleted_at: new Date() }
