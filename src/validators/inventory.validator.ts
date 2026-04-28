@@ -11,8 +11,8 @@ const JOURNAL_TYPES = [
 
 export const adjustStockSchema = z.object({
     body: z.object({
-        store_id: z.number().int().positive('store_id must be a positive integer').optional(),
-        product_id: z.number().int().positive('product_id must be a positive integer'),
+        store_id: z.string().uuid('store_id must be a valid UUID').optional(),
+        product_id: z.string().uuid('product_id must be a valid UUID'),
         quantity: z.number().int().positive('quantity must be a positive integer'),
         type: z.enum(['addition', 'reduction'], {
             error: 'type must be either addition or reduction',
@@ -23,8 +23,8 @@ export const adjustStockSchema = z.object({
 
 export const createJournalSchema = z.object({
     body: z.object({
-        store_id: z.number().int().positive('store_id must be a positive integer').optional(),
-        product_id: z.number().int().positive('product_id must be a positive integer'),
+        store_id: z.string().uuid('store_id must be a valid UUID').optional(),
+        product_id: z.string().uuid('product_id must be a valid UUID'),
         quantity: z.number().int().positive('quantity must be a positive integer'),
         type: z.enum(JOURNAL_TYPES, {
             error: 'type must be a valid journal type',
@@ -35,8 +35,8 @@ export const createJournalSchema = z.object({
 
 export const journalQuerySchema = z.object({
     query: z.object({
-        store_id: z.coerce.number().int().positive().optional(),
-        product_id: z.coerce.number().int().positive().optional(),
+        store_id: z.string().uuid().optional(),
+        product_id: z.string().uuid().optional(),
         type: z.enum(JOURNAL_TYPES).optional(),
         from: z
             .string()
@@ -54,15 +54,15 @@ export const journalQuerySchema = z.object({
 
 export const inventoryQuerySchema = z.object({
     query: z.object({
-        store_id: z.coerce.number().int().positive().optional(),
-        product_id: z.coerce.number().int().positive().optional(),
+        store_id: z.string().uuid().optional(),
+        product_id: z.string().uuid().optional(),
     }),
 });
 
 export const createInventorySchema = z.object({
     body: z.object({
-        store_id: z.number().int().positive('store_id must be a positive integer').optional(),
-        product_id: z.number().int().positive('product_id must be a positive integer'),
+        store_id: z.string().uuid('store_id must be a valid UUID').optional(),
+        product_id: z.string().uuid('product_id must be a valid UUID'),
         initial_stock: z
             .number()
             .int('initial_stock must be an integer')
@@ -73,6 +73,6 @@ export const createInventorySchema = z.object({
 
 export const inventoryIdParamSchema = z.object({
     params: z.object({
-        id: z.coerce.number().int().positive('Inventory ID must be a positive integer'),
+        id: z.string().uuid('Inventory ID must be a valid UUID'),
     }),
 });

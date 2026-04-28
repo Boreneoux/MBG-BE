@@ -15,7 +15,7 @@ const storeRepository = {
           },
         },
       },
-      orderBy: { id: 'asc' },
+      orderBy: { created_at: 'asc' },
     });
   },
 
@@ -38,7 +38,7 @@ const storeRepository = {
             },
           },
         },
-        orderBy: { id: 'asc' },
+        orderBy: { created_at: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -51,11 +51,11 @@ const storeRepository = {
     return prisma.store.findMany({
       where: { deleted_at: null },
       select: { id: true, name: true, latitude: true, longitude: true, max_delivery_distance: true },
-      orderBy: { id: 'asc' }
+      orderBy: { created_at: 'asc' }
     });
   },
 
-  async findById(id: number) {
+  async findById(id: string) {
     const store = await prisma.store.findUnique({
       where: { id },
       include: { city: true }
@@ -63,8 +63,15 @@ const storeRepository = {
     return store?.deleted_at ? null : store;
   },
 
-  findByIdWithDetails(id: number) {
-    return prisma.store.findUnique({
+  findBySlug(slug: string) {
+    return prisma.store.findFirst({
+      where: { slug, deleted_at: null },
+      include: { city: true }
+    });
+  },
+
+  findByIdWithDetails(id: string) {
+    return prisma.store.findFirst({
       where: { id, deleted_at: null },
       include: {
         province: true,
@@ -82,10 +89,11 @@ const storeRepository = {
 
   create(data: {
     name: string;
+    slug: string;
     address: string;
-    district_id: number;
-    city_id: number;
-    province_id: number;
+    district_id: string;
+    city_id: string;
+    province_id: string;
     postal_code?: string;
     latitude: number;
     longitude: number;
@@ -97,12 +105,13 @@ const storeRepository = {
     });
   },
 
-  update(id: number, data: {
+  update(id: string, data: {
     name?: string;
+    slug?: string;
     address?: string;
-    district_id?: number;
-    city_id?: number;
-    province_id?: number;
+    district_id?: string;
+    city_id?: string;
+    province_id?: string;
     postal_code?: string;
     latitude?: number;
     longitude?: number;
@@ -115,15 +124,15 @@ const storeRepository = {
     });
   },
 
-  async softDelete(id: number): Promise<void> {
+  async softDelete(id: string): Promise<void> {
     await prisma.store.update({
       where: { id },
       data: { deleted_at: new Date() }
     });
   },
 
-  findUserById(userId: number) {
-    return prisma.user.findUnique({
+  findUserById(userId: string) {
+    return prisma.user.findFirst({
       where: { id: userId, deleted_at: null },
       select: {
         id: true,
@@ -136,19 +145,19 @@ const storeRepository = {
     });
   },
 
-  findAdminByStoreAndUser(storeId: number, userId: number) {
+  findAdminByStoreAndUser(storeId: string, userId: string) {
     return prisma.storeAdmin.findFirst({
       where: { store_id: storeId, user_id: userId, deleted_at: null }
     });
   },
 
-  removeAdmin(storeId: number, userId: number) {
+  removeAdmin(storeId: string, userId: string) {
     return prisma.storeAdmin.deleteMany({
       where: { store_id: storeId, user_id: userId }
     });
   },
 
-  createAdmin(storeId: number, userId: number) {
+  createAdmin(storeId: string, userId: string) {
     return prisma.storeAdmin.create({
       data: { store_id: storeId, user_id: userId },
       include: {

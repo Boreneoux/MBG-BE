@@ -26,7 +26,7 @@ const mockRepo = jest.mocked(authRepository);
 const mockBcrypt = jest.mocked(bcryptHelper);
 
 const mockUser = {
-  id: 1,
+  id: '1',
   email: 'user@test.com',
   first_name: 'John',
   last_name: 'Doe',
@@ -78,7 +78,7 @@ describe('authService.register', () => {
 
     expect(mockRepo.createUser).toHaveBeenCalledTimes(1);
     expect(authHelpers.sendVerificationEmail).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ user: { id: 1, email: 'user@test.com' } });
+    expect(result).toEqual({ user: { id: '1', email: 'user@test.com' } });
   });
 });
 
@@ -129,8 +129,8 @@ describe('authService.login', () => {
 describe('authService.verifyEmail', () => {
   const futureDate = new Date(Date.now() + 60 * 60 * 1000);
   const baseToken = {
-    id: 1,
-    user_id: 1,
+    id: '1',
+    user_id: '1',
     token: 'hashed',
     type: 'email_verification',
     is_used: false,
@@ -175,11 +175,11 @@ describe('authService.verifyEmail', () => {
     await authService.verifyEmail('validtoken', 'Password1');
 
     expect(mockRepo.updateUser).toHaveBeenCalledWith(
-      1,
+      '1',
       expect.objectContaining({ is_verified: true }),
       {}
     );
-    expect(mockRepo.markTokenUsed).toHaveBeenCalledWith(1, {});
+    expect(mockRepo.markTokenUsed).toHaveBeenCalledWith('1', {});
   });
 });
 
@@ -207,7 +207,7 @@ describe('authService.resendVerification', () => {
     await authService.resendVerification('user@test.com');
 
     expect(mockRepo.invalidateUserTokens).toHaveBeenCalledWith(
-      1,
+      '1',
       'email_verification'
     );
     expect(authHelpers.sendVerificationEmail).toHaveBeenCalledTimes(1);
@@ -235,7 +235,7 @@ describe('authService.forgotPassword', () => {
     await authService.forgotPassword('user@test.com');
 
     expect(mockRepo.invalidateUserTokens).toHaveBeenCalledWith(
-      1,
+      '1',
       'password_reset'
     );
     expect(authHelpers.sendResetEmail).toHaveBeenCalledTimes(1);
@@ -245,8 +245,8 @@ describe('authService.forgotPassword', () => {
 describe('authService.resetPassword', () => {
   const futureDate = new Date(Date.now() + 15 * 60 * 1000);
   const baseToken = {
-    id: 2,
-    user_id: 1,
+    id: '2',
+    user_id: '1',
     token: 'hashed',
     type: 'password_reset',
     is_used: false,
@@ -271,11 +271,11 @@ describe('authService.resetPassword', () => {
     const result = await authService.resetPassword('validtoken', 'NewPass1');
 
     expect(mockRepo.updateUser).toHaveBeenCalledWith(
-      1,
+      '1',
       { password: 'new_hashed_pw' },
       {}
     );
-    expect(mockRepo.markTokenUsed).toHaveBeenCalledWith(2, {});
+    expect(mockRepo.markTokenUsed).toHaveBeenCalledWith('2', {});
     expect(result.message).toBe('Password has been reset successfully');
   });
 });

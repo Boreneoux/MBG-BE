@@ -14,8 +14,7 @@ export const inventoryController = {
     // DELETE /inventory/:id
     deleteInventory: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as JwtPayload;
-        const id = Number(req.params.id);
-        await inventoryService.deleteInventory(id, user);
+        await inventoryService.deleteInventory(req.params.id as string, user);
         res.status(204).send();
     }),
 

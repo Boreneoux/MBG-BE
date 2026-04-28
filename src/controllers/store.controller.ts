@@ -25,10 +25,9 @@ export const storeController = {
     res.json({ success: true, message, data: result });
   }),
 
-  // GET /stores/:id
+  // GET /stores/:slug
   getById: catchAsync(async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const result = await storeService.getById(id);
+    const result = await storeService.getBySlug(req.params.slug as string);
     res.json({ success: true, message: 'Store retrieved', data: result });
   }),
 
@@ -38,23 +37,22 @@ export const storeController = {
     res.status(201).json({ success: true, message: 'Store created', data: result });
   }),
 
-  // PUT /stores/:id
+  // PUT /stores/:slug
   update: catchAsync(async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const result = await storeService.update(id, req.body);
+    const result = await storeService.update(req.params.slug as string, req.body);
     res.json({ success: true, message: 'Store updated', data: result });
   }),
 
-  // DELETE /stores/:id
+  // DELETE /stores/:slug
   delete: catchAsync(async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    await storeService.delete(id);
+    await storeService.delete(req.params.slug as string);
     res.status(204).send();
   }),
 
-  // GET /stores/:id/products — public
+  // GET /stores/:slug/products — public
   getStoreProducts: catchAsync(async (req: Request, res: Response) => {
-    const storeId = Number(req.params.id);
+    const { store } = await storeService.getBySlug(req.params.slug as string);
+    const storeId = store.id;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 8;
 
@@ -62,19 +60,16 @@ export const storeController = {
     res.json({ success: true, message: 'Store products retrieved', data: result.data, meta: result.meta });
   }),
 
-  // POST /stores/:id/admins
+  // POST /stores/:slug/admins
   assignAdmin: catchAsync(async (req: Request, res: Response) => {
-    const storeId = Number(req.params.id);
     const { user_id } = req.body;
-    const result = await storeService.assignAdmin(storeId, user_id);
+    const result = await storeService.assignAdmin(req.params.slug as string, user_id);
     res.status(201).json({ success: true, message: 'Admin assigned to store', data: result });
   }),
 
-  // DELETE /stores/:id/admins/:userId
+  // DELETE /stores/:slug/admins/:userId
   unassignAdmin: catchAsync(async (req: Request, res: Response) => {
-    const storeId = Number(req.params.id);
-    const userId = Number(req.params.userId);
-    await storeService.unassignAdmin(storeId, userId);
+    await storeService.unassignAdmin(req.params.slug as string, req.params.userId as string);
     res.status(200).json({ success: true, message: 'Admin unassigned from store', data: null });
   })
 };

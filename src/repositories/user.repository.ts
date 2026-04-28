@@ -48,8 +48,8 @@ export const userRepository = {
     ]);
   },
 
-  findById(id: number) {
-    return prisma.user.findUnique({
+  findById(id: string) {
+    return prisma.user.findFirst({
       where: { id, deleted_at: null },
       select: {
         id: true,
@@ -77,8 +77,8 @@ export const userRepository = {
     });
   },
 
-  findByIdWithPassword(id: number) {
-    return prisma.user.findUnique({
+  findByIdWithPassword(id: string) {
+    return prisma.user.findFirst({
       where: { id, deleted_at: null },
       select: {
         id: true,
@@ -104,7 +104,7 @@ export const userRepository = {
     });
   },
 
-  update(id: number, data: Prisma.UserUpdateInput) {
+  update(id: string, data: Prisma.UserUpdateInput) {
     return prisma.user.update({
       where: { id },
       data,
@@ -119,7 +119,7 @@ export const userRepository = {
     });
   },
 
-  softDelete(id: number) {
+  softDelete(id: string) {
     return prisma.user.update({
       where: { id },
       data: { deleted_at: new Date() }

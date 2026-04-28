@@ -55,14 +55,14 @@ const buildOrderBy = <T extends string>(
 ) => Prisma.sql`ORDER BY ${Prisma.raw(mapping[sortBy])} ${Prisma.raw(sort.toUpperCase())}`;
 
 export const reportRepository = {
-  findStoreAdminByUserId(userId: number) {
+  findStoreAdminByUserId(userId: string) {
     return prisma.storeAdmin.findFirst({
       where: { user_id: userId, deleted_at: null },
       select: { store_id: true }
     });
   },
 
-  findStoreById(storeId: number) {
+  findStoreById(storeId: string) {
     return prisma.store.findFirst({
       where: { id: storeId, deleted_at: null },
       select: { id: true, name: true }
@@ -179,7 +179,7 @@ export const reportRepository = {
     const [rows, countRows] = await Promise.all([
       prisma.$queryRaw<
         Array<{
-          category_id: number;
+          category_id: string;
           category_name: string;
           total_sales: number;
           total_quantity: number;
@@ -268,10 +268,10 @@ export const reportRepository = {
     const [rows, countRows] = await Promise.all([
       prisma.$queryRaw<
         Array<{
-          product_id: number;
+          product_id: string;
           product_name: string;
           product_slug: string;
-          category_id: number;
+          category_id: string;
           category_name: string;
           total_sales: number;
           total_quantity: number;
@@ -452,18 +452,18 @@ export const reportRepository = {
     const [rows, countRows] = await Promise.all([
       prisma.$queryRaw<
         Array<{
-          id: number;
+          id: string;
           created_at: Date;
           type: stock_journal_type;
           quantity: number;
           description: string | null;
-          reference_id: number | null;
-          store_id: number;
+          reference_id: string | null;
+          store_id: string;
           store_name: string;
-          product_id: number;
+          product_id: string;
           product_name: string;
           product_slug: string;
-          category_id: number;
+          category_id: string;
           category_name: string;
         }>
       >(Prisma.sql`

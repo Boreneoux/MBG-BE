@@ -27,8 +27,7 @@ export const userAddressController = {
 
   updateAddress: catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const addressId = parseInt(req.params.id as string);
-    const address = await userAddressService.updateAddress(userId, addressId, req.body);
+    const address = await userAddressService.updateAddress(userId, req.params.id as string, req.body);
 
     res.status(200).json({
       success: true,
@@ -39,8 +38,7 @@ export const userAddressController = {
 
   deleteAddress: catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const addressId = parseInt(req.params.id as string);
-    await userAddressService.deleteAddress(userId, addressId);
+    await userAddressService.deleteAddress(userId, req.params.id as string);
 
     res.status(200).json({
       success: true,
@@ -51,8 +49,7 @@ export const userAddressController = {
 
   setPrimaryAddress: catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const addressId = parseInt(req.params.id as string);
-    const address = await userAddressService.setPrimaryAddress(userId, addressId);
+    const address = await userAddressService.setPrimaryAddress(userId, req.params.id as string);
 
     res.status(200).json({
       success: true,

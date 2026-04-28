@@ -7,8 +7,8 @@ import logger from '../config/logger.config';
 const TERMINAL_STATUSES = ['processing', 'shipped', 'confirmed', 'cancelled'] as const;
 
 export const paymentService = {
-  async createPaymentUrl(orderId: number, userId: number) {
-    const order = await orderRepository.findOrderById(orderId);
+  async createPaymentUrl(orderNumber: string, userId: string) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId) throw new AppError('Access denied', 403);
     if (order.status !== 'waiting_for_payment') {
@@ -16,7 +16,7 @@ export const paymentService = {
     }
 
     // Get order items for Midtrans
-    const orderItems = await orderRepository.findOrderItemsByOrderId(orderId);
+    const orderItems = await orderRepository.findOrderItemsByOrderId(order.id);
     const items = orderItems.map((item) => ({
       id: String(item.product_id),
       name: item.product?.name || 'Product',
@@ -66,7 +66,7 @@ export const paymentService = {
     });
 
     // Persist Midtrans details on the order
-    const updatedOrder = await orderRepository.updatePaymentDetails(orderId, {
+    const updatedOrder = await orderRepository.updatePaymentDetails(order.id, {
       midtrans_order_id: midtransResponse.transaction_id,
       payment_url: midtransResponse.redirect_url,
       midtrans_status: 'pending',
@@ -137,8 +137,8 @@ export const paymentService = {
     return { success: true, message: 'Notification processed' };
   },
 
-  async getPaymentStatus(orderId: number, userId: number) {
-    const order = await orderRepository.findOrderById(orderId);
+  async getPaymentStatus(orderNumber: string, userId: string) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId) throw new AppError('Access denied', 403);
 

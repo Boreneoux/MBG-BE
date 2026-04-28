@@ -4,7 +4,7 @@ import inventoryRepository from '../repositories/inventory.repository';
 import { prisma } from '../config/prisma-client.config';
 
 export const mutationService = {
-    async createMutation(input: { source_store_id: number; destination_store_id: number; product_id: number; quantity: number }) {
+    async createMutation(input: { source_store_id: string; destination_store_id: string; product_id: string; quantity: number }) {
         if (input.source_store_id === input.destination_store_id) {
             throw new AppError('Source and destination stores must be different', 400);
         }

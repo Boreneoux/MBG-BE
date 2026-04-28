@@ -16,9 +16,15 @@ export const categoryRepository = {
         });
     },
 
-    findById(id: number) {
-        return prisma.productCategory.findUnique({
+    findById(id: string) {
+        return prisma.productCategory.findFirst({
             where: { id, deleted_at: null }
+        });
+    },
+
+    findBySlug(slug: string) {
+        return prisma.productCategory.findFirst({
+            where: { slug, deleted_at: null }
         });
     },
 
@@ -32,14 +38,14 @@ export const categoryRepository = {
         return prisma.productCategory.create({ data });
     },
 
-    update(id: number, data: Prisma.ProductCategoryUpdateInput) {
+    update(id: string, data: Prisma.ProductCategoryUpdateInput) {
         return prisma.productCategory.update({
             where: { id },
             data
         });
     },
 
-    softDelete(id: number) {
+    softDelete(id: string) {
         return prisma.productCategory.update({
             where: { id },
             data: { deleted_at: new Date() }

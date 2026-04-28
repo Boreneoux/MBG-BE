@@ -58,22 +58,22 @@ export const adminOrderService = {
     };
   },
 
-  async getAdminOrderDetail(orderId: number, user: JwtPayload) {
-    const order = await orderRepository.findOrderById(orderId);
-    if (!order) throw new AppError('Order not found', 404);
+  async getAdminOrderDetail(orderNumber: string, user: JwtPayload) {
+    const lean = await orderRepository.findOrderByOrderNumber(orderNumber);
+    if (!lean) throw new AppError('Order not found', 404);
 
     if (user.role === 'store_admin') {
       const storeAdmin = await orderRepository.findStoreAdminByUserId(user.id);
-      if (!storeAdmin || storeAdmin.store_id !== order.store_id) {
+      if (!storeAdmin || storeAdmin.store_id !== lean.store_id) {
         throw new AppError('Forbidden: cannot view this order', 403);
       }
     }
 
-    return order;
+    return orderRepository.findOrderById(lean.id);
   },
 
-  async rejectPaymentProof(orderId: number, user: JwtPayload) {
-    const order = await orderRepository.findOrderById(orderId);
+  async rejectPaymentProof(orderNumber: string, user: JwtPayload) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.status !== 'waiting_for_confirmation') {
       throw new AppError('Order is not awaiting confirmation', 400);
@@ -85,13 +85,13 @@ export const adminOrderService = {
       }
     }
 
-    const updatedOrder = await orderRepository.rejectPaymentProof(orderId, prisma);
+    const updatedOrder = await orderRepository.rejectPaymentProof(order.id, prisma);
     logger.info(`Payment proof rejected for order ${order.order_number}`);
     return updatedOrder;
   },
 
-  async approvePayment(orderId: number, user: JwtPayload) {
-    const order = await orderRepository.findOrderById(orderId);
+  async approvePayment(orderNumber: string, user: JwtPayload) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.status !== 'waiting_for_confirmation') {
       throw new AppError('Order is not awaiting confirmation', 400);
@@ -103,13 +103,13 @@ export const adminOrderService = {
       }
     }
 
-    const updatedOrder = await orderRepository.approvePayment(orderId);
+    const updatedOrder = await orderRepository.approvePayment(order.id);
     logger.info(`Order approved for processing: ${order.order_number}`);
     return updatedOrder;
   },
 
-  async shipOrder(orderId: number, user: JwtPayload) {
-    const order = await orderRepository.findOrderById(orderId);
+  async shipOrder(orderNumber: string, user: JwtPayload) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.status !== 'processing') {
       throw new AppError('Order is not ready to ship', 400);
@@ -121,13 +121,15 @@ export const adminOrderService = {
       }
     }
 
-    const updatedOrder = await orderRepository.shipOrder(orderId);
+    const updatedOrder = await orderRepository.shipOrder(order.id);
     logger.info(`Order marked shipped: ${order.order_number}`);
     return updatedOrder;
   },
 
-  async cancelOrderAdmin(orderId: number, user: JwtPayload) {
-    const order = await orderRepository.findOrderById(orderId);
+  async cancelOrderAdmin(orderNumber: string, user: JwtPayload) {
+    const lean = await orderRepository.findOrderByOrderNumber(orderNumber);
+    if (!lean) throw new AppError('Order not found', 404);
+    const order = await orderRepository.findOrderById(lean.id);
     if (!order) throw new AppError('Order not found', 404);
     if (['shipped', 'confirmed', 'cancelled'].includes(order.status)) {
       throw new AppError('Order cannot be canceled after shipment', 400);
@@ -167,7 +169,7 @@ export const adminOrderService = {
         );
       }
 
-      return orderRepository.cancelOrder(orderId, tx);
+      return orderRepository.cancelOrder(order.id, tx);
     });
 
     logger.info(`Admin canceled order ${order.order_number}`);

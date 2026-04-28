@@ -91,7 +91,7 @@ async function main() {
   console.log(`Fetched ${emsifaProvinces.length} provinces from emsifa`);
 
   // provinceDbId[komerce_id] = our DB primary key
-  const provinceDbId = new Map<number, number>();
+  const provinceDbId = new Map<number, string>();
 
   for (const ep of emsifaProvinces) {
     const komerceId = EMSIFA_TO_KOMERCE_PROVINCE[ep.id];
@@ -111,7 +111,7 @@ async function main() {
 
   // --- Cities (regencies) ---
   // cityDbId[emsifa_regency_id_string] = our DB primary key
-  const cityDbId = new Map<string, number>();
+  const cityDbId = new Map<string, string>();
   let totalCities = 0;
 
   for (const ep of emsifaProvinces) {

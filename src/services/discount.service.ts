@@ -20,7 +20,7 @@ export const discountService = {
         };
     },
 
-    async getDiscountById(id: number) {
+    async getDiscountById(id: string) {
         const discount = await discountRepository.findById(id);
         if (!discount) {
             throw new AppError('Discount not found', 404);
@@ -45,10 +45,10 @@ export const discountService = {
             if (user?.role !== 'super_admin') {
                 throw new AppError('Only super admins can create global discounts', 403);
             }
-            
+
             // Get all stores
             const stores = await storeRepository.findAllActive();
-            
+
             if (stores.length === 0) {
                 throw new AppError('No stores found to apply discount', 400);
             }
@@ -65,8 +65,6 @@ export const discountService = {
                 expired_at: data.expired_at ? new Date(data.expired_at) : null,
             }));
 
-            // Since repository pattern usually creates one, let's bypass to prisma if possible, or loop
-            // In Prisma, we could use prisma.discount.createMany, but if we don't have direct access here, we can loop
             const createdDiscounts = [];
             for (const d of discountsData) {
                 createdDiscounts.push(await discountRepository.create({
@@ -80,7 +78,7 @@ export const discountService = {
                     ...(d.product_id && { product: { connect: { id: d.product_id } } })
                 }));
             }
-            return createdDiscounts[0]; // Just return one for the controller response
+            return createdDiscounts[0];
         }
 
         return await discountRepository.create({
@@ -90,12 +88,12 @@ export const discountService = {
             max_discount_value: data.max_discount_value,
             started_at: data.started_at ? new Date(data.started_at) : null,
             expired_at: data.expired_at ? new Date(data.expired_at) : null,
-            store: { connect: { id: data.store_id as number } },
+            store: { connect: { id: data.store_id as string } },
             ...(data.product_id && { product: { connect: { id: data.product_id } } })
         });
     },
 
-    async updateDiscount(id: number, data: UpdateDiscountInput) {
+    async updateDiscount(id: string, data: UpdateDiscountInput) {
         const discount = await discountRepository.findById(id);
         if (!discount) {
             throw new AppError('Discount not found', 404);
@@ -121,7 +119,7 @@ export const discountService = {
         return await discountRepository.update(id, updateData);
     },
 
-    async deleteDiscount(id: number) {
+    async deleteDiscount(id: string) {
         const discount = await discountRepository.findById(id);
         if (!discount) {
             throw new AppError('Discount not found', 404);

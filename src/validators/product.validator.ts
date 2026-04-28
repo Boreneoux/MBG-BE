@@ -6,7 +6,7 @@ export const createProductSchema = z.object({
         description: z.string().optional(),
         price: z.preprocess((val) => Number(val), z.number().min(0)),
         weight: z.preprocess((val) => Number(val), z.number().min(0)),
-        category_id: z.preprocess((val) => Number(val), z.number().int().positive())
+        category_id: z.string().uuid('category_id must be a valid UUID')
     })
 });
 
@@ -16,7 +16,7 @@ export const updateProductSchema = z.object({
         description: z.string().optional(),
         price: z.preprocess((val) => Number(val), z.number().min(0)).optional(),
         weight: z.preprocess((val) => Number(val), z.number().min(0)).optional(),
-        category_id: z.preprocess((val) => Number(val), z.number().int().positive()).optional(),
+        category_id: z.string().uuid('category_id must be a valid UUID').optional(),
         primaryIndex: z.preprocess((val) => Number(val), z.number().int().min(0)).optional(),
         deleteImageIds: z.union([z.array(z.string()), z.string()]).optional()
     })
@@ -27,7 +27,7 @@ export const getProductsQuerySchema = z.object({
         page: z.string().regex(/^\d+$/).optional(),
         limit: z.string().regex(/^\d+$/).optional(),
         search: z.string().optional(),
-        category: z.string().regex(/^\d+$/).optional(),
+        category: z.string().optional(),
         sort: z.enum(['price_asc', 'price_desc', 'newest']).optional()
     })
 });

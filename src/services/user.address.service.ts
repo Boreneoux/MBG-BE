@@ -3,18 +3,18 @@ import { AppError } from '../utils/AppError';
 import { CreateAddressInput, UpdateAddressInput } from '../types/user.address';
 import logger from '../config/logger.config';
 
-async function findAddressOrFail(addressId: number, userId: number) {
+async function findAddressOrFail(addressId: string, userId: string) {
   const address = await userAddressRepository.findByIdAndUserId(addressId, userId);
   if (!address) throw new AppError('Address not found', 404);
   return address;
 }
 
 export const userAddressService = {
-  getAddresses(userId: number) {
+  getAddresses(userId: string) {
     return userAddressRepository.findAllByUserId(userId);
   },
 
-  async createAddress(userId: number, data: CreateAddressInput) {
+  async createAddress(userId: string, data: CreateAddressInput) {
     const count = await userAddressRepository.countByUserId(userId);
     const isFirst = count === 0;
     const isPrimary = isFirst || data.is_primary === true;
@@ -42,7 +42,7 @@ export const userAddressService = {
     return address;
   },
 
-  async updateAddress(userId: number, addressId: number, data: UpdateAddressInput) {
+  async updateAddress(userId: string, addressId: string, data: UpdateAddressInput) {
     await findAddressOrFail(addressId, userId);
 
     if (data.is_primary === true) {
@@ -65,7 +65,7 @@ export const userAddressService = {
     return userAddressRepository.update(addressId, updatePayload);
   },
 
-  async deleteAddress(userId: number, addressId: number) {
+  async deleteAddress(userId: string, addressId: string) {
     const existing = await findAddressOrFail(addressId, userId);
 
     await userAddressRepository.softDelete(addressId);
@@ -77,7 +77,7 @@ export const userAddressService = {
     logger.info(`Address ${addressId} deleted for user ${userId}`);
   },
 
-  async setPrimaryAddress(userId: number, addressId: number) {
+  async setPrimaryAddress(userId: string, addressId: string) {
     const existing = await findAddressOrFail(addressId, userId);
 
     if (existing.is_primary) {

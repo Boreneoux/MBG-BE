@@ -28,7 +28,7 @@ function buildPaymentDeadline(): Date {
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const orderService = {
-  async createOrder(userId: number, input: CreateOrderInput) {
+  async createOrder(userId: string, input: CreateOrderInput) {
     const {
       address_id,
       payment_method,
@@ -144,11 +144,11 @@ export const orderService = {
     const discounts = await orderRepository.findActiveDiscountsForStore(selectedStore.id, now);
 
     type LineItem = {
-      product_id: number;
+      product_id: string;
       quantity: number;
       unit_price: Prisma.Decimal;
       discount_amount: Prisma.Decimal;
-      discount_id?: number;
+      discount_id?: string;
       is_bogo_item: boolean;
       total_price: Prisma.Decimal;
     };
@@ -160,7 +160,7 @@ export const orderService = {
     for (const item of itemsToProcess) {
       const unitPrice = item.product.price;
       let discountAmount = new Prisma.Decimal(0);
-      let discountId: number | undefined;
+      let discountId: string | undefined;
       let is_bogo_item = false;
 
       // Find the best applicable discount for this product
@@ -214,9 +214,9 @@ export const orderService = {
     }
 
     // 7. Resolve voucher
-    let voucherId: number | undefined;
+    let voucherId: string | undefined;
     let voucherDiscount = new Prisma.Decimal(0);
-    let userVoucherId: number | undefined;
+    let userVoucherId: string | undefined;
 
     if (voucher_code) {
       const voucher = await orderRepository.findVoucherByCode(voucher_code);
@@ -268,7 +268,7 @@ export const orderService = {
     // per attempt, so this is purely a safety net.
     const cartId = cart.id;
     const storeId = selectedStore.id;
-    let createdOrderId: number | undefined;
+    let createdOrderId: string | undefined;
     let createdOrderNumber: string | undefined;
 
     const MAX_ORDER_RETRIES = 3;
@@ -340,7 +340,7 @@ export const orderService = {
           const remainingItemsCount = await tx.cartItem.count({
             where: { cart_id: cartId }
           });
-          
+
           if (remainingItemsCount === 0) {
             await orderRepository.deleteCart(cartId, tx);
           }
@@ -372,7 +372,7 @@ export const orderService = {
   },
 
   async getUserOrders(
-    userId: number,
+    userId: string,
     page: number,
     limit: number,
     search?: string
@@ -393,8 +393,8 @@ export const orderService = {
     };
   },
 
-  async getOrderForUser(userId: number, orderId: number) {
-    const order = await orderRepository.findOrderById(orderId);
+  async getOrderForUser(userId: string, orderNumber: string) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId) throw new AppError('Forbidden', 403);
     return order;
@@ -414,21 +414,21 @@ export const orderService = {
     return ordersToCancel.length;
   },
 
-  async cancelOrder(userId: number, orderId: number) {
-    const order = await orderRepository.findOrderById(orderId);
+  async cancelOrder(userId: string, orderNumber: string) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId) throw new AppError('Forbidden: cannot cancel this order', 403);
     if (order.status !== 'waiting_for_payment') {
       throw new AppError('Order can only be cancelled before payment upload', 400);
     }
 
-    const cancelled = await orderRepository.cancelOrder(orderId);
+    const cancelled = await orderRepository.cancelOrder(order.id);
     logger.info(`Order cancelled by user ${userId}: ${order.order_number}`);
     return cancelled;
   },
 
 
-  async confirmPayment(orderId: number, gatewayReference?: string) {
+  async confirmPayment(orderId: string, gatewayReference?: string) {
     const order = await orderRepository.findOrderById(orderId);
     if (!order) throw new AppError('Order not found', 404);
 
@@ -441,15 +441,15 @@ export const orderService = {
     return updatedOrder;
   },
 
-  async confirmReceipt(orderId: number, userId: number) {
-    const order = await orderRepository.findOrderById(orderId);
+  async confirmReceipt(userId: string, orderNumber: string) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId) throw new AppError('Forbidden: cannot confirm this order', 403);
     if (order.status !== 'shipped') {
       throw new AppError('Order is not shipped yet', 400);
     }
 
-    const updatedOrder = await orderRepository.confirmReceipt(orderId);
+    const updatedOrder = await orderRepository.confirmReceipt(order.id);
     logger.info(`Order receipt confirmed by customer: ${order.order_number}`);
     return updatedOrder;
   },

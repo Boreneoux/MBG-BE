@@ -13,7 +13,7 @@ const uploadImages = multerUpload('products', 'PRODUCT', ['jpg', 'jpeg', 'png', 
 
 // Public accessible endpoints (Users & Store Admins)
 router.get('/', validate(getProductsQuerySchema), productController.getProducts);
-router.get('/:id', productController.getProductById);
+router.get('/:slug', productController.getProductBySlug);
 
 // Protected endpoints
 router.use(authenticate);
@@ -28,7 +28,7 @@ router.post(
 );
 
 router.put(
-    '/:id',
+    '/:slug',
     authorize(user_role.super_admin),
     uploadImages,
     validate(updateProductSchema),
@@ -36,7 +36,7 @@ router.put(
 );
 
 router.delete(
-    '/:id',
+    '/:slug',
     authorize(user_role.super_admin),
     productController.deleteProduct
 );

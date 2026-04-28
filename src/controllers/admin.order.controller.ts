@@ -9,7 +9,7 @@ export const adminOrderController = {
       page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
       sort: (req.query.sort as string) === 'asc' ? 'asc' : 'desc',
-      warehouse_id: req.query.warehouse_id ? parseInt(req.query.warehouse_id as string, 10) : undefined,
+      warehouse_id: req.query.warehouse_id as string | undefined,
       order_number: req.query.order_number as string | undefined,
       status: req.query.status as any,
       from: req.query.from as string | undefined,
@@ -26,8 +26,7 @@ export const adminOrderController = {
   }),
 
   getOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.getAdminOrderDetail(orderId, req.user!);
+    const order = await adminOrderService.getAdminOrderDetail(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,
@@ -36,8 +35,7 @@ export const adminOrderController = {
   }),
 
   confirmPaymentProof: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.approvePayment(orderId, req.user!);
+    const order = await adminOrderService.approvePayment(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,
@@ -47,8 +45,7 @@ export const adminOrderController = {
   }),
 
   rejectPaymentProof: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.rejectPaymentProof(orderId, req.user!);
+    const order = await adminOrderService.rejectPaymentProof(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,
@@ -58,8 +55,7 @@ export const adminOrderController = {
   }),
 
   shipOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.shipOrder(orderId, req.user!);
+    const order = await adminOrderService.shipOrder(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,
@@ -69,8 +65,7 @@ export const adminOrderController = {
   }),
 
   cancelOrder: catchAsync(async (req: Request, res: Response) => {
-    const orderId = Number(req.params.id);
-    const order = await adminOrderService.cancelOrderAdmin(orderId, req.user!);
+    const order = await adminOrderService.cancelOrderAdmin(req.params.orderNumber as string, req.user!);
 
     res.json({
       success: true,

@@ -31,8 +31,8 @@ const createMeta = (total: number, page: number, limit: number) => ({
 
 const resolveStoreScope = async (
   user: JwtPayload,
-  requestedStoreId?: number
-): Promise<number | undefined> => {
+  requestedStoreId?: string
+): Promise<string | undefined> => {
   if (user.role === 'store_admin') {
     const storeAdmin = await reportRepository.findStoreAdminByUserId(user.id);
     if (!storeAdmin) {

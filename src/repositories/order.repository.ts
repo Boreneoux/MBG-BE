@@ -9,7 +9,7 @@ type Db = Tx | typeof prisma;
 export const orderRepository = {
   // ── Cart ────────────────────────────────────────────────────────────────────
 
-  findCartWithItems(userId: number, db: Db = prisma) {
+  findCartWithItems(userId: string, db: Db = prisma) {
     return db.cart.findUnique({
       where: { user_id: userId },
       include: {
@@ -35,7 +35,7 @@ export const orderRepository = {
 
   // ── Address ─────────────────────────────────────────────────────────────────
 
-  findAddressById(addressId: number, userId: number, db: Db = prisma) {
+  findAddressById(addressId: string, userId: string, db: Db = prisma) {
     return db.userAddress.findFirst({
       where: { id: addressId, user_id: userId, deleted_at: null },
       select: {
@@ -66,43 +66,34 @@ export const orderRepository = {
 
   // ── Inventory ───────────────────────────────────────────────────────────────
 
-  /**
-   * Returns total global stock per product in a single query.
-   * Result is a Map<productId, totalStock>.
-   */
   async findGlobalStockByProducts(
-    productIds: number[],
+    productIds: string[],
     db: Db = prisma
-  ): Promise<Map<number, number>> {
+  ): Promise<Map<string, number>> {
     const rows = await db.storeInventory.groupBy({
       by: ['product_id'],
       where: { product_id: { in: productIds }, deleted_at: null },
       _sum: { stock: true }
     });
-    const map = new Map<number, number>();
+    const map = new Map<string, number>();
     for (const r of rows) {
       map.set(r.product_id, r._sum.stock ?? 0);
     }
     return map;
   },
 
-  /** Returns stock for a specific product in a specific store */
-  findStoreInventory(storeId: number, productId: number, db: Db = prisma) {
+  findStoreInventory(storeId: string, productId: string, db: Db = prisma) {
     return db.storeInventory.findUnique({
       where: { store_id_product_id: { store_id: storeId, product_id: productId } },
       select: { id: true, stock: true }
     });
   },
 
-  /**
-   * Bulk-fetch inventories for a set of stores × products in one query.
-   * Returns a Map keyed by `"storeId:productId"` for O(1) lookup.
-   */
   async findInventoriesBulk(
-    storeIds: number[],
-    productIds: number[],
+    storeIds: string[],
+    productIds: string[],
     db: Db = prisma
-  ): Promise<Map<string, { id: number; stock: number }>> {
+  ): Promise<Map<string, { id: string; stock: number }>> {
     const rows = await db.storeInventory.findMany({
       where: {
         store_id: { in: storeIds },
@@ -111,28 +102,28 @@ export const orderRepository = {
       },
       select: { id: true, store_id: true, product_id: true, stock: true }
     });
-    const map = new Map<string, { id: number; stock: number }>();
+    const map = new Map<string, { id: string; stock: number }>();
     for (const r of rows) {
       map.set(`${r.store_id}:${r.product_id}`, { id: r.id, stock: r.stock });
     }
     return map;
   },
 
-  decrementStock(inventoryId: number, quantity: number, db: Db = prisma) {
+  decrementStock(inventoryId: string, quantity: number, db: Db = prisma) {
     return db.storeInventory.update({
       where: { id: inventoryId },
       data: { stock: { decrement: quantity } }
     });
   },
 
-  incrementStock(inventoryId: number, quantity: number, db: Db = prisma) {
+  incrementStock(inventoryId: string, quantity: number, db: Db = prisma) {
     return db.storeInventory.update({
       where: { id: inventoryId },
       data: { stock: { increment: quantity } }
     });
   },
 
-  findStoreAdminByUserId(userId: number, db: Db = prisma) {
+  findStoreAdminByUserId(userId: string, db: Db = prisma) {
     return db.storeAdmin.findFirst({
       where: { user_id: userId, deleted_at: null },
       select: { store_id: true }
@@ -141,11 +132,11 @@ export const orderRepository = {
 
   createStockJournal(
     data: {
-      store_inventory_id: number;
+      store_inventory_id: string;
       quantity: number;
       type: 'order_deduction' | 'order_cancellation_return';
       description?: string;
-      reference_id?: number;
+      reference_id?: string;
     },
     db: Db = prisma
   ) {
@@ -160,13 +151,13 @@ export const orderRepository = {
     });
   },
 
-  findUserVoucher(userId: number, voucherId: number, db: Db = prisma) {
+  findUserVoucher(userId: string, voucherId: string, db: Db = prisma) {
     return db.userVoucher.findFirst({
       where: { user_id: userId, voucher_id: voucherId, is_used: false, deleted_at: null }
     });
   },
 
-  markVoucherUsed(userVoucherId: number, orderId: number, db: Db = prisma) {
+  markVoucherUsed(userVoucherId: string, orderId: string, db: Db = prisma) {
     return db.userVoucher.update({
       where: { id: userVoucherId },
       data: { is_used: true, used_at: new Date(), order_id: orderId }
@@ -175,7 +166,7 @@ export const orderRepository = {
 
   // ── Discount ─────────────────────────────────────────────────────────────────
 
-  findActiveDiscountsForStore(storeId: number, now: Date, db: Db = prisma) {
+  findActiveDiscountsForStore(storeId: string, now: Date, db: Db = prisma) {
     return db.discount.findMany({
       where: {
         store_id: storeId,
@@ -191,15 +182,15 @@ export const orderRepository = {
 
   createOrder(
     data: {
-      user_id: number;
-      store_id: number;
+      user_id: string;
+      store_id: string;
       order_number: string;
       total_price: Prisma.Decimal | number;
       total_discount: Prisma.Decimal | number;
       shipping_cost: Prisma.Decimal | number;
       shipping_method?: string;
-      address_id: number;
-      voucher_id?: number;
+      address_id: string;
+      voucher_id?: string;
       payment_method: payment_method;
       payment_deadline: Date;
     },
@@ -210,12 +201,12 @@ export const orderRepository = {
 
   createOrderItem(
     data: {
-      order_id: number;
-      product_id: number;
+      order_id: string;
+      product_id: string;
       quantity: number;
       price: Prisma.Decimal | number;
       discount_amount: Prisma.Decimal | number;
-      discount_id?: number;
+      discount_id?: string;
       is_bogo_item: boolean;
       total_price: Prisma.Decimal | number;
     },
@@ -224,7 +215,7 @@ export const orderRepository = {
     return db.orderItem.create({ data });
   },
 
-  findOrderById(orderId: number, db: Db = prisma) {
+  findOrderById(orderId: string, db: Db = prisma) {
     return db.order.findUnique({
       where: { id: orderId },
       include: {
@@ -258,7 +249,7 @@ export const orderRepository = {
 
   findUserOrders(
     params: {
-      userId: number;
+      userId: string;
       search?: string;
       skip: number;
       take: number;
@@ -287,7 +278,7 @@ export const orderRepository = {
   },
 
   countUserOrders(
-    params: { userId: number; search?: string },
+    params: { userId: string; search?: string },
     db: Db = prisma
   ) {
     const where: Prisma.OrderWhereInput = {
@@ -331,22 +322,17 @@ export const orderRepository = {
     return db.order.count({ where });
   },
 
-  rejectPaymentProof(orderId: number, db: Db = prisma) {
+  rejectPaymentProof(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'waiting_for_payment'
-      }
+      data: { status: 'waiting_for_payment' }
     });
   },
 
-  cancelOrder(orderId: number, db: Db = prisma) {
+  cancelOrder(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'cancelled',
-        cancelled_at: new Date()
-      }
+      data: { status: 'cancelled', cancelled_at: new Date() }
     });
   },
 
@@ -380,57 +366,47 @@ export const orderRepository = {
     });
   },
 
-  confirmPayment(orderId: number, db: Db = prisma) {
+  confirmPayment(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'waiting_for_confirmation'
-      }
+      data: { status: 'waiting_for_confirmation' }
     });
   },
 
-  approvePayment(orderId: number, db: Db = prisma) {
+  approvePayment(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'processing'
-      }
+      data: { status: 'processing' }
     });
   },
 
-  shipOrder(orderId: number, db: Db = prisma) {
+  shipOrder(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'shipped',
-        shipped_at: new Date()
-      }
+      data: { status: 'shipped', shipped_at: new Date() }
     });
   },
 
-  confirmReceipt(orderId: number, db: Db = prisma) {
+  confirmReceipt(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
-      data: {
-        status: 'confirmed',
-        confirmed_at: new Date()
-      }
+      data: { status: 'confirmed', confirmed_at: new Date() }
     });
   },
 
   // ── Cart cleanup ─────────────────────────────────────────────────────────────
 
-  deleteCartItems(cartId: number, db: Db = prisma) {
+  deleteCartItems(cartId: string, db: Db = prisma) {
     return db.cartItem.deleteMany({ where: { cart_id: cartId } });
   },
 
-  deleteCart(cartId: number, db: Db = prisma) {
+  deleteCart(cartId: string, db: Db = prisma) {
     return db.cart.delete({ where: { id: cartId } });
   },
 
   // ── User ─────────────────────────────────────────────────────────────────────
 
-  findUserById(userId: number, db: Db = prisma) {
+  findUserById(userId: string, db: Db = prisma) {
     return db.user.findUnique({
       where: { id: userId },
       select: { id: true, is_verified: true, first_name: true, last_name: true, email: true, phone: true }
@@ -445,7 +421,7 @@ export const orderRepository = {
     });
   },
 
-  findOrderItemsByOrderId(orderId: number, db: Db = prisma) {
+  findOrderItemsByOrderId(orderId: string, db: Db = prisma) {
     return db.orderItem.findMany({
       where: { order_id: orderId },
       include: { product: { select: { name: true } } }
@@ -453,7 +429,7 @@ export const orderRepository = {
   },
 
   updatePaymentDetails(
-    orderId: number,
+    orderId: string,
     data: {
       midtrans_order_id?: string;
       midtrans_transaction_id?: string;

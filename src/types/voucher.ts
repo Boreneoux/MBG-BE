@@ -7,7 +7,7 @@ export interface CreateVoucherInput {
     max_discount_amount?: number | null;
     min_purchase_amount?: number | null;
     usage_type: voucher_type;
-    product_id?: number | null;
+    product_id?: string | null;
     expired_at: Date | string;
 }
 
@@ -20,6 +20,6 @@ export interface GetVouchersQuery {
 export interface ApplyVoucherInput {
     code: string;
     cart_total: number;
-    store_id: number;
-    product_ids?: number[];
+    store_id: string;
+    product_ids?: string[];
 }

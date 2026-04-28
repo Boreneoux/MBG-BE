@@ -10,7 +10,7 @@ export const authRepository = {
   },
 
   findUserById<S extends Prisma.UserSelect>(
-    id: number,
+    id: string,
     select: S,
     db: Db = prisma
   ) {
@@ -31,7 +31,7 @@ export const authRepository = {
     return db.user.create({ data });
   },
 
-  updateUser(id: number, data: Prisma.UserUpdateInput, db: Db = prisma) {
+  updateUser(id: string, data: Prisma.UserUpdateInput, db: Db = prisma) {
     return db.user.update({ where: { id }, data });
   },
 
@@ -68,7 +68,7 @@ export const authRepository = {
 
   createOAuthAccount(
     data: {
-      user_id: number;
+      user_id: string;
       provider: auth_provider;
       provider_user_id: string;
       provider_email: string;
@@ -83,7 +83,7 @@ export const authRepository = {
   },
 
   createVerificationToken(
-    userId: number,
+    userId: string,
     hash: string,
     type: string,
     expiresAt: Date,
@@ -94,14 +94,14 @@ export const authRepository = {
     });
   },
 
-  markTokenUsed(tokenId: number, db: Db = prisma) {
+  markTokenUsed(tokenId: string, db: Db = prisma) {
     return db.verificationToken.update({
       where: { id: tokenId },
       data: { is_used: true }
     });
   },
 
-  invalidateUserTokens(userId: number, type: string, db: Db = prisma) {
+  invalidateUserTokens(userId: string, type: string, db: Db = prisma) {
     return db.verificationToken.updateMany({
       where: { user_id: userId, type, is_used: false },
       data: { is_used: true }
@@ -109,7 +109,7 @@ export const authRepository = {
   },
 
   createRefreshToken(
-    userId: number,
+    userId: string,
     hash: string,
     expiresAt: Date,
     db: Db = prisma
@@ -123,11 +123,11 @@ export const authRepository = {
     return db.refreshToken.findUnique({ where: { token: hash } });
   },
 
-  deleteRefreshToken(id: number, db: Db = prisma) {
+  deleteRefreshToken(id: string, db: Db = prisma) {
     return db.refreshToken.delete({ where: { id } });
   },
 
-  deleteUserRefreshTokens(userId: number, db: Db = prisma) {
+  deleteUserRefreshTokens(userId: string, db: Db = prisma) {
     return db.refreshToken.deleteMany({ where: { user_id: userId } });
   },
 
@@ -141,7 +141,7 @@ export const authRepository = {
     });
   },
 
-  assignVoucherToUser(userId: number, voucherId: number, db: Db = prisma) {
+  assignVoucherToUser(userId: string, voucherId: string, db: Db = prisma) {
     return db.userVoucher.create({
       data: { user_id: userId, voucher_id: voucherId }
     });

@@ -2,6 +2,7 @@ import { AppError } from '../utils/AppError';
 import storeRepository from '../repositories/store.repository';
 import { haversineKm } from '../helpers/geo.helper';
 import { CreateStoreInput, UpdateStoreInput } from '../types/store';
+import { generateUniqueSlug } from '../utils/slug.helper';
 
 export const storeService = {
   async findNearest(lat?: number, lng?: number) {
@@ -49,32 +50,53 @@ export const storeService = {
   },
 
   async create(data: CreateStoreInput) {
-    const store = await storeRepository.create(data);
+    const slug = await generateUniqueSlug(data.name, (s) =>
+      storeRepository.findBySlug(s).then(Boolean)
+    );
+    const store = await storeRepository.create({ ...data, slug });
     return { store };
   },
 
-  async getById(id: number) {
+  async getById(id: string) {
     const store = await storeRepository.findByIdWithDetails(id);
     if (!store) throw new AppError('Store not found', 404);
     return { store };
   },
 
-  async update(id: number, data: UpdateStoreInput) {
-    const existing = await storeRepository.findByIdWithDetails(id);
-    if (!existing) throw new AppError('Store not found', 404);
-    const store = await storeRepository.update(id, data);
+  async getBySlug(slug: string) {
+    const lean = await storeRepository.findBySlug(slug);
+    if (!lean) throw new AppError('Store not found', 404);
+    const store = await storeRepository.findByIdWithDetails(lean.id);
+    if (!store) throw new AppError('Store not found', 404);
     return { store };
   },
 
-  async delete(id: number) {
-    const existing = await storeRepository.findByIdWithDetails(id);
-    if (!existing) throw new AppError('Store not found', 404);
-    await storeRepository.softDelete(id);
+  async update(slug: string, data: UpdateStoreInput) {
+    const lean = await storeRepository.findBySlug(slug);
+    if (!lean) throw new AppError('Store not found', 404);
+    const id = lean.id;
+
+    let newSlug: string | undefined;
+    if (data.name && data.name !== lean.name) {
+      newSlug = await generateUniqueSlug(data.name, (s) =>
+        storeRepository.findBySlug(s).then(Boolean)
+      );
+    }
+
+    const store = await storeRepository.update(id, { ...data, ...(newSlug && { slug: newSlug }) });
+    return { store };
   },
 
-  async unassignAdmin(storeId: number, userId: number) {
-    const store = await storeRepository.findByIdWithDetails(storeId);
-    if (!store) throw new AppError('Store not found', 404);
+  async delete(slug: string) {
+    const lean = await storeRepository.findBySlug(slug);
+    if (!lean) throw new AppError('Store not found', 404);
+    await storeRepository.softDelete(lean.id);
+  },
+
+  async unassignAdmin(storeSlug: string, userId: string) {
+    const lean = await storeRepository.findBySlug(storeSlug);
+    if (!lean) throw new AppError('Store not found', 404);
+    const storeId = lean.id;
 
     const user = await storeRepository.findUserById(userId);
     if (!user) throw new AppError('User not found', 404);
@@ -85,9 +107,10 @@ export const storeService = {
     await storeRepository.removeAdmin(storeId, userId);
   },
 
-  async assignAdmin(storeId: number, userId: number) {
-    const store = await storeRepository.findByIdWithDetails(storeId);
-    if (!store) throw new AppError('Store not found', 404);
+  async assignAdmin(storeSlug: string, userId: string) {
+    const lean = await storeRepository.findBySlug(storeSlug);
+    if (!lean) throw new AppError('Store not found', 404);
+    const storeId = lean.id;
 
     const user = await storeRepository.findUserById(userId);
     if (!user) throw new AppError('User not found', 404);
@@ -96,12 +119,8 @@ export const storeService = {
       throw new AppError('User does not have store_admin role', 400);
     }
 
-    const existing = await storeRepository.findAdminByStoreAndUser(
-      storeId,
-      userId
-    );
-    if (existing)
-      throw new AppError('User is already assigned to this store', 409);
+    const existing = await storeRepository.findAdminByStoreAndUser(storeId, userId);
+    if (existing) throw new AppError('User is already assigned to this store', 409);
 
     const storeAdmin = await storeRepository.createAdmin(storeId, userId);
     return { storeAdmin };

@@ -23,16 +23,16 @@ export const nearestStoreQuerySchema = z.object({
     )
 });
 
-const storeIdParam = z.object({
-  id: z.coerce.number().int().positive('Store ID must be a positive integer')
+const storeSlugParam = z.object({
+  slug: z.string().min(1, 'Store slug is required')
 });
 
 const storeBodyFields = {
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
   address: z.string().trim().min(1, 'Address is required'),
-  district_id: z.number().int().positive('district_id must be a positive integer'),
-  city_id: z.number().int().positive('city_id must be a positive integer'),
-  province_id: z.number().int().positive('province_id must be a positive integer'),
+  district_id: z.string().uuid('district_id must be a valid UUID'),
+  city_id: z.string().uuid('city_id must be a valid UUID'),
+  province_id: z.string().uuid('province_id must be a valid UUID'),
   postal_code: z.string().trim().optional(),
   latitude: z.number().min(-90, 'Latitude must be >= -90').max(90, 'Latitude must be <= 90'),
   longitude: z.number().min(-180, 'Longitude must be >= -180').max(180, 'Longitude must be <= 180'),
@@ -44,7 +44,7 @@ export const createStoreSchema = z.object({
 });
 
 export const updateStoreSchema = z.object({
-  params: storeIdParam,
+  params: storeSlugParam,
   body: z
     .object({
       name: storeBodyFields.name.optional(),
@@ -64,19 +64,19 @@ export const updateStoreSchema = z.object({
 });
 
 export const storeParamsSchema = z.object({
-  params: storeIdParam
+  params: storeSlugParam
 });
 
 export const assignAdminSchema = z.object({
-  params: storeIdParam,
+  params: storeSlugParam,
   body: z.object({
-    user_id: z.number().int().positive('user_id must be a positive integer')
+    user_id: z.string().uuid('user_id must be a valid UUID')
   })
 });
 
 export const unassignAdminSchema = z.object({
   params: z.object({
-    id: z.coerce.number().int().positive('Store ID must be a positive integer'),
-    userId: z.coerce.number().int().positive('User ID must be a positive integer')
+    slug: z.string().min(1, 'Store slug is required'),
+    userId: z.string().uuid('User ID must be a valid UUID')
   })
 });

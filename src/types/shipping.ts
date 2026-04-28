@@ -1,7 +1,7 @@
 export interface CalculateInput {
-  store_id: number;
-  address_id: number;
-  user_id: number;
+  store_id: string;
+  address_id: string;
+  user_id: string;
   weight: number; // grams
   courier: string; // jne | tiki | pos
 }
