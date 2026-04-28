@@ -22,6 +22,7 @@ export const createVoucherSchema = z.object({
         min_purchase_amount: z.number().min(0).optional().nullable(),
         usage_type: voucherTypeEnum,
         product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
+        reward_duration_days: z.number().int().min(1).optional().nullable(),
         expired_at: z.string().datetime()
     }).refine((data) => {
         if (data.usage_type === 'product_specific') {
@@ -43,6 +44,7 @@ export const updateVoucherSchema = z.object({
         min_purchase_amount: z.number().min(0).optional().nullable(),
         usage_type: voucherTypeEnum.optional(),
         product_id: z.string().uuid('product_id must be a valid UUID').optional().nullable(),
+        reward_duration_days: z.number().int().min(1).optional().nullable(),
         expired_at: z.string().datetime().optional()
     })
 });

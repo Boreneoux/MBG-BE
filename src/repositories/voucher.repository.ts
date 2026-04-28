@@ -56,6 +56,44 @@ export const voucherRepository = {
         });
     },
 
+    findByUser(userId: string) {
+        return prisma.userVoucher.findMany({
+            where: { user_id: userId, deleted_at: null },
+            include: {
+                voucher: { include: { product: true } }
+            },
+            orderBy: { created_at: 'desc' }
+        });
+    },
+
+    swapReferralVoucher(id: string) {
+        return prisma.$transaction(async (tx) => {
+            await tx.voucher.updateMany({
+                where: { is_referral: true, deleted_at: null },
+                data: { is_referral: false }
+            });
+            return tx.voucher.update({
+                where: { id },
+                data: { is_referral: true },
+                include: { product: true }
+            });
+        });
+    },
+
+    swapReferrerRewardVoucher(id: string) {
+        return prisma.$transaction(async (tx) => {
+            await tx.voucher.updateMany({
+                where: { is_referrer_reward: true, deleted_at: null },
+                data: { is_referrer_reward: false }
+            });
+            return tx.voucher.update({
+                where: { id },
+                data: { is_referrer_reward: true },
+                include: { product: true }
+            });
+        });
+    },
+
     checkUserUsage(userId: string, voucherId: string) {
         return prisma.userVoucher.findFirst({
             where: { user_id: userId, voucher_id: voucherId }

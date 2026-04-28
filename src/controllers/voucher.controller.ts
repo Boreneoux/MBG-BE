@@ -58,6 +58,37 @@ export const voucherController = {
         });
     }),
 
+    getUserVouchers: catchAsync(async (req: Request, res: Response) => {
+        const userId = req.user!.id;
+        const vouchers = await voucherService.getUserVouchers(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'User vouchers retrieved successfully',
+            data: vouchers
+        });
+    }),
+
+    setReferrerRewardVoucher: catchAsync(async (req: Request, res: Response) => {
+        const voucher = await voucherService.setAsReferrerRewardVoucher(req.params.id as string);
+
+        res.status(200).json({
+            success: true,
+            message: 'Referrer reward voucher updated successfully',
+            data: voucher
+        });
+    }),
+
+    setReferralVoucher: catchAsync(async (req: Request, res: Response) => {
+        const voucher = await voucherService.setAsReferralVoucher(req.params.id as string);
+
+        res.status(200).json({
+            success: true,
+            message: 'Referral voucher updated successfully',
+            data: voucher
+        });
+    }),
+
     applyVoucher: catchAsync(async (req: Request, res: Response) => {
         const userId = req.user!.id;
         const result = await voucherService.applyVoucher(userId, req.body);
