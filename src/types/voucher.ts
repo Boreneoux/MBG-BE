@@ -8,6 +8,7 @@ export interface CreateVoucherInput {
     min_purchase_amount?: number | null;
     usage_type: voucher_type;
     product_id?: string | null;
+    reward_duration_days?: number | null;
     expired_at: Date | string;
 }
 

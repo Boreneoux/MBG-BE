@@ -141,9 +141,28 @@ export const authRepository = {
     });
   },
 
-  assignVoucherToUser(userId: string, voucherId: string, db: Db = prisma) {
+  findActiveReferrerRewardVoucher(db: Db = prisma) {
+    return db.voucher.findFirst({
+      where: {
+        is_referrer_reward: true,
+        deleted_at: null,
+        expired_at: { gt: new Date() }
+      }
+    });
+  },
+
+  assignVoucherToUser(
+    userId: string,
+    voucherId: string,
+    expiredAt?: Date,
+    db: Db = prisma
+  ) {
     return db.userVoucher.create({
-      data: { user_id: userId, voucher_id: voucherId }
+      data: {
+        user_id: userId,
+        voucher_id: voucherId,
+        ...(expiredAt && { expired_at: expiredAt })
+      }
     });
   }
 };

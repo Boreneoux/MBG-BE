@@ -403,6 +403,8 @@ model Voucher {
   usage_type          voucher_type
   product_id          String?
   is_referral         Boolean       @default(false)
+  is_referrer_reward  Boolean       @default(false)
+  reward_duration_days Int?
   expired_at          DateTime
   created_at          DateTime      @default(now())
   updated_at          DateTime      @default(now())
@@ -421,6 +423,7 @@ model UserVoucher {
   voucher_id String
   is_used    Boolean   @default(false)
   used_at    DateTime?
+  expired_at DateTime?
   order_id   String?
   created_at DateTime  @default(now())
   deleted_at DateTime?

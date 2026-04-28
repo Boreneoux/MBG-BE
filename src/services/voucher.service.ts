@@ -74,6 +74,32 @@ export const voucherService = {
         return await voucherRepository.update(id, updateData);
     },
 
+    async getUserVouchers(userId: string) {
+        return voucherRepository.findByUser(userId);
+    },
+
+    async setAsReferrerRewardVoucher(id: string) {
+        const voucher = await voucherRepository.findById(id);
+        if (!voucher) {
+            throw new AppError('Voucher not found', 404);
+        }
+        if (new Date(voucher.expired_at) < new Date()) {
+            throw new AppError('Cannot set an expired voucher as the referrer reward voucher', 400);
+        }
+        return voucherRepository.swapReferrerRewardVoucher(id);
+    },
+
+    async setAsReferralVoucher(id: string) {
+        const voucher = await voucherRepository.findById(id);
+        if (!voucher) {
+            throw new AppError('Voucher not found', 404);
+        }
+        if (new Date(voucher.expired_at) < new Date()) {
+            throw new AppError('Cannot set an expired voucher as the referral voucher', 400);
+        }
+        return voucherRepository.swapReferralVoucher(id);
+    },
+
     async deleteVoucher(id: string) {
         const voucher = await voucherRepository.findById(id);
         if (!voucher) {

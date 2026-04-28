@@ -72,15 +72,49 @@ async function validateToken(rawToken: string, expectedType: string) {
 }
 
 async function issueTokenPair(userId: string, email: string, role: string) {
-  const { accessToken, refreshToken } = buildTokenPair(userId, email, role as any);
-  const expiresAt = new Date(Date.now() + parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY));
-  await authRepository.createRefreshToken(userId, refreshToken.hashed, expiresAt);
+  const { accessToken, refreshToken } = buildTokenPair(
+    userId,
+    email,
+    role as any
+  );
+  const expiresAt = new Date(
+    Date.now() + parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY)
+  );
+  await authRepository.createRefreshToken(
+    userId,
+    refreshToken.hashed,
+    expiresAt
+  );
   return { accessToken, rawRefreshToken: refreshToken.raw };
+}
+
+function computeVoucherExpiry(
+  rewardDurationDays?: number | null
+): Date | undefined {
+  if (!rewardDurationDays) return undefined;
+  return new Date(Date.now() + rewardDurationDays * 24 * 60 * 60 * 1000);
 }
 
 async function applyReferralVoucher(userId: string, tx: Tx): Promise<void> {
   const voucher = await authRepository.findActiveReferralVoucher(tx);
-  if (voucher) await authRepository.assignVoucherToUser(userId, voucher.id, tx);
+  if (!voucher) return;
+  const expiredAt = computeVoucherExpiry(voucher.reward_duration_days);
+  await authRepository.assignVoucherToUser(userId, voucher.id, expiredAt, tx);
+}
+
+async function applyReferrerRewardVoucher(
+  referrerId: string,
+  tx: Tx
+): Promise<void> {
+  const voucher = await authRepository.findActiveReferrerRewardVoucher(tx);
+  if (!voucher) return;
+  const expiredAt = computeVoucherExpiry(voucher.reward_duration_days);
+  await authRepository.assignVoucherToUser(
+    referrerId,
+    voucher.id,
+    expiredAt,
+    tx
+  );
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -110,7 +144,10 @@ export const authService = {
         },
         tx
       );
-      if (referrer) await applyReferralVoucher(created.id, tx);
+      if (referrer) {
+        await applyReferralVoucher(created.id, tx);
+        await applyReferrerRewardVoucher(referrer.id, tx);
+      }
       return created;
     });
 
@@ -183,7 +220,9 @@ export const authService = {
           user.first_name ?? first_name,
           user.last_name ?? last_name
         );
-        await authRepository.updateUser(user.id, { referral_code: referralCode });
+        await authRepository.updateUser(user.id, {
+          referral_code: referralCode
+        });
         user = { ...user, referral_code: referralCode };
       }
       const tokens = await issueTokenPair(user.id, user.email, user.role);
@@ -206,12 +245,18 @@ export const authService = {
           existingUser.first_name ?? first_name,
           existingUser.last_name ?? last_name
         );
-        await authRepository.updateUser(existingUser.id, { referral_code: referralCode });
+        await authRepository.updateUser(existingUser.id, {
+          referral_code: referralCode
+        });
         existingUser.referral_code = referralCode;
       }
 
       const { password: _, ...user } = existingUser;
-      const tokens = await issueTokenPair(existingUser.id, existingUser.email, existingUser.role);
+      const tokens = await issueTokenPair(
+        existingUser.id,
+        existingUser.email,
+        existingUser.role
+      );
       return { user, ...tokens, isNewUser: false };
     }
 
@@ -243,7 +288,11 @@ export const authService = {
       return created;
     });
     const { password: _, ...user } = newUser;
-    const tokens = await issueTokenPair(newUser.id, newUser.email, newUser.role);
+    const tokens = await issueTokenPair(
+      newUser.id,
+      newUser.email,
+      newUser.role
+    );
     return { user, ...tokens, isNewUser: true };
   },
 

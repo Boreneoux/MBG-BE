@@ -221,10 +221,12 @@ export const orderService = {
     if (voucher_code) {
       const voucher = await orderRepository.findVoucherByCode(voucher_code);
       if (!voucher) throw new AppError('Voucher not found or expired', 404);
-      if (voucher.expired_at < now) throw new AppError('Voucher has expired', 400);
 
       const uv = await orderRepository.findUserVoucher(userId, voucher.id);
       if (!uv) throw new AppError('Voucher not available for your account', 400);
+
+      const effectiveExpiry = uv.expired_at ?? voucher.expired_at;
+      if (effectiveExpiry < now) throw new AppError('Voucher has expired', 400);
 
       if (voucher.usage_type === 'shipping') {
         // Apply towards shipping cost
