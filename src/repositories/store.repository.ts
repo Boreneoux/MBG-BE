@@ -11,18 +11,27 @@ const storeRepository = {
         store_admins: {
           where: { deleted_at: null },
           include: {
-            user: { select: { id: true, first_name: true, last_name: true, email: true } },
-          },
-        },
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                email: true
+              }
+            }
+          }
+        }
       },
-      orderBy: { created_at: 'asc' },
+      orderBy: { created_at: 'asc' }
     });
   },
 
   async findAllActivePaginated(page: number, limit: number, search?: string) {
     const where = {
       deleted_at: null,
-      ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
+      ...(search && {
+        name: { contains: search, mode: 'insensitive' as const }
+      })
     };
     const [stores, total] = await Promise.all([
       prisma.store.findMany({
@@ -34,15 +43,22 @@ const storeRepository = {
           store_admins: {
             where: { deleted_at: null },
             include: {
-              user: { select: { id: true, first_name: true, last_name: true, email: true } },
-            },
-          },
+              user: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  last_name: true,
+                  email: true
+                }
+              }
+            }
+          }
         },
         orderBy: { created_at: 'asc' },
         skip: (page - 1) * limit,
-        take: limit,
+        take: limit
       }),
-      prisma.store.count({ where }),
+      prisma.store.count({ where })
     ]);
     return { stores, total };
   },
@@ -50,7 +66,14 @@ const storeRepository = {
   findAllActiveForRouting() {
     return prisma.store.findMany({
       where: { deleted_at: null },
-      select: { id: true, name: true, slug: true, latitude: true, longitude: true, max_delivery_distance: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        latitude: true,
+        longitude: true,
+        max_delivery_distance: true
+      },
       orderBy: { created_at: 'asc' }
     });
   },
@@ -80,10 +103,17 @@ const storeRepository = {
         store_admins: {
           where: { deleted_at: null },
           include: {
-            user: { select: { id: true, first_name: true, last_name: true, email: true } },
-          },
-        },
-      },
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
     });
   },
 
@@ -105,18 +135,21 @@ const storeRepository = {
     });
   },
 
-  update(id: string, data: {
-    name?: string;
-    slug?: string;
-    address?: string;
-    district_id?: string;
-    city_id?: string;
-    province_id?: string;
-    postal_code?: string;
-    latitude?: number;
-    longitude?: number;
-    max_delivery_distance?: number;
-  }) {
+  update(
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      address?: string;
+      district_id?: string;
+      city_id?: string;
+      province_id?: string;
+      postal_code?: string;
+      latitude?: number;
+      longitude?: number;
+      max_delivery_distance?: number;
+    }
+  ) {
     return prisma.store.update({
       where: { id },
       data,
@@ -161,7 +194,9 @@ const storeRepository = {
     return prisma.storeAdmin.create({
       data: { store_id: storeId, user_id: userId },
       include: {
-        user: { select: { id: true, first_name: true, last_name: true, email: true } },
+        user: {
+          select: { id: true, first_name: true, last_name: true, email: true }
+        },
         store: { select: { id: true, name: true } }
       }
     });

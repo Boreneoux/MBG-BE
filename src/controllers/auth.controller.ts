@@ -28,10 +28,14 @@ const REFRESH_COOKIE_OPTIONS = {
 const REFRESH_COOKIE_CLEAR_OPTIONS = {
   httpOnly: true,
   secure: IS_PROD,
-  sameSite: 'lax' as const,
+  sameSite: 'lax' as const
 };
 
-function setAuthCookies(res: Response, accessToken: string, rawRefreshToken: string) {
+function setAuthCookies(
+  res: Response,
+  accessToken: string,
+  rawRefreshToken: string
+) {
   res.cookie('access_token', accessToken, ACCESS_COOKIE_OPTIONS);
   res.cookie('refresh_token', rawRefreshToken, REFRESH_COOKIE_OPTIONS);
 }
@@ -71,7 +75,9 @@ export const authController = {
   }),
 
   login: catchAsync(async (req: Request, res: Response) => {
-    const { user, accessToken, rawRefreshToken } = await authService.login(req.body);
+    const { user, accessToken, rawRefreshToken } = await authService.login(
+      req.body
+    );
 
     setAuthCookies(res, accessToken, rawRefreshToken);
 
@@ -83,9 +89,8 @@ export const authController = {
   }),
 
   googleCallback: catchAsync(async (req: Request, res: Response) => {
-    const { user, accessToken, rawRefreshToken } = await authService.googleCallback(
-      req.googleProfile!
-    );
+    const { user, accessToken, rawRefreshToken } =
+      await authService.googleCallback(req.googleProfile!);
 
     setAuthCookies(res, accessToken, rawRefreshToken);
 
@@ -120,7 +125,8 @@ export const authController = {
     const rawToken = req.cookies?.refresh_token as string | undefined;
     if (!rawToken) throw new AppError('Refresh token missing', 401);
 
-    const { accessToken, rawRefreshToken } = await authService.refreshToken(rawToken);
+    const { accessToken, rawRefreshToken } =
+      await authService.refreshToken(rawToken);
 
     setAuthCookies(res, accessToken, rawRefreshToken);
 

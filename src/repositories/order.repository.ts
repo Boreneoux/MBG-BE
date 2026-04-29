@@ -84,7 +84,9 @@ export const orderRepository = {
 
   findStoreInventory(storeId: string, productId: string, db: Db = prisma) {
     return db.storeInventory.findUnique({
-      where: { store_id_product_id: { store_id: storeId, product_id: productId } },
+      where: {
+        store_id_product_id: { store_id: storeId, product_id: productId }
+      },
       select: { id: true, stock: true }
     });
   },
@@ -153,7 +155,12 @@ export const orderRepository = {
 
   findUserVoucher(userId: string, voucherId: string, db: Db = prisma) {
     return db.userVoucher.findFirst({
-      where: { user_id: userId, voucher_id: voucherId, is_used: false, deleted_at: null }
+      where: {
+        user_id: userId,
+        voucher_id: voucherId,
+        is_used: false,
+        deleted_at: null
+      }
     });
   },
 
@@ -242,7 +249,9 @@ export const orderRepository = {
             district: { select: { name: true } }
           }
         },
-        store: { select: { id: true, name: true, city: { select: { name: true } } } }
+        store: {
+          select: { id: true, name: true, city: { select: { name: true } } }
+        }
       }
     });
   },
@@ -312,8 +321,12 @@ export const orderRepository = {
           }
         },
         address: true,
-        store: { select: { id: true, name: true, city: { select: { name: true } } } },
-        user: { select: { id: true, first_name: true, last_name: true, email: true } }
+        store: {
+          select: { id: true, name: true, city: { select: { name: true } } }
+        },
+        user: {
+          select: { id: true, first_name: true, last_name: true, email: true }
+        }
       }
     });
   },
@@ -409,7 +422,14 @@ export const orderRepository = {
   findUserById(userId: string, db: Db = prisma) {
     return db.user.findUnique({
       where: { id: userId },
-      select: { id: true, is_verified: true, first_name: true, last_name: true, email: true, phone: true }
+      select: {
+        id: true,
+        is_verified: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone: true
+      }
     });
   },
 
@@ -444,7 +464,7 @@ export const orderRepository = {
         midtrans_order_id: data.midtrans_order_id,
         midtrans_transaction_id: data.midtrans_transaction_id,
         midtrans_status: data.midtrans_status,
-        payment_url: data.payment_url,
+        payment_url: data.payment_url
       }
     });
   }

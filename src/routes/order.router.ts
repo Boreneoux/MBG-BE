@@ -20,17 +20,37 @@ router.use(authenticate);
 router.get('/', orderController.getOrders);
 
 // GET /api/orders/:orderNumber  — single order detail
-router.get('/:orderNumber', validate(orderIdParamsSchema), orderController.getOrder);
+router.get(
+  '/:orderNumber',
+  validate(orderIdParamsSchema),
+  orderController.getOrder
+);
 
 // POST /api/orders
 router.post('/', validate(createOrderSchema), orderController.createOrder);
 
 // Payment routes
-router.get('/:orderNumber/payment-url', validate(orderIdParamsSchema), orderController.getPaymentUrl);
-router.get('/:orderNumber/payment-status', validate(orderIdParamsSchema), orderController.getPaymentStatus);
+router.get(
+  '/:orderNumber/payment-url',
+  validate(orderIdParamsSchema),
+  orderController.getPaymentUrl
+);
+router.get(
+  '/:orderNumber/payment-status',
+  validate(orderIdParamsSchema),
+  orderController.getPaymentStatus
+);
 
-router.post('/:orderNumber/cancel', validate(orderIdParamsSchema), orderController.cancelOrder);
-router.post('/:orderNumber/confirm-receipt', validate(orderIdParamsSchema), orderController.confirmReceipt);
+router.post(
+  '/:orderNumber/cancel',
+  validate(orderIdParamsSchema),
+  orderController.cancelOrder
+);
+router.post(
+  '/:orderNumber/confirm-receipt',
+  validate(orderIdParamsSchema),
+  orderController.confirmReceipt
+);
 router.post(
   '/:orderNumber/approve-payment',
   authorize(user_role.super_admin, user_role.store_admin),

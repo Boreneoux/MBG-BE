@@ -14,6 +14,7 @@ const toDecimal = (n: number) => ({ toNumber: () => n }) as any;
 const makeLeanStore = (id: string, lat: number, lng: number) => ({
   id,
   name: `Store ${id}`,
+  slug: `store-${id}`,
   latitude: toDecimal(lat),
   longitude: toDecimal(lng),
   max_delivery_distance: toDecimal(200)
@@ -232,14 +233,19 @@ describe('storeService.create', () => {
     const result = await storeService.create(createInput);
 
     expect(result.store).toEqual(fullStore);
-    expect(mockRepo.create).toHaveBeenCalledWith({ ...createInput, slug: 'new-store' });
+    expect(mockRepo.create).toHaveBeenCalledWith({
+      ...createInput,
+      slug: 'new-store'
+    });
   });
 
   it('propagates repository errors (e.g. FK violation) to the caller', async () => {
     mockRepo.findBySlug.mockResolvedValue(null);
     mockRepo.create.mockRejectedValue(new Error('FK constraint'));
 
-    await expect(storeService.create(createInput)).rejects.toThrow('FK constraint');
+    await expect(storeService.create(createInput)).rejects.toThrow(
+      'FK constraint'
+    );
   });
 });
 
@@ -276,18 +282,28 @@ describe('storeService.getById', () => {
 
 describe('storeService.update', () => {
   it('updates the store and returns the updated record', async () => {
-    const updateData: UpdateStoreInput = { name: 'Renamed Store', max_delivery_distance: 20 };
-    const updatedStore = { ...fullStore, name: 'Renamed Store', max_delivery_distance: toDecimal(20) };
+    const updateData: UpdateStoreInput = {
+      name: 'Renamed Store',
+      max_delivery_distance: 20
+    };
+    const updatedStore = {
+      ...fullStore,
+      name: 'Renamed Store',
+      max_delivery_distance: toDecimal(20)
+    };
 
     mockRepo.findBySlug.mockResolvedValueOnce(fullStore); // store lookup by slug
-    mockRepo.findBySlug.mockResolvedValue(null);          // generateUniqueSlug checker
+    mockRepo.findBySlug.mockResolvedValue(null); // generateUniqueSlug checker
     mockRepo.update.mockResolvedValue(updatedStore);
 
     const result = await storeService.update('1', updateData);
 
     expect(result.store).toEqual(updatedStore);
     expect(mockRepo.findBySlug).toHaveBeenCalledWith('1');
-    expect(mockRepo.update).toHaveBeenCalledWith('1', { ...updateData, slug: 'renamed-store' });
+    expect(mockRepo.update).toHaveBeenCalledWith('1', {
+      ...updateData,
+      slug: 'renamed-store'
+    });
   });
 
   it('throws 404 when store does not exist', async () => {
@@ -406,7 +422,9 @@ describe('storeService.unassignAdmin', () => {
     mockRepo.findAdminByStoreAndUser.mockResolvedValue(mockStoreAdminRecord);
     mockRepo.removeAdmin.mockResolvedValue({ count: 1 });
 
-    await expect(storeService.unassignAdmin('1', '10')).resolves.toBeUndefined();
+    await expect(
+      storeService.unassignAdmin('1', '10')
+    ).resolves.toBeUndefined();
 
     expect(mockRepo.findBySlug).toHaveBeenCalledWith('1');
     expect(mockRepo.findUserById).toHaveBeenCalledWith('10');

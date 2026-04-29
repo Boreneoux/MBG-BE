@@ -42,15 +42,19 @@ export const storeService = {
   },
 
   async getAll(page: number = 1, limit: number = 10, search?: string) {
-    const { stores, total } = await storeRepository.findAllActivePaginated(page, limit, search);
+    const { stores, total } = await storeRepository.findAllActivePaginated(
+      page,
+      limit,
+      search
+    );
     return {
       stores,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   },
 
   async create(data: CreateStoreInput) {
-    const slug = await generateUniqueSlug(data.name, (s) =>
+    const slug = await generateUniqueSlug(data.name, s =>
       storeRepository.findBySlug(s).then(Boolean)
     );
     const store = await storeRepository.create({ ...data, slug });
@@ -78,12 +82,15 @@ export const storeService = {
 
     let newSlug: string | undefined;
     if (data.name && data.name !== lean.name) {
-      newSlug = await generateUniqueSlug(data.name, (s) =>
+      newSlug = await generateUniqueSlug(data.name, s =>
         storeRepository.findBySlug(s).then(Boolean)
       );
     }
 
-    const store = await storeRepository.update(id, { ...data, ...(newSlug && { slug: newSlug }) });
+    const store = await storeRepository.update(id, {
+      ...data,
+      ...(newSlug && { slug: newSlug })
+    });
     return { store };
   },
 
@@ -101,8 +108,12 @@ export const storeService = {
     const user = await storeRepository.findUserById(userId);
     if (!user) throw new AppError('User not found', 404);
 
-    const existing = await storeRepository.findAdminByStoreAndUser(storeId, userId);
-    if (!existing) throw new AppError('User is not assigned to this store', 404);
+    const existing = await storeRepository.findAdminByStoreAndUser(
+      storeId,
+      userId
+    );
+    if (!existing)
+      throw new AppError('User is not assigned to this store', 404);
 
     await storeRepository.removeAdmin(storeId, userId);
   },
@@ -119,8 +130,12 @@ export const storeService = {
       throw new AppError('User does not have store_admin role', 400);
     }
 
-    const existing = await storeRepository.findAdminByStoreAndUser(storeId, userId);
-    if (existing) throw new AppError('User is already assigned to this store', 409);
+    const existing = await storeRepository.findAdminByStoreAndUser(
+      storeId,
+      userId
+    );
+    if (existing)
+      throw new AppError('User is already assigned to this store', 409);
 
     const storeAdmin = await storeRepository.createAdmin(storeId, userId);
     return { storeAdmin };

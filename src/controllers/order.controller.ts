@@ -10,21 +10,29 @@ export const orderController = {
     const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
     const search = req.query.search as string | undefined;
 
-    const result = await orderService.getUserOrders(req.user!.id, page, limit, search);
+    const result = await orderService.getUserOrders(
+      req.user!.id,
+      page,
+      limit,
+      search
+    );
 
     res.json({
       success: true,
       data: result.data,
-      meta: result.meta,
+      meta: result.meta
     });
   }),
 
   getOrder: catchAsync(async (req: Request, res: Response) => {
-    const order = await orderService.getOrderForUser(req.user!.id, req.params.orderNumber as string);
+    const order = await orderService.getOrderForUser(
+      req.user!.id,
+      req.params.orderNumber as string
+    );
 
     res.json({
       success: true,
-      data: order,
+      data: order
     });
   }),
 
@@ -33,13 +41,17 @@ export const orderController = {
 
     res.status(201).json({
       success: true,
-      message: 'Order created successfully. Please complete payment within 1 hour.',
+      message:
+        'Order created successfully. Please complete payment within 1 hour.',
       data: { order }
     });
   }),
 
   getPaymentUrl: catchAsync(async (req: Request, res: Response) => {
-    const result = await paymentService.createPaymentUrl(req.params.orderNumber as string, req.user!.id);
+    const result = await paymentService.createPaymentUrl(
+      req.params.orderNumber as string,
+      req.user!.id
+    );
 
     res.json({
       success: true,
@@ -49,7 +61,10 @@ export const orderController = {
   }),
 
   getPaymentStatus: catchAsync(async (req: Request, res: Response) => {
-    const result = await paymentService.getPaymentStatus(req.params.orderNumber as string, req.user!.id);
+    const result = await paymentService.getPaymentStatus(
+      req.params.orderNumber as string,
+      req.user!.id
+    );
 
     res.json({
       success: true,
@@ -58,7 +73,10 @@ export const orderController = {
   }),
 
   cancelOrder: catchAsync(async (req: Request, res: Response) => {
-    const order = await orderService.cancelOrder(req.user!.id, req.params.orderNumber as string);
+    const order = await orderService.cancelOrder(
+      req.user!.id,
+      req.params.orderNumber as string
+    );
 
     res.json({
       success: true,
@@ -68,7 +86,10 @@ export const orderController = {
   }),
 
   confirmReceipt: catchAsync(async (req: Request, res: Response) => {
-    const order = await orderService.confirmReceipt(req.user!.id, req.params.orderNumber as string);
+    const order = await orderService.confirmReceipt(
+      req.user!.id,
+      req.params.orderNumber as string
+    );
 
     res.json({
       success: true,
@@ -78,7 +99,10 @@ export const orderController = {
   }),
 
   approvePayment: catchAsync(async (req: Request, res: Response) => {
-    const order = await adminOrderService.approvePayment(req.params.orderNumber as string, req.user!);
+    const order = await adminOrderService.approvePayment(
+      req.params.orderNumber as string,
+      req.user!
+    );
 
     res.json({
       success: true,
@@ -88,7 +112,10 @@ export const orderController = {
   }),
 
   shipOrder: catchAsync(async (req: Request, res: Response) => {
-    const order = await adminOrderService.shipOrder(req.params.orderNumber as string, req.user!);
+    const order = await adminOrderService.shipOrder(
+      req.params.orderNumber as string,
+      req.user!
+    );
 
     res.json({
       success: true,

@@ -9,17 +9,9 @@ export const createOrderSchema = z.object({
       error: 'payment_method must be payment_gateway'
     }),
 
-    voucher_code: z
-      .string()
-      .trim()
-      .min(1)
-      .optional(),
+    voucher_code: z.string().trim().min(1).optional(),
 
-    shipping_method: z
-      .string()
-      .trim()
-      .min(1)
-      .optional(),
+    shipping_method: z.string().trim().min(1).optional(),
 
     shipping_cost: z
       .number({ error: 'shipping_cost must be a number' })

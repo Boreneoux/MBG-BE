@@ -65,7 +65,7 @@ export const userService = {
       email: data.email,
       phone: data.phone,
       role: data.role || user_role.store_admin,
-      is_verified: false,
+      is_verified: false
     };
 
     const user = await userRepository.create(userData);
@@ -78,10 +78,20 @@ export const userService = {
     const { raw, hashed } = authHelpers.generateToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await authRepository.invalidateUserTokens(user.id, 'email_verification');
-    await authRepository.createVerificationToken(user.id, hashed, 'email_verification', expiresAt);
+    await authRepository.createVerificationToken(
+      user.id,
+      hashed,
+      'email_verification',
+      expiresAt
+    );
 
     if (storeName) {
-      authHelpers.sendStoreAdminInviteEmail(data.email, data.first_name ?? '', storeName, raw);
+      authHelpers.sendStoreAdminInviteEmail(
+        data.email,
+        data.first_name ?? '',
+        storeName,
+        raw
+      );
     } else {
       authHelpers.sendVerificationEmail(data.email, data.first_name ?? '', raw);
     }

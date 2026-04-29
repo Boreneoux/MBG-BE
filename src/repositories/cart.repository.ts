@@ -87,7 +87,9 @@ export const cartRepository = {
 
   findStoreInventory(storeId: string, productId: string, db: Db = prisma) {
     return db.storeInventory.findUnique({
-      where: { store_id_product_id: { store_id: storeId, product_id: productId } }
+      where: {
+        store_id_product_id: { store_id: storeId, product_id: productId }
+      }
     });
   },
 

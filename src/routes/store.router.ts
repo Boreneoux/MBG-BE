@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { authenticate, authorize, optionalAuthenticate } from '../middlewares/auth.middleware';
+import {
+  authenticate,
+  authorize,
+  optionalAuthenticate
+} from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
 import {
   nearestStoreQuerySchema,
