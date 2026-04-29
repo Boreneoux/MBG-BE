@@ -26,7 +26,7 @@ export const cartController = {
   updateItem: catchAsync(async (req: Request, res: Response) => {
     const cartItem = await cartService.updateItem(
       req.user!.id,
-      Number(req.params.id),
+      req.params.id as string,
       req.body
     );
 
@@ -38,7 +38,7 @@ export const cartController = {
   }),
 
   deleteItem: catchAsync(async (req: Request, res: Response) => {
-    await cartService.deleteItem(req.user!.id, Number(req.params.id));
+    await cartService.deleteItem(req.user!.id, req.params.id as string);
 
     res.status(200).json({
       success: true,

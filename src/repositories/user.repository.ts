@@ -1,115 +1,128 @@
 import { Prisma, user_role } from '../../generated/prisma/client';
 import { prisma } from '../config/prisma-client.config';
 
-export class UserRepository {
-    async findAll(params: {
-        skip?: number;
-        take?: number;
-        search?: string;
-        role?: user_role;
-    }) {
-        const { skip, take, search, role } = params;
+export const userRepository = {
+  findAll(params: {
+    skip?: number;
+    take?: number;
+    search?: string;
+    role?: user_role;
+  }) {
+    const { skip, take, search, role } = params;
 
-        const where: Prisma.UserWhereInput = {
-            deleted_at: null,
-            ...(role && { role }),
-            ...(search && {
-                OR: [
-                    { first_name: { contains: search, mode: 'insensitive' } },
-                    { last_name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } }
-                ]
-            })
-        };
+    const where: Prisma.UserWhereInput = {
+      deleted_at: null,
+      ...(role && { role }),
+      ...(search && {
+        OR: [
+          { first_name: { contains: search, mode: 'insensitive' } },
+          { last_name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    };
 
-        const [users, total] = await prisma.$transaction([
-            prisma.user.findMany({
-                where,
-                skip,
-                take,
-                orderBy: { created_at: 'desc' },
-                select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone: true,
-                    role: true,
-                    is_verified: true,
-                    created_at: true,
-                    profile_image: true,
-                    store_admins: {
-                        select: { store: true }
-                    }
-                }
-            }),
-            prisma.user.count({ where })
-        ]);
+    return Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          phone: true,
+          role: true,
+          is_verified: true,
+          created_at: true,
+          profile_image: true,
+          store_admins: {
+            where: { deleted_at: null },
+            select: { store: { select: { id: true, name: true } } }
+          }
+        }
+      }),
+      prisma.user.count({ where })
+    ]);
+  },
 
-        return { users, total };
-    }
+  findById(id: string) {
+    return prisma.user.findFirst({
+      where: { id, deleted_at: null },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone: true,
+        role: true,
+        is_verified: true,
+        created_at: true,
+        profile_image: true,
+        profile_image_public_id: true,
+        referral_code: true,
+        store_admins: {
+          where: { deleted_at: null },
+          select: { store: { select: { id: true, name: true } } }
+        }
+      }
+    });
+  },
 
-    async findById(id: number) {
-        return prisma.user.findUnique({
-            where: { id, deleted_at: null },
-            select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-                phone: true,
-                role: true,
-                is_verified: true,
-                created_at: true,
-                profile_image: true,
-                store_admins: {
-                    select: { store: true }
-                }
-            }
-        });
-    }
+  findByEmail(email: string) {
+    return prisma.user.findUnique({
+      where: { email, deleted_at: null }
+    });
+  },
 
-    async findByEmail(email: string) {
-        return prisma.user.findUnique({
-            where: { email, deleted_at: null }
-        });
-    }
+  findByIdWithPassword(id: string) {
+    return prisma.user.findFirst({
+      where: { id, deleted_at: null },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        password: true
+      }
+    });
+  },
 
-    async create(data: Prisma.UserCreateInput) {
-        return prisma.user.create({
-            data,
-            select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-                role: true,
-                created_at: true
-            }
-        });
-    }
+  create(data: Prisma.UserCreateInput) {
+    return prisma.user.create({
+      data,
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        created_at: true
+      }
+    });
+  },
 
-    async update(id: number, data: Prisma.UserUpdateInput) {
-        return prisma.user.update({
-            where: { id },
-            data,
-            select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-                role: true,
-                updated_at: true
-            }
-        });
-    }
+  update(id: string, data: Prisma.UserUpdateInput) {
+    return prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        updated_at: true
+      }
+    });
+  },
 
-    async softDelete(id: number) {
-        return prisma.user.update({
-            where: { id },
-            data: { deleted_at: new Date() }
-        });
-    }
-}
-
-export const userRepository = new UserRepository();
+  softDelete(id: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { deleted_at: new Date() }
+    });
+  }
+};

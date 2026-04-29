@@ -10,7 +10,7 @@ export interface UpsertCacheInput {
 }
 
 const shippingRepository = {
-  findUserAddress(addressId: number) {
+  findUserAddress(addressId: string) {
     return prisma.userAddress.findFirst({
       where: { id: addressId, deleted_at: null },
       include: { city: true }

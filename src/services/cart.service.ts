@@ -7,7 +7,7 @@ import { AddToCartInput, UpdateCartItemInput, Tx } from '../types/cart';
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const cartService = {
-  async getCart(userId: number) {
+  async getCart(userId: string) {
     const cart = await cartRepository.findCartByUserId(userId);
 
     if (!cart) {
@@ -17,18 +17,24 @@ export const cartService = {
     return cart;
   },
 
-  async addItem(userId: number, input: AddToCartInput) {
+  async addItem(userId: string, input: AddToCartInput) {
     const { product_id, quantity, store_id } = input;
 
     // Verify user is verified
     const user = await cartRepository.findUserById(userId);
     if (!user) throw new AppError('User not found', 404);
     if (!user.is_verified) {
-      throw new AppError('Please verify your email before adding items to cart', 403);
+      throw new AppError(
+        'Please verify your email before adding items to cart',
+        403
+      );
     }
 
     // Check stock availability
-    const inventory = await cartRepository.findStoreInventory(store_id, product_id);
+    const inventory = await cartRepository.findStoreInventory(
+      store_id,
+      product_id
+    );
     if (!inventory) {
       throw new AppError('Product is not available at this store', 404);
     }
@@ -45,7 +51,7 @@ export const cartService = {
       }
 
       if (!cart) {
-        cart = await cartRepository.createCart(userId, store_id, tx) as any;
+        cart = (await cartRepository.createCart(userId, store_id, tx)) as any;
       }
 
       // Check if item already exists in cart
@@ -88,11 +94,17 @@ export const cartService = {
       return created;
     });
 
-    logger.info(`Cart item added: user=${userId}, product=${product_id}, qty=${input.quantity}`);
+    logger.info(
+      `Cart item added: user=${userId}, product=${product_id}, qty=${input.quantity}`
+    );
     return cartItem;
   },
 
-  async updateItem(userId: number, cartItemId: number, input: UpdateCartItemInput) {
+  async updateItem(
+    userId: string,
+    cartItemId: string,
+    input: UpdateCartItemInput
+  ) {
     const { quantity } = input;
 
     const cartItem = await cartRepository.findCartItemById(cartItemId);
@@ -116,13 +128,16 @@ export const cartService = {
       );
     }
 
-    const updated = await cartRepository.updateCartItemQuantity(cartItemId, quantity);
+    const updated = await cartRepository.updateCartItemQuantity(
+      cartItemId,
+      quantity
+    );
 
     logger.info(`Cart item updated: id=${cartItemId}, qty=${quantity}`);
     return updated;
   },
 
-  async deleteItem(userId: number, cartItemId: number) {
+  async deleteItem(userId: string, cartItemId: string) {
     const cartItem = await cartRepository.findCartItemById(cartItemId);
     if (!cartItem) throw new AppError('Cart item not found', 404);
 
@@ -135,7 +150,10 @@ export const cartService = {
       await cartRepository.deleteCartItem(cartItemId, tx);
 
       // If cart is now empty, delete it
-      const remaining = await cartRepository.countCartItems(cartItem.cart.id, tx);
+      const remaining = await cartRepository.countCartItems(
+        cartItem.cart.id,
+        tx
+      );
       if (remaining === 0) {
         await cartRepository.deleteCart(cartItem.cart.id, tx);
       }

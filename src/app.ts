@@ -15,6 +15,15 @@ import cartRouter from './routes/cart.router';
 import storeRouter from './routes/store.router';
 import orderRouter from './routes/order.router';
 import shippingRouter from './routes/shipping.router';
+import inventoryRouter from './routes/inventory.router';
+import discountRouter from './routes/discount.router';
+import voucherRouter from './routes/voucher.router';
+import adminOrderRouter from './routes/admin.order.router';
+import regionRouter from './routes/region.router';
+import mutationRouter from './routes/mutation.router';
+import reportRouter from './routes/report.router';
+import schedulerRouter from './routes/scheduler.router';
+// import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -44,7 +53,15 @@ app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/stores', storeRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/admin/orders', adminOrderRouter);
 app.use('/api/shipping', shippingRouter);
+app.use('/api/inventory', inventoryRouter);
+app.use('/api/discounts', discountRouter);
+app.use('/api/vouchers', voucherRouter);
+app.use('/api/regions', regionRouter);
+app.use('/api/mutations', mutationRouter);
+app.use('/api/reports', reportRouter);
+app.use('/api/internal/scheduler', schedulerRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
@@ -53,4 +70,7 @@ app.listen(serverPort, () => {
   console.log(
     `⚡️[server]: Server is running at http://localhost:${serverPort}`
   );
+
+  // Scheduler runs via Vercel Cron → GET /api/internal/scheduler/tick
+  // schedulerService.start();
 });

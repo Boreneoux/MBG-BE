@@ -13,11 +13,13 @@ import {
 import {
   generateToken,
   hashToken,
-  buildCookieToken,
+  buildTokenPair,
+  parseDurationMs,
   generateReferralCode,
   sendVerificationEmail,
   sendResetEmail
 } from './auth.helpers';
+import { JWT_REFRESH_TOKEN_EXPIRY } from '../config/main.config';
 
 // ─── Private helpers ─────────────────────────────────────────────────────────
 
@@ -40,7 +42,7 @@ async function generateUniqueReferralCode(
 }
 
 async function issueVerificationToken(
-  userId: number,
+  userId: string,
   email: string,
   firstName: string
 ): Promise<void> {
@@ -69,9 +71,50 @@ async function validateToken(rawToken: string, expectedType: string) {
   return record;
 }
 
-async function applyReferralVoucher(userId: number, tx: Tx): Promise<void> {
+async function issueTokenPair(userId: string, email: string, role: string) {
+  const { accessToken, refreshToken } = buildTokenPair(
+    userId,
+    email,
+    role as any
+  );
+  const expiresAt = new Date(
+    Date.now() + parseDurationMs(JWT_REFRESH_TOKEN_EXPIRY)
+  );
+  await authRepository.createRefreshToken(
+    userId,
+    refreshToken.hashed,
+    expiresAt
+  );
+  return { accessToken, rawRefreshToken: refreshToken.raw };
+}
+
+function computeVoucherExpiry(
+  rewardDurationDays?: number | null
+): Date | undefined {
+  if (!rewardDurationDays) return undefined;
+  return new Date(Date.now() + rewardDurationDays * 24 * 60 * 60 * 1000);
+}
+
+async function applyReferralVoucher(userId: string, tx: Tx): Promise<void> {
   const voucher = await authRepository.findActiveReferralVoucher(tx);
-  if (voucher) await authRepository.assignVoucherToUser(userId, voucher.id, tx);
+  if (!voucher) return;
+  const expiredAt = computeVoucherExpiry(voucher.reward_duration_days);
+  await authRepository.assignVoucherToUser(userId, voucher.id, expiredAt, tx);
+}
+
+async function applyReferrerRewardVoucher(
+  referrerId: string,
+  tx: Tx
+): Promise<void> {
+  const voucher = await authRepository.findActiveReferrerRewardVoucher(tx);
+  if (!voucher) return;
+  const expiredAt = computeVoucherExpiry(voucher.reward_duration_days);
+  await authRepository.assignVoucherToUser(
+    referrerId,
+    voucher.id,
+    expiredAt,
+    tx
+  );
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -101,7 +144,10 @@ export const authService = {
         },
         tx
       );
-      if (referrer) await applyReferralVoucher(created.id, tx);
+      if (referrer) {
+        await applyReferralVoucher(created.id, tx);
+        await applyReferrerRewardVoucher(referrer.id, tx);
+      }
       return created;
     });
 
@@ -156,10 +202,8 @@ export const authService = {
       );
     logger.info(`User logged in: ${email}`);
     const { password: _, ...userWithoutPassword } = user;
-    return {
-      user: userWithoutPassword,
-      token: buildCookieToken(user.id, user.email, user.role)
-    };
+    const tokens = await issueTokenPair(user.id, user.email, user.role);
+    return { user: userWithoutPassword, ...tokens };
   },
 
   async googleCallback(profile: GoogleProfile) {
@@ -170,12 +214,19 @@ export const authService = {
       provider_user_id
     );
     if (existingOAuth) {
-      const { user } = existingOAuth;
-      return {
-        user,
-        token: buildCookieToken(user.id, user.email, user.role),
-        isNewUser: false
-      };
+      let { user } = existingOAuth;
+      if (!user.referral_code) {
+        const referralCode = await generateUniqueReferralCode(
+          user.first_name ?? first_name,
+          user.last_name ?? last_name
+        );
+        await authRepository.updateUser(user.id, {
+          referral_code: referralCode
+        });
+        user = { ...user, referral_code: referralCode };
+      }
+      const tokens = await issueTokenPair(user.id, user.email, user.role);
+      return { user, ...tokens, isNewUser: false };
     }
 
     const existingUser = await authRepository.findUserByEmail(provider_email);
@@ -188,16 +239,25 @@ export const authService = {
       });
       if (!existingUser.is_verified)
         await authRepository.updateUser(existingUser.id, { is_verified: true });
+
+      if (!existingUser.referral_code) {
+        const referralCode = await generateUniqueReferralCode(
+          existingUser.first_name ?? first_name,
+          existingUser.last_name ?? last_name
+        );
+        await authRepository.updateUser(existingUser.id, {
+          referral_code: referralCode
+        });
+        existingUser.referral_code = referralCode;
+      }
+
       const { password: _, ...user } = existingUser;
-      return {
-        user,
-        token: buildCookieToken(
-          existingUser.id,
-          existingUser.email,
-          existingUser.role
-        ),
-        isNewUser: false
-      };
+      const tokens = await issueTokenPair(
+        existingUser.id,
+        existingUser.email,
+        existingUser.role
+      );
+      return { user, ...tokens, isNewUser: false };
     }
 
     logger.info(`New user via Google OAuth: ${provider_email}`);
@@ -228,15 +288,16 @@ export const authService = {
       return created;
     });
     const { password: _, ...user } = newUser;
-    return {
-      user,
-      token: buildCookieToken(newUser.id, newUser.email, newUser.role),
-      isNewUser: true
-    };
+    const tokens = await issueTokenPair(
+      newUser.id,
+      newUser.email,
+      newUser.role
+    );
+    return { user, ...tokens, isNewUser: true };
   },
 
   async completeProfile(
-    userId: number,
+    userId: string,
     input: { phone: string; referral_code?: string }
   ) {
     const { phone, referral_code } = input;
@@ -261,7 +322,7 @@ export const authService = {
     return { user: updatedUser };
   },
 
-  async setupPassword(userId: number, password: string) {
+  async setupPassword(userId: string, password: string) {
     const user = await authRepository.findUserById(userId, {
       id: true,
       password: true
@@ -274,7 +335,7 @@ export const authService = {
     return { message: 'Password set successfully' };
   },
 
-  async getMe(userId: number) {
+  async getMe(userId: string) {
     const user = await authRepository.findUserById(userId, {
       id: true,
       first_name: true,
@@ -309,6 +370,33 @@ export const authService = {
     );
     sendResetEmail(email, user.first_name ?? 'there', raw);
     return { message: 'If that email exists, a reset link has been sent' };
+  },
+
+  async refreshToken(rawToken: string) {
+    const hashed = hashToken(rawToken);
+    const record = await authRepository.findRefreshTokenByHash(hashed);
+
+    if (!record) throw new AppError('Invalid refresh token', 401);
+    if (new Date(record.expires_at) < new Date())
+      throw new AppError('Refresh token expired, please log in again', 401);
+
+    const user = await authRepository.findUserById(record.user_id, {
+      id: true,
+      email: true,
+      role: true
+    });
+    if (!user) throw new AppError('User not found', 404);
+
+    // Rotate: revoke old token, issue a new pair
+    await authRepository.deleteRefreshToken(record.id);
+    const tokens = await issueTokenPair(user.id, user.email, user.role);
+    return tokens;
+  },
+
+  async logout(rawToken: string) {
+    const hashed = hashToken(rawToken);
+    const record = await authRepository.findRefreshTokenByHash(hashed);
+    if (record) await authRepository.deleteRefreshToken(record.id);
   },
 
   async resetPassword(rawToken: string, newPassword: string) {

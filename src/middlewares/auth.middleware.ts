@@ -10,7 +10,7 @@ export { GoogleProfile };
 declare global {
   namespace Express {
     interface User {
-      id: number;
+      id: string;
       email: string;
       role: user_role;
     }
@@ -61,3 +61,25 @@ export const authorize =
     }
     next();
   };
+
+// Tries to parse the JWT but never rejects — req.user is set only when valid
+export const optionalAuthenticate = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  try {
+    const tokenFromCookie = req.cookies?.access_token as string | undefined;
+    const authHeader = req.headers.authorization;
+    const tokenFromHeader = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : undefined;
+    const token = tokenFromCookie ?? tokenFromHeader;
+    if (token) {
+      req.user = jwtVerifyToken(token, JWT_SECRET_TOKEN!) as JwtPayload;
+    }
+  } catch {
+    // silently ignore — unauthenticated request proceeds normally
+  }
+  next();
+};

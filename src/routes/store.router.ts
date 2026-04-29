@@ -1,10 +1,91 @@
 import { Router } from 'express';
+import {
+  authenticate,
+  authorize,
+  optionalAuthenticate
+} from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/zod-request-validation.middleware';
-import { nearestStoreQuerySchema } from '../validators/store.validator';
-import { getNearest } from '../controllers/store.controller';
+import {
+  nearestStoreQuerySchema,
+  createStoreSchema,
+  updateStoreSchema,
+  storeParamsSchema,
+  assignAdminSchema,
+  unassignAdminSchema
+} from '../validators/store.validator';
+import { storeController } from '../controllers/store.controller';
 
 const storeRouter = Router();
 
-storeRouter.get('/', validate(nearestStoreQuerySchema), getNearest);
+// GET /stores
+// - Admin roles (super_admin, store_admin): list all active stores
+// - Public: nearest store by lat/lng (or default fallback)
+storeRouter.get(
+  '/',
+  optionalAuthenticate,
+  validate(nearestStoreQuerySchema),
+  storeController.getStores
+);
+
+// GET /stores/:slug/products — public
+storeRouter.get(
+  '/:slug/products',
+  validate(storeParamsSchema),
+  storeController.getStoreProducts
+);
+
+// GET /stores/:slug — Super Admin + Store Admin
+storeRouter.get(
+  '/:slug',
+  authenticate,
+  authorize('super_admin', 'store_admin'),
+  validate(storeParamsSchema),
+  storeController.getById
+);
+
+// POST /stores — Super Admin only
+storeRouter.post(
+  '/',
+  authenticate,
+  authorize('super_admin'),
+  validate(createStoreSchema),
+  storeController.create
+);
+
+// PUT /stores/:slug — Super Admin only
+storeRouter.put(
+  '/:slug',
+  authenticate,
+  authorize('super_admin'),
+  validate(updateStoreSchema),
+  storeController.update
+);
+
+// DELETE /stores/:slug — Super Admin only
+storeRouter.delete(
+  '/:slug',
+  authenticate,
+  authorize('super_admin'),
+  validate(storeParamsSchema),
+  storeController.delete
+);
+
+// POST /stores/:slug/admins — Super Admin only
+storeRouter.post(
+  '/:slug/admins',
+  authenticate,
+  authorize('super_admin'),
+  validate(assignAdminSchema),
+  storeController.assignAdmin
+);
+
+// DELETE /stores/:slug/admins/:userId — Super Admin only
+storeRouter.delete(
+  '/:slug/admins/:userId',
+  authenticate,
+  authorize('super_admin'),
+  validate(unassignAdminSchema),
+  storeController.unassignAdmin
+);
 
 export default storeRouter;

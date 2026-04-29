@@ -33,12 +33,13 @@ const FAR_LAT = -7.2575;
 const FAR_LNG = 112.7521;
 
 const makeStore = (overrides: Record<string, any> = {}) => ({
-  id: 1,
+  id: '1',
   name: 'Store Pusat',
+  slug: 'store-pusat',
   address: 'Jl. Monas No. 1',
-  district_id: 1,
-  city_id: 1,
-  province_id: 1,
+  district_id: '1',
+  city_id: '1',
+  province_id: '1',
   postal_code: '10110',
   latitude: toDecimal(STORE_LAT),
   longitude: toDecimal(STORE_LNG),
@@ -47,8 +48,8 @@ const makeStore = (overrides: Record<string, any> = {}) => ({
   updated_at: new Date(),
   deleted_at: null,
   city: {
-    id: 1,
-    province_id: 1,
+    id: '1',
+    province_id: '1',
     rajaongkir_city_id: 151,
     type: 'Kota',
     name: 'Jakarta Pusat',
@@ -61,15 +62,15 @@ const makeStore = (overrides: Record<string, any> = {}) => ({
 });
 
 const makeAddress = (overrides: Record<string, any> = {}) => ({
-  id: 1,
-  user_id: 10,
+  id: '1',
+  user_id: '10',
   label: 'Rumah',
   recipient_name: 'John Doe',
   phone: '08123456789',
   address: 'Jl. Dekat No. 5',
-  district_id: 2,
-  city_id: 2,
-  province_id: 1,
+  district_id: '2',
+  city_id: '2',
+  province_id: '1',
   postal_code: '12345',
   latitude: toDecimal(NEAR_LAT),
   longitude: toDecimal(NEAR_LNG),
@@ -81,8 +82,8 @@ const makeAddress = (overrides: Record<string, any> = {}) => ({
   updated_at: new Date(),
   deleted_at: null,
   city: {
-    id: 2,
-    province_id: 1,
+    id: '2',
+    province_id: '1',
     rajaongkir_city_id: 154,
     type: 'Kota',
     name: 'Jakarta Selatan',
@@ -96,12 +97,26 @@ const makeAddress = (overrides: Record<string, any> = {}) => ({
 
 // Komerce flat response — one entry per service, cost is a plain number
 const CACHED_RESULTS = [
-  { name: 'Jalur Nugraha Ekakurir (JNE)', code: 'jne', service: 'OKE', description: 'Ongkos Kirim Ekonomis', cost: 9000, etd: '4-5 day' },
-  { name: 'Jalur Nugraha Ekakurir (JNE)', code: 'jne', service: 'REG', description: 'Layanan Reguler', cost: 11000, etd: '2-3 day' }
+  {
+    name: 'Jalur Nugraha Ekakurir (JNE)',
+    code: 'jne',
+    service: 'OKE',
+    description: 'Ongkos Kirim Ekonomis',
+    cost: 9000,
+    etd: '4-5 day'
+  },
+  {
+    name: 'Jalur Nugraha Ekakurir (JNE)',
+    code: 'jne',
+    service: 'REG',
+    description: 'Layanan Reguler',
+    cost: 11000,
+    etd: '2-3 day'
+  }
 ];
 
 const makeCache = (overrides: Record<string, any> = {}) => ({
-  id: 1,
+  id: '1',
   origin_city_id: 151,
   destination_city_id: 154,
   weight: 1000,
@@ -113,14 +128,18 @@ const makeCache = (overrides: Record<string, any> = {}) => ({
 });
 
 const komerceSuccessBody = {
-  meta: { message: 'Success Calculate Domestic Shipping cost', code: 200, status: 'success' },
+  meta: {
+    message: 'Success Calculate Domestic Shipping cost',
+    code: 200,
+    status: 'success'
+  },
   data: CACHED_RESULTS
 };
 
 const defaultInput = {
-  store_id: 1,
-  address_id: 1,
-  user_id: 10,
+  store_id: '1',
+  address_id: '1',
+  user_id: '10',
   weight: 1000,
   courier: 'jne'
 };
@@ -165,7 +184,9 @@ describe('shippingService.calculate', () => {
 
   it('throws 403 when the address does not belong to the requesting user', async () => {
     mockStoreRepo.findById.mockResolvedValue(makeStore());
-    mockShippingRepo.findUserAddress.mockResolvedValue(makeAddress({ user_id: 99 }));
+    mockShippingRepo.findUserAddress.mockResolvedValue(
+      makeAddress({ user_id: '99' })
+    );
 
     await expect(shippingService.calculate(defaultInput)).rejects.toThrow(
       new AppError('Address does not belong to this user', 403)
@@ -179,11 +200,17 @@ describe('shippingService.calculate', () => {
       makeStore({ max_delivery_distance: toDecimal(5) }) // 5 km max
     );
     mockShippingRepo.findUserAddress.mockResolvedValue(
-      makeAddress({ latitude: toDecimal(FAR_LAT), longitude: toDecimal(FAR_LNG) }) // ~664 km away
+      makeAddress({
+        latitude: toDecimal(FAR_LAT),
+        longitude: toDecimal(FAR_LNG)
+      }) // ~664 km away
     );
 
     await expect(shippingService.calculate(defaultInput)).rejects.toThrow(
-      new AppError("Delivery address is outside the store's delivery range", 422)
+      new AppError(
+        "Delivery address is outside the store's delivery range",
+        422
+      )
     );
 
     expect(mockAxios.post).not.toHaveBeenCalled();
@@ -191,7 +218,11 @@ describe('shippingService.calculate', () => {
 
   it('does NOT throw 422 when user address is within max_delivery_distance', async () => {
     mockStoreRepo.findById.mockResolvedValue(
-      makeStore({ latitude: toDecimal(0), longitude: toDecimal(0), max_delivery_distance: toDecimal(5) })
+      makeStore({
+        latitude: toDecimal(0),
+        longitude: toDecimal(0),
+        max_delivery_distance: toDecimal(5)
+      })
     );
     mockShippingRepo.findUserAddress.mockResolvedValue(
       makeAddress({ latitude: toDecimal(0), longitude: toDecimal(0) })
@@ -200,7 +231,9 @@ describe('shippingService.calculate', () => {
     mockShippingRepo.upsertCache.mockResolvedValue({} as any);
     mockApiSuccess();
 
-    await expect(shippingService.calculate(defaultInput)).resolves.not.toThrow();
+    await expect(
+      shippingService.calculate(defaultInput)
+    ).resolves.not.toThrow();
   });
 
   // ── Cache hit ──────────────────────────────────────────────────────────────
@@ -250,8 +283,8 @@ describe('shippingService.calculate', () => {
     const [, body] = mockAxios.post.mock.calls[0];
     const params = new URLSearchParams(body as string);
 
-    expect(params.get('origin')).toBe('151');       // store's rajaongkir_city_id
-    expect(params.get('destination')).toBe('154');  // address's rajaongkir_city_id
+    expect(params.get('origin')).toBe('151'); // store's rajaongkir_city_id
+    expect(params.get('destination')).toBe('154'); // address's rajaongkir_city_id
     expect(params.get('weight')).toBe('1000');
     expect(params.get('courier')).toBe('jne');
   });
@@ -335,7 +368,9 @@ describe('shippingService.calculate', () => {
     mockStoreRepo.findById.mockResolvedValue(makeStore());
     mockShippingRepo.findUserAddress.mockResolvedValue(makeAddress());
     mockShippingRepo.findCachedCost.mockResolvedValue(null);
-    mockAxios.post.mockRejectedValue(new Error('Request failed with status code 500'));
+    mockAxios.post.mockRejectedValue(
+      new Error('Request failed with status code 500')
+    );
 
     await expect(shippingService.calculate(defaultInput)).rejects.toThrow(
       new AppError('Shipping cost service is temporarily unavailable', 502)
@@ -350,7 +385,11 @@ describe('shippingService.calculate', () => {
     mockShippingRepo.findCachedCost.mockResolvedValue(null);
     mockAxios.post.mockResolvedValue({
       data: {
-        meta: { message: 'Bad Request — invalid city', code: 400, status: 'error' },
+        meta: {
+          message: 'Bad Request — invalid city',
+          code: 400,
+          status: 'error'
+        },
         data: []
       }
     });
@@ -366,7 +405,9 @@ describe('shippingService.calculate', () => {
     mockShippingRepo.findCachedCost.mockResolvedValue(null);
     mockAxios.post.mockRejectedValue(new Error('ECONNREFUSED'));
 
-    await expect(shippingService.calculate(defaultInput)).rejects.toThrow(AppError);
+    await expect(shippingService.calculate(defaultInput)).rejects.toThrow(
+      AppError
+    );
 
     expect(mockShippingRepo.upsertCache).not.toHaveBeenCalled();
   });

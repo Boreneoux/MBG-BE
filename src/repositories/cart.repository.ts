@@ -5,7 +5,7 @@ import { Tx } from '../types/cart';
 type Db = Tx | typeof prisma;
 
 export const cartRepository = {
-  findCartByUserId(userId: number, db: Db = prisma) {
+  findCartByUserId(userId: string, db: Db = prisma) {
     return db.cart.findUnique({
       where: { user_id: userId },
       include: {
@@ -21,7 +21,7 @@ export const cartRepository = {
     });
   },
 
-  findCartItemById(id: number, db: Db = prisma) {
+  findCartItemById(id: string, db: Db = prisma) {
     return db.cartItem.findUnique({
       where: { id },
       include: {
@@ -32,8 +32,8 @@ export const cartRepository = {
   },
 
   findCartItemByCartAndProduct(
-    cartId: number,
-    productId: number,
+    cartId: string,
+    productId: string,
     db: Db = prisma
   ) {
     return db.cartItem.findUnique({
@@ -41,14 +41,14 @@ export const cartRepository = {
     });
   },
 
-  createCart(userId: number, storeId: number, db: Db = prisma) {
+  createCart(userId: string, storeId: string, db: Db = prisma) {
     return db.cart.create({
       data: { user_id: userId, store_id: storeId }
     });
   },
 
   createCartItem(
-    data: { cart_id: number; product_id: number; quantity: number },
+    data: { cart_id: string; product_id: string; quantity: number },
     db: Db = prisma
   ) {
     return db.cartItem.create({
@@ -61,7 +61,7 @@ export const cartRepository = {
     });
   },
 
-  updateCartItemQuantity(id: number, quantity: number, db: Db = prisma) {
+  updateCartItemQuantity(id: string, quantity: number, db: Db = prisma) {
     return db.cartItem.update({
       where: { id },
       data: { quantity },
@@ -73,25 +73,27 @@ export const cartRepository = {
     });
   },
 
-  deleteCartItem(id: number, db: Db = prisma) {
+  deleteCartItem(id: string, db: Db = prisma) {
     return db.cartItem.delete({ where: { id } });
   },
 
-  countCartItems(cartId: number, db: Db = prisma) {
+  countCartItems(cartId: string, db: Db = prisma) {
     return db.cartItem.count({ where: { cart_id: cartId } });
   },
 
-  deleteCart(id: number, db: Db = prisma) {
+  deleteCart(id: string, db: Db = prisma) {
     return db.cart.delete({ where: { id } });
   },
 
-  findStoreInventory(storeId: number, productId: number, db: Db = prisma) {
+  findStoreInventory(storeId: string, productId: string, db: Db = prisma) {
     return db.storeInventory.findUnique({
-      where: { store_id_product_id: { store_id: storeId, product_id: productId } }
+      where: {
+        store_id_product_id: { store_id: storeId, product_id: productId }
+      }
     });
   },
 
-  findUserById(userId: number, db: Db = prisma) {
+  findUserById(userId: string, db: Db = prisma) {
     return db.user.findUnique({
       where: { id: userId },
       select: { id: true, is_verified: true }
