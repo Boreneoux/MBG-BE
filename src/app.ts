@@ -22,7 +22,8 @@ import adminOrderRouter from './routes/admin.order.router';
 import regionRouter from './routes/region.router';
 import mutationRouter from './routes/mutation.router';
 import reportRouter from './routes/report.router';
-import { schedulerService } from './services/scheduler.service';
+import schedulerRouter from './routes/scheduler.router';
+// import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
 const app: Express = express();
@@ -60,6 +61,7 @@ app.use('/api/vouchers', voucherRouter);
 app.use('/api/regions', regionRouter);
 app.use('/api/mutations', mutationRouter);
 app.use('/api/reports', reportRouter);
+app.use('/api/internal/scheduler', schedulerRouter);
 
 // Centralized Error Handler
 app.use(errorMiddleware);
@@ -69,6 +71,6 @@ app.listen(serverPort, () => {
     `⚡️[server]: Server is running at http://localhost:${serverPort}`
   );
 
-  // Start the scheduler
-  schedulerService.start();
+  // Scheduler runs via Vercel Cron → GET /api/internal/scheduler/tick
+  // schedulerService.start();
 });

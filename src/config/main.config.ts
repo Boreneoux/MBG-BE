@@ -28,3 +28,6 @@ export const MIDTRANS_IS_PRODUCTION = process.env.MIDTRANS_IS_PRODUCTION === 'tr
 export const MIDTRANS_SNAP_URL = process.env.MIDTRANS_SNAP_URL || 'https://app.sandbox.midtrans.com/snap/v1';
 export const MIDTRANS_API_URL = process.env.MIDTRANS_API_URL || 'https://api.sandbox.midtrans.com';
 export const MIDTRANS_WEBHOOK_URL = process.env.MIDTRANS_WEBHOOK_URL || 'http://localhost:8000/api/orders/webhook/payment';
+
+// Set automatically by Vercel for cron job authentication
+export const CRON_SECRET = process.env.CRON_SECRET;

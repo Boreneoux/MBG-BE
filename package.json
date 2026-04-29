@@ -10,7 +10,8 @@
     "test:coverage": "jest --coverage",
     "seed": "ts-node prisma/seed.ts",
     "seed:regions": "ts-node prisma/seed-regions.ts",
-    "seed:regions:with-districts": "ts-node prisma/seed-regions.ts --with-districts"
+    "seed:regions:with-districts": "ts-node prisma/seed-regions.ts --with-districts",
+    "seed:demo": "ts-node prisma/seed-demo.ts"
   },
   "keywords": [],
   "author": "",
