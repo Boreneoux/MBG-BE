@@ -2,11 +2,12 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import connectPg from 'connect-pg-simple';
 import passport from 'passport';
 
 import { errorMiddleware } from './middlewares/error.middleware';
 import { corsOptions } from './config/cors.config';
-import { PORT, SESSION_SECRET } from './config/main.config';
+import { PORT, SESSION_SECRET, DATABASE_URL } from './config/main.config';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';
 import categoryRouter from './routes/category.router';
@@ -26,6 +27,7 @@ import schedulerRouter from './routes/scheduler.router';
 // import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
+const PgStore = connectPg(session);
 const app: Express = express();
 
 app.use(cors(corsOptions));
@@ -34,6 +36,11 @@ app.use(cookieParser());
 
 app.use(
   session({
+    store: new PgStore({
+      conString: DATABASE_URL,
+      tableName: 'user_sessions',
+      createTableIfMissing: true,
+    }),
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -66,11 +73,13 @@ app.use('/api/internal/scheduler', schedulerRouter);
 // Centralized Error Handler
 app.use(errorMiddleware);
 
-app.listen(serverPort, () => {
-  console.log(
-    `⚡️[server]: Server is running at http://localhost:${serverPort}`
-  );
+// Local dev only — Vercel serverless uses the exported app, not app.listen()
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(serverPort, () => {
+    console.log(
+      `⚡️[server]: Server is running at http://localhost:${serverPort}`
+    );
+  });
+}
 
-  // Scheduler runs via Vercel Cron → GET /api/internal/scheduler/tick
-  // schedulerService.start();
-});
+export default app;

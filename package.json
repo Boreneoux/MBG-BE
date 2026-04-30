@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "start": "node dist/app.ts",
+    "start": "node dist/src/app.js",
+    "postinstall": "prisma generate",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "seed": "ts-node prisma/seed.ts",
@@ -32,6 +33,7 @@
     "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
+    "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
@@ -52,6 +54,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/passport": "^1.0.17",
