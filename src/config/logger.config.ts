@@ -10,22 +10,22 @@ const logFormat = printf(({ level, message, timestamp, stack, ...meta }) => {
   return `${timestamp} [${level}]: ${stack || message}${metaStr}`;
 });
 
-const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
-  format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    errors({ stack: true }),
-    logFormat
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        errors({ stack: true }),
-        logFormat
-      )
-    }),
+const isProduction = process.env.NODE_ENV === 'production';
+
+const transports: winston.transport[] = [
+  new winston.transports.Console({
+    format: combine(
+      colorize(),
+      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      errors({ stack: true }),
+      logFormat
+    )
+  })
+];
+
+// Vercel's filesystem is read-only — skip file transports in production
+if (!isProduction) {
+  transports.push(
     new DailyRotateFile({
       filename: 'logs/error-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
@@ -39,7 +39,17 @@ const logger = winston.createLogger({
       maxFiles: '14d',
       zippedArchive: true
     })
-  ]
+  );
+}
+
+const logger = winston.createLogger({
+  level: isProduction ? 'warn' : 'debug',
+  format: combine(
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    errors({ stack: true }),
+    logFormat
+  ),
+  transports
 });
 
 export default logger;
