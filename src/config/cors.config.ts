@@ -1,4 +1,7 @@
-const whiteList = ['http://localhost:3000'];
+const whiteList = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
 
 export const corsOptions = {
   origin: function (origin: any, callback: any) {
