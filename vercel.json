@@ -6,11 +6,5 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "src/app.ts" }
-  ],
-  "crons": [
-    {
-      "path": "/api/internal/scheduler/tick",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
