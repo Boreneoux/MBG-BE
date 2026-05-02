@@ -80,80 +80,68 @@ export function compileTemplate(
   return template({ year: new Date().getFullYear().toString(), ...vars });
 }
 
-export function sendEmailAsync(options: {
+export async function sendEmailAsync(options: {
   to: string;
   subject: string;
   html: string;
-}): void {
-  transporter
+}): Promise<void> {
+  await transporter
     .sendMail({ from: USER_EMAILER, ...options })
     .catch((err: unknown) => logger.error('Email send failed', { err }));
 }
 
-export function sendVerificationEmail(
+export async function sendVerificationEmail(
   email: string,
   firstName: string,
   rawToken: string
-): void {
-  try {
-    const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
-    const html = compileTemplate('verify-email.html', {
-      firstName,
-      verifyLink,
-      expirationTime: '1 hour'
-    });
-    sendEmailAsync({
-      to: email,
-      subject: 'Verify your MagerBeliGrocery email address',
-      html
-    });
-  } catch (err) {
-    logger.error('Failed to send verification email', { err });
-  }
+): Promise<void> {
+  const verifyLink = `${FRONTEND_URL}/setup-password?token=${rawToken}`;
+  const html = compileTemplate('verify-email.html', {
+    firstName,
+    verifyLink,
+    expirationTime: '1 hour'
+  });
+  await sendEmailAsync({
+    to: email,
+    subject: 'Verify your MagerBeliGrocery email address',
+    html
+  });
 }
 
-export function sendStoreAdminInviteEmail(
+export async function sendStoreAdminInviteEmail(
   email: string,
   firstName: string,
   storeName: string,
   rawToken: string
-): void {
-  try {
-    const verifyLink = `${FRONTEND_URL}/admin/setup-password?token=${rawToken}`;
-    const html = compileTemplate('store-admin-invite.html', {
-      firstName,
-      storeName,
-      verifyLink,
-      expirationTime: '24 hours'
-    });
-    sendEmailAsync({
-      to: email,
-      subject: "You've been invited as a Store Admin — Set up your password",
-      html
-    });
-  } catch (err) {
-    logger.error('Failed to send store admin invite email', { err });
-  }
+): Promise<void> {
+  const verifyLink = `${FRONTEND_URL}/admin/setup-password?token=${rawToken}`;
+  const html = compileTemplate('store-admin-invite.html', {
+    firstName,
+    storeName,
+    verifyLink,
+    expirationTime: '24 hours'
+  });
+  await sendEmailAsync({
+    to: email,
+    subject: "You've been invited as a Store Admin — Set up your password",
+    html
+  });
 }
 
-export function sendResetEmail(
+export async function sendResetEmail(
   email: string,
   firstName: string,
   rawToken: string
-): void {
-  try {
-    const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
-    const html = compileTemplate('reset-password.html', {
-      firstName,
-      resetLink,
-      expirationTime: `${TOKEN_EXPIRY.password_reset} minutes`
-    });
-    sendEmailAsync({
-      to: email,
-      subject: 'Reset your MagerBeliGrocery password',
-      html
-    });
-  } catch (err) {
-    logger.error('Failed to send reset email', { err });
-  }
+): Promise<void> {
+  const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+  const html = compileTemplate('reset-password.html', {
+    firstName,
+    resetLink,
+    expirationTime: `${TOKEN_EXPIRY.password_reset} minutes`
+  });
+  await sendEmailAsync({
+    to: email,
+    subject: 'Reset your MagerBeliGrocery password',
+    html
+  });
 }
