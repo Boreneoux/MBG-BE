@@ -10,6 +10,7 @@ export const cartRepository = {
       where: { user_id: userId },
       include: {
         cart_items: {
+          orderBy: { created_at: 'asc' },
           include: {
             product: {
               include: { product_images: { where: { is_primary: true } } }

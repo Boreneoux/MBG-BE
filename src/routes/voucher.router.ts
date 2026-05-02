@@ -9,6 +9,7 @@ const router = Router();
 
 // Static user-facing routes — must come before /:id to avoid param capture
 router.get('/mine', authenticate, authorize(user_role.user), voucherController.getUserVouchers);
+router.get('/promotions', authenticate, voucherController.getPromotionVouchers);
 router.post('/apply', authenticate, authorize(user_role.user), validate(applyVoucherSchema), voucherController.applyVoucher);
 
 // Admin read routes

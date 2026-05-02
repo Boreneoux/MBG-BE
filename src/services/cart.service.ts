@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import logger from '../config/logger.config';
 import { cartRepository } from '../repositories/cart.repository';
 import { AddToCartInput, UpdateCartItemInput, Tx } from '../types/cart';
+import { Prisma } from '../../generated/prisma/client';
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,70 @@ export const cartService = {
       return null;
     }
 
-    return cart;
+    const now = new Date();
+    const discounts = await prisma.discount.findMany({
+      where: {
+        store_id: cart.store_id,
+        is_active: true,
+        deleted_at: null,
+        OR: [{ started_at: null }, { started_at: { lte: now } }],
+        AND: [{ OR: [{ expired_at: null }, { expired_at: { gte: now } }] }]
+      }
+    });
+
+    const enrichedCartItems = cart.cart_items.map((item) => {
+      const unitPrice = new Prisma.Decimal(item.product.price);
+      let discountAmount = new Prisma.Decimal(0);
+      let discountId: string | undefined;
+      let isBogo = false;
+
+      const applicable = discounts.filter(
+        d => d.product_id === item.product_id || d.product_id === null
+      );
+
+      for (const d of applicable) {
+        if (d.type === 'buy_one_get_one') {
+          const freeQty = Math.floor(item.quantity / 2);
+          const bogoDiscount = unitPrice.mul(freeQty);
+          if (bogoDiscount.gt(discountAmount)) {
+            discountAmount = bogoDiscount;
+            discountId = d.id;
+            isBogo = true;
+          }
+        } else if (d.type === 'percentage' && d.value) {
+          const pct = d.value.div(100);
+          let pctDiscount = unitPrice.mul(item.quantity).mul(pct);
+          if (d.max_discount_value) {
+            pctDiscount = Prisma.Decimal.min(pctDiscount, d.max_discount_value);
+          }
+          if (pctDiscount.gt(discountAmount)) {
+            discountAmount = pctDiscount;
+            discountId = d.id;
+            isBogo = false;
+          }
+        } else if (d.type === 'nominal' && d.value) {
+          if (d.value.gt(discountAmount)) {
+            discountAmount = d.value;
+            discountId = d.id;
+            isBogo = false;
+          }
+        }
+      }
+
+      return {
+        ...item,
+        discount_amount: discountAmount,
+        discount_id: discountId,
+        is_bogo_item: isBogo,
+        original_total_price: unitPrice.mul(item.quantity),
+        total_price: unitPrice.mul(item.quantity).sub(discountAmount)
+      };
+    });
+
+    return {
+      ...cart,
+      cart_items: enrichedCartItems
+    };
   },
 
   async addItem(userId: string, input: AddToCartInput) {
