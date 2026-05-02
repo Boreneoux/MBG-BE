@@ -58,11 +58,27 @@ export const voucherRepository = {
 
     findByUser(userId: string) {
         return prisma.userVoucher.findMany({
-            where: { user_id: userId, deleted_at: null },
+            where: {
+                user_id: userId,
+                deleted_at: null,
+                voucher: { deleted_at: null } // exclude soft-deleted vouchers
+            },
             include: {
                 voucher: { include: { product: true } }
             },
             orderBy: { created_at: 'desc' }
+        });
+    },
+
+    findActiveReferralVoucher() {
+        return prisma.voucher.findFirst({
+            where: { is_referral: true, deleted_at: null, expired_at: { gt: new Date() } }
+        });
+    },
+
+    findActiveReferrerRewardVoucher() {
+        return prisma.voucher.findFirst({
+            where: { is_referrer_reward: true, deleted_at: null, expired_at: { gt: new Date() } }
         });
     },
 
@@ -97,6 +113,20 @@ export const voucherRepository = {
     checkUserUsage(userId: string, voucherId: string) {
         return prisma.userVoucher.findFirst({
             where: { user_id: userId, voucher_id: voucherId }
+        });
+    },
+
+    findPromotionVouchers() {
+        const now = new Date();
+        return prisma.voucher.findMany({
+            where: {
+                deleted_at: null,
+                is_referral: false,
+                is_referrer_reward: false,
+                expired_at: { gt: now }
+            },
+            include: { product: true },
+            orderBy: { created_at: 'desc' }
         });
     },
 

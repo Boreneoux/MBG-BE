@@ -1,4 +1,5 @@
 import { voucherRepository } from '../repositories/voucher.repository';
+import { prisma } from '../config/prisma-client.config';
 import { AppError } from '../utils/AppError';
 import { CreateVoucherInput, GetVouchersQuery, ApplyVoucherInput } from '../types/voucher';
 
@@ -75,7 +76,41 @@ export const voucherService = {
     },
 
     async getUserVouchers(userId: string) {
-        return voucherRepository.findByUser(userId);
+        let vouchers = await voucherRepository.findByUser(userId);
+        const hasActiveReferralVoucher = vouchers.some(
+            (uv) => uv.voucher.is_referral && !uv.is_used
+        );
+
+        if (!hasActiveReferralVoucher) {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { referred_by_id: true }
+            });
+
+            if (user?.referred_by_id) {
+                const referralVoucher = await voucherRepository.findActiveReferralVoucher();
+                if (referralVoucher) {
+                    // Only assign if they've never had this voucher at all
+                    const existing = await voucherRepository.checkUserUsage(userId, referralVoucher.id);
+                    if (!existing) {
+                        const expiredAt = referralVoucher.reward_duration_days
+                            ? new Date(Date.now() + referralVoucher.reward_duration_days * 24 * 60 * 60 * 1000)
+                            : undefined;
+                        await prisma.userVoucher.create({
+                            data: { user_id: userId, voucher_id: referralVoucher.id, ...(expiredAt && { expired_at: expiredAt }) }
+                        });
+                        // Re-fetch with the newly assigned voucher included
+                        vouchers = await voucherRepository.findByUser(userId);
+                    }
+                }
+            }
+        }
+
+        return vouchers;
+    },
+
+    async getPromotionVouchers() {
+        return voucherRepository.findPromotionVouchers();
     },
 
     async setAsReferrerRewardVoucher(id: string) {
@@ -120,8 +155,13 @@ export const voucherService = {
         }
 
         const usage = await voucherRepository.checkUserUsage(userId, voucher.id);
-        if (usage) {
-            throw new AppError('You have already used this voucher', 400);
+        // For user-specific vouchers (referral/reward): the UserVoucher record must exist
+        // For general promotion vouchers: only block if already used (is_used = true)
+        if (voucher.is_referral || voucher.is_referrer_reward) {
+            if (!usage) throw new AppError('Voucher not available for your account', 400);
+            if (usage.is_used) throw new AppError('You have already used this voucher', 400);
+        } else {
+            if (usage && usage.is_used) throw new AppError('You have already used this voucher', 400);
         }
 
         if (voucher.min_purchase_amount && applyData.cart_total < Number(voucher.min_purchase_amount)) {
