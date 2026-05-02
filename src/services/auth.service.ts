@@ -56,7 +56,7 @@ async function issueVerificationToken(
     'email_verification',
     expiresAt
   );
-  sendVerificationEmail(email, firstName, raw);
+  await sendVerificationEmail(email, firstName, raw);
 }
 
 async function validateToken(rawToken: string, expectedType: string) {
@@ -368,7 +368,7 @@ export const authService = {
       'password_reset',
       expiresAt
     );
-    sendResetEmail(email, user.first_name ?? 'there', raw);
+    await sendResetEmail(email, user.first_name ?? 'there', raw);
     return { message: 'If that email exists, a reset link has been sent' };
   },
 

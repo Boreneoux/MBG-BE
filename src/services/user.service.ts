@@ -86,7 +86,7 @@ export const userService = {
     );
 
     if (storeName) {
-      authHelpers.sendStoreAdminInviteEmail(
+      await authHelpers.sendStoreAdminInviteEmail(
         data.email,
         data.first_name ?? '',
         storeName,
