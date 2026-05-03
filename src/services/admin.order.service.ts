@@ -222,36 +222,7 @@ export const adminOrderService = {
       }
     }
 
-    const updatedOrder = await prisma.$transaction(async (tx: Tx) => {
-      for (const item of order.order_items) {
-        const inventory = await tx.storeInventory.findUnique({
-          where: {
-            store_id_product_id: {
-              store_id: order.store_id,
-              product_id: item.product_id
-            }
-          }
-        });
-
-        if (!inventory) {
-          throw new AppError('Store inventory not found for order cancellation', 400);
-        }
-
-        await orderRepository.incrementStock(inventory.id, item.quantity, tx);
-        await orderRepository.createStockJournal(
-          {
-            store_inventory_id: inventory.id,
-            quantity: item.quantity,
-            type: 'order_cancellation_return',
-            description: `Order ${order.order_number} canceled and stock returned`,
-            reference_id: order.id
-          },
-          tx
-        );
-      }
-
-      return orderRepository.cancelOrder(order.id, tx);
-    });
+    const updatedOrder = await orderRepository.cancelOrder(order.id);
 
     logger.info(`Admin canceled order ${order.order_number}`);
     return updatedOrder;

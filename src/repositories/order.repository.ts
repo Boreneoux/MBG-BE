@@ -358,10 +358,53 @@ export const orderRepository = {
   },
 
   cancelOrder(orderId: string, db: Db = prisma) {
-    return db.order.update({
-      where: { id: orderId },
-      data: { status: 'cancelled', cancelled_at: new Date() }
-    });
+    const isTx = !('$transaction' in db);
+
+    const runInTx = async (tx: any) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { order_items: true }
+      });
+
+      if (!order) return null;
+      if (order.status === 'cancelled') return order;
+
+      for (const item of order.order_items) {
+        const storeInventory = await tx.storeInventory.findUnique({
+          where: {
+            store_id_product_id: { store_id: order.store_id, product_id: item.product_id }
+          }
+        });
+
+        if (storeInventory) {
+          await tx.storeInventory.update({
+            where: { id: storeInventory.id },
+            data: { stock: { increment: item.quantity } }
+          });
+
+          await tx.stockJournal.create({
+            data: {
+              store_inventory_id: storeInventory.id,
+              quantity: item.quantity,
+              type: 'order_cancellation_return',
+              description: `Order ${order.order_number} canceled and stock returned`,
+              reference_id: order.id
+            }
+          });
+        }
+      }
+
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status: 'cancelled', cancelled_at: new Date() }
+      });
+    };
+
+    if (isTx) {
+      return runInTx(db);
+    } else {
+      return (db as typeof prisma).$transaction(runInTx);
+    }
   },
 
   findOrdersToCancel(now: Date, db: Db = prisma) {
