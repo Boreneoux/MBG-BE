@@ -2,8 +2,9 @@ import { prisma } from '../config/prisma-client.config';
 import { Prisma } from '../../generated/prisma/client';
 
 class MutationRepository {
-    async findMutations(params: { skip: number; take: number; sort: 'asc' | 'desc' }) {
+    async findMutations(params: { skip: number; take: number; sort: 'asc' | 'desc', where?: Prisma.StockMutationWhereInput }) {
         return prisma.stockMutation.findMany({
+            where: params.where,
             skip: params.skip,
             take: params.take,
             orderBy: { created_at: params.sort },
@@ -15,8 +16,8 @@ class MutationRepository {
         });
     }
 
-    async countMutations() {
-        return prisma.stockMutation.count();
+    async countMutations(where?: Prisma.StockMutationWhereInput) {
+        return prisma.stockMutation.count({ where });
     }
 }
 

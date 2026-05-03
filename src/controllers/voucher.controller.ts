@@ -69,6 +69,16 @@ export const voucherController = {
         });
     }),
 
+    getPromotionVouchers: catchAsync(async (req: Request, res: Response) => {
+        const vouchers = await voucherService.getPromotionVouchers();
+
+        res.status(200).json({
+            success: true,
+            message: 'Promotion vouchers retrieved successfully',
+            data: vouchers
+        });
+    }),
+
     setReferrerRewardVoucher: catchAsync(async (req: Request, res: Response) => {
         const voucher = await voucherService.setAsReferrerRewardVoucher(req.params.id as string);
 

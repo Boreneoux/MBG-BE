@@ -485,6 +485,7 @@ model Order {
   midtrans_status         String?        @db.VarChar(50)
   payment_url             String?        @db.Text
   shipped_at              DateTime?
+  shipped_simulate_at     DateTime?
   confirmed_at            DateTime?
   cancelled_at            DateTime?
   created_at              DateTime       @default(now())

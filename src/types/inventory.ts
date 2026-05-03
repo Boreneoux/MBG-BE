@@ -29,4 +29,7 @@ export interface JournalQueryInput {
 export interface InventoryQueryInput {
     store_id?: string; // super_admin only
     product_id?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
 }

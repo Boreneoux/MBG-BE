@@ -13,7 +13,6 @@ router.use(authorize(user_role.super_admin, user_role.store_admin));
 router.get('/', validate(getAdminOrdersQuerySchema), adminOrderController.getOrders);
 router.get('/:orderNumber', validate(orderIdParamsSchema), adminOrderController.getOrder);
 router.post('/:orderNumber/confirm-payment-proof', validate(orderIdParamsSchema), adminOrderController.confirmPaymentProof);
-router.post('/:orderNumber/reject-payment-proof', validate(orderIdParamsSchema), adminOrderController.rejectPaymentProof);
 router.post('/:orderNumber/ship', validate(orderIdParamsSchema), adminOrderController.shipOrder);
 router.post('/:orderNumber/cancel', validate(orderIdParamsSchema), adminOrderController.cancelOrder);
 

@@ -242,29 +242,28 @@ export const orderService = {
       if (!voucher) throw new AppError('Voucher not found or expired', 404);
 
       const uv = await orderRepository.findUserVoucher(userId, voucher.id);
-      if (!uv)
-        throw new AppError('Voucher not available for your account', 400);
 
-      const effectiveExpiry = uv.expired_at ?? voucher.expired_at;
+      if (voucher.is_referral || voucher.is_referrer_reward) {
+        // User-specific: must be explicitly assigned and unused
+        if (!uv) throw new AppError('Voucher not available for your account', 400);
+        if (uv.is_used) throw new AppError('You have already used this voucher', 400);
+      } else {
+        // General promotion: only block if already used
+        if (uv && uv.is_used) throw new AppError('You have already used this voucher', 400);
+      }
+
+      const effectiveExpiry = uv?.expired_at ?? voucher.expired_at;
       if (effectiveExpiry < now) throw new AppError('Voucher has expired', 400);
 
       if (voucher.usage_type === 'shipping') {
-        // Apply towards shipping cost
         const shippingDec = new Prisma.Decimal(resolvedShippingCost);
         if (voucher.discount_type === 'percentage') {
           voucherDiscount = shippingDec.mul(voucher.discount_value.div(100));
         } else {
-          voucherDiscount = Prisma.Decimal.min(
-            voucher.discount_value,
-            shippingDec
-          );
+          voucherDiscount = Prisma.Decimal.min(voucher.discount_value, shippingDec);
         }
       } else {
-        // Apply towards subtotal
-        if (
-          voucher.min_purchase_amount &&
-          subtotal.lt(voucher.min_purchase_amount)
-        ) {
+        if (voucher.min_purchase_amount && subtotal.lt(voucher.min_purchase_amount)) {
           throw new AppError(
             `Minimum purchase amount for this voucher is ${voucher.min_purchase_amount}`,
             400
@@ -273,10 +272,7 @@ export const orderService = {
         if (voucher.discount_type === 'percentage') {
           voucherDiscount = subtotal.mul(voucher.discount_value.div(100));
           if (voucher.max_discount_amount) {
-            voucherDiscount = Prisma.Decimal.min(
-              voucherDiscount,
-              voucher.max_discount_amount
-            );
+            voucherDiscount = Prisma.Decimal.min(voucherDiscount, voucher.max_discount_amount);
           }
         } else {
           voucherDiscount = voucher.discount_value;
@@ -285,7 +281,7 @@ export const orderService = {
 
       totalDiscount = totalDiscount.add(voucherDiscount);
       voucherId = voucher.id;
-      userVoucherId = uv.id;
+      userVoucherId = uv?.id; // undefined for general promotion vouchers
     }
 
     // 8. Grand total
@@ -357,12 +353,22 @@ export const orderService = {
           }
 
           // Mark voucher as used
-          if (userVoucherId) {
-            await orderRepository.markVoucherUsed(
-              userVoucherId,
-              created.id,
-              tx
-            );
+          if (voucherId) {
+            if (userVoucherId) {
+              // User-specific voucher: mark existing record as used
+              await orderRepository.markVoucherUsed(userVoucherId, created.id, tx);
+            } else {
+              // General promotion voucher: create a UserVoucher record to prevent reuse
+              await tx.userVoucher.create({
+                data: {
+                  user_id: userId,
+                  voucher_id: voucherId,
+                  order_id: created.id,
+                  is_used: true,
+                  used_at: new Date()
+                }
+              });
+            }
           }
 
           // Clear processed items from cart
@@ -414,12 +420,14 @@ export const orderService = {
     userId: string,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
+    date?: string,
+    sortOrder?: 'asc' | 'desc'
   ) {
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
-      orderRepository.findUserOrders({ userId, search, skip, take: limit }),
-      orderRepository.countUserOrders({ userId, search })
+      orderRepository.findUserOrders({ userId, search, date, sortOrder, skip, take: limit }),
+      orderRepository.countUserOrders({ userId, search, date })
     ]);
     return {
       data: orders,
@@ -460,9 +468,19 @@ export const orderService = {
     if (!order) throw new AppError('Order not found', 404);
     if (order.user_id !== userId)
       throw new AppError('Forbidden: cannot cancel this order', 403);
-    if (order.status !== 'waiting_for_payment') {
+
+    // Only allow cancellation if no successful payment has been made
+    const successfulPaymentStatuses = ['capture', 'settlement'];
+    if (order.midtrans_status && successfulPaymentStatuses.includes(order.midtrans_status)) {
       throw new AppError(
-        'Order can only be cancelled before payment upload',
+        'Order cannot be cancelled after a successful payment has been made',
+        400
+      );
+    }
+
+    if (!['waiting_for_payment', 'waiting_for_confirmation'].includes(order.status)) {
+      throw new AppError(
+        'Order can only be cancelled before it starts processing',
         400
       );
     }
@@ -515,6 +533,28 @@ export const orderService = {
     return orders.length;
   },
 
+  /**
+   * Scheduler: auto-ship processing orders whose simulated shipment timer has elapsed.
+   */
+  async autoShipProcessingOrders() {
+    const now = new Date();
+    const orders = await orderRepository.findOrdersToAutoShip(now);
+
+    if (orders.length === 0) return 0;
+
+    for (const order of orders) {
+      await orderRepository.shipOrder(order.id);
+      logger.info(
+        `Auto-shipped order ${order.order_number} — simulated shipment timer elapsed`
+      );
+    }
+
+    return orders.length;
+  },
+
+  /**
+   * Scheduler: auto-confirm receipt for shipped orders after 7 days with no action.
+   */
   async autoConfirmShippedOrders() {
     const now = new Date();
     const orders = await orderRepository.findOrdersToAutoConfirmReceipt(now);
@@ -524,7 +564,7 @@ export const orderService = {
     for (const order of orders) {
       await orderRepository.confirmReceipt(order.id);
       logger.info(
-        `Auto-confirmed receipt for order ${order.order_number} after shipped grace period`
+        `Auto-confirmed receipt for order ${order.order_number} after 7 days without customer action`
       );
     }
 

@@ -250,7 +250,13 @@ export const orderRepository = {
           }
         },
         store: {
-          select: { id: true, name: true, city: { select: { name: true } } }
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            city: { select: { name: true } }
+          }
         }
       }
     });
@@ -260,6 +266,8 @@ export const orderRepository = {
     params: {
       userId: string;
       search?: string;
+      date?: string;
+      sortOrder?: 'asc' | 'desc';
       skip: number;
       take: number;
     },
@@ -271,11 +279,18 @@ export const orderRepository = {
         ? { order_number: { contains: params.search, mode: 'insensitive' } }
         : {})
     };
+
+    if (params.date) {
+      const startDate = new Date(`${params.date}T00:00:00.000Z`);
+      const endDate = new Date(`${params.date}T23:59:59.999Z`);
+      where.created_at = { gte: startDate, lte: endDate };
+    }
+
     return db.order.findMany({
       where,
       skip: params.skip,
       take: params.take,
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: params.sortOrder || 'desc' },
       include: {
         order_items: {
           include: {
@@ -287,7 +302,7 @@ export const orderRepository = {
   },
 
   countUserOrders(
-    params: { userId: string; search?: string },
+    params: { userId: string; search?: string; date?: string },
     db: Db = prisma
   ) {
     const where: Prisma.OrderWhereInput = {
@@ -296,6 +311,13 @@ export const orderRepository = {
         ? { order_number: { contains: params.search, mode: 'insensitive' } }
         : {})
     };
+
+    if (params.date) {
+      const startDate = new Date(`${params.date}T00:00:00.000Z`);
+      const endDate = new Date(`${params.date}T23:59:59.999Z`);
+      where.created_at = { gte: startDate, lte: endDate };
+    }
+
     return db.order.count({ where });
   },
 
@@ -335,18 +357,54 @@ export const orderRepository = {
     return db.order.count({ where });
   },
 
-  rejectPaymentProof(orderId: string, db: Db = prisma) {
-    return db.order.update({
-      where: { id: orderId },
-      data: { status: 'waiting_for_payment' }
-    });
-  },
-
   cancelOrder(orderId: string, db: Db = prisma) {
-    return db.order.update({
-      where: { id: orderId },
-      data: { status: 'cancelled', cancelled_at: new Date() }
-    });
+    const isTx = !('$transaction' in db);
+
+    const runInTx = async (tx: any) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { order_items: true }
+      });
+
+      if (!order) return null;
+      if (order.status === 'cancelled') return order;
+
+      for (const item of order.order_items) {
+        const storeInventory = await tx.storeInventory.findUnique({
+          where: {
+            store_id_product_id: { store_id: order.store_id, product_id: item.product_id }
+          }
+        });
+
+        if (storeInventory) {
+          await tx.storeInventory.update({
+            where: { id: storeInventory.id },
+            data: { stock: { increment: item.quantity } }
+          });
+
+          await tx.stockJournal.create({
+            data: {
+              store_inventory_id: storeInventory.id,
+              quantity: item.quantity,
+              type: 'order_cancellation_return',
+              description: `Order ${order.order_number} canceled and stock returned`,
+              reference_id: order.id
+            }
+          });
+        }
+      }
+
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status: 'cancelled', cancelled_at: new Date() }
+      });
+    };
+
+    if (isTx) {
+      return runInTx(db);
+    } else {
+      return (db as typeof prisma).$transaction(runInTx);
+    }
   },
 
   findOrdersToCancel(now: Date, db: Db = prisma) {
@@ -359,6 +417,36 @@ export const orderRepository = {
     });
   },
 
+  /**
+   * Find processing orders whose simulated shipment timer has elapsed.
+   */
+  findOrdersToAutoShip(now: Date, db: Db = prisma) {
+    return db.order.findMany({
+      where: {
+        status: 'processing',
+        shipped_simulate_at: { lte: now }
+      },
+      select: { id: true, order_number: true }
+    });
+  },
+
+  /**
+   * Find shipped orders that have not been confirmed within 7 days.
+   * Auto-confirm these as "received".
+   */
+  findOrdersToAutoConfirmReceipt(now: Date, db: Db = prisma) {
+    return db.order.findMany({
+      where: {
+        status: 'shipped',
+        shipped_at: { lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) }
+      },
+      select: { id: true, order_number: true }
+    });
+  },
+
+  /**
+   * Find orders in waiting_for_confirmation state for 7+ days (auto-approve).
+   */
   findOrdersToAutoApprove(now: Date, db: Db = prisma) {
     return db.order.findMany({
       where: {
@@ -369,20 +457,20 @@ export const orderRepository = {
     });
   },
 
-  findOrdersToAutoConfirmReceipt(now: Date, db: Db = prisma) {
-    return db.order.findMany({
-      where: {
-        status: 'shipped',
-        shipped_at: { lt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) }
-      },
-      select: { id: true, order_number: true }
-    });
-  },
-
   confirmPayment(orderId: string, db: Db = prisma) {
     return db.order.update({
       where: { id: orderId },
       data: { status: 'waiting_for_confirmation' }
+    });
+  },
+
+  /**
+   * Move order to processing and set the simulated shipment time.
+   */
+  setProcessing(orderId: string, shippedSimulateAt: Date, db: Db = prisma) {
+    return db.order.update({
+      where: { id: orderId },
+      data: { status: 'processing', shipped_simulate_at: shippedSimulateAt }
     });
   },
 
@@ -437,7 +525,41 @@ export const orderRepository = {
 
   findOrderByOrderNumber(orderNumber: string, db: Db = prisma) {
     return db.order.findFirst({
-      where: { order_number: orderNumber }
+      where: { order_number: orderNumber },
+      include: {
+        order_items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                product_images: {
+                  select: { id: true, image_url: true, is_primary: true },
+                  orderBy: { is_primary: 'desc' },
+                  take: 1
+                }
+              }
+            },
+            discount: { select: { id: true, type: true, value: true } }
+          }
+        },
+        address: {
+          include: {
+            city: { select: { name: true } },
+            province: { select: { name: true } },
+            district: { select: { name: true } }
+          }
+        },
+        store: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            city: { select: { name: true } }
+          }
+        }
+      }
     });
   },
 

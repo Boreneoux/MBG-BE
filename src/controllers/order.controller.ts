@@ -9,12 +9,16 @@ export const orderController = {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
     const search = req.query.search as string | undefined;
+    const date = req.query.date as string | undefined;
+    const sortOrder = req.query.sort as 'asc' | 'desc' | undefined;
 
     const result = await orderService.getUserOrders(
       req.user!.id,
       page,
       limit,
-      search
+      search,
+      date,
+      sortOrder
     );
 
     res.json({
@@ -72,6 +76,32 @@ export const orderController = {
     });
   }),
 
+  syncPaymentStatus: catchAsync(async (req: Request, res: Response) => {
+    const result = await paymentService.syncPaymentStatus(
+      req.params.orderNumber as string,
+      req.user!.id
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  }),
+
+  adminSyncPaymentStatus: catchAsync(async (req: Request, res: Response) => {
+    const result = await paymentService.syncPaymentStatus(
+      req.params.orderNumber as string,
+      req.user!.id,
+      true // isAdmin
+    );
+
+    res.json({
+      success: true,
+      message: 'Payment status synced from Midtrans',
+      data: result
+    });
+  }),
+
   cancelOrder: catchAsync(async (req: Request, res: Response) => {
     const order = await orderService.cancelOrder(
       req.user!.id,
@@ -120,6 +150,19 @@ export const orderController = {
     res.json({
       success: true,
       message: 'Order marked as shipped',
+      data: { order }
+    });
+  }),
+
+  processShipment: catchAsync(async (req: Request, res: Response) => {
+    const order = await adminOrderService.processShipment(
+      req.params.orderNumber as string,
+      req.user!
+    );
+
+    res.json({
+      success: true,
+      message: 'Order shipment processing started',
       data: { order }
     });
   }),
