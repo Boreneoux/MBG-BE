@@ -245,12 +245,36 @@ export const inventoryService = {
             storeId = storeAdmin.store_id;
         }
 
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
+        const search = query.search?.trim();
+
         const where: Prisma.StoreInventoryWhereInput = {
             ...(storeId !== undefined && { store_id: storeId }),
             ...(productId !== undefined && { product_id: productId }),
+            ...(search && {
+                OR: [
+                    { product: { name: { contains: search, mode: 'insensitive' } } },
+                    { store: { name: { contains: search, mode: 'insensitive' } } }
+                ]
+            })
         };
 
-        const inventories = await inventoryRepository.findInventories({ where });
-        return { inventories };
+        const skip = (page - 1) * limit;
+
+        const [inventories, total] = await Promise.all([
+            inventoryRepository.findInventories({ where, skip, take: limit }),
+            inventoryRepository.countInventories(where)
+        ]);
+
+        return { 
+            inventories,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     },
 };
