@@ -39,17 +39,7 @@ export const adminOrderController = {
 
     res.json({
       success: true,
-      message: 'Payment proof confirmed',
-      data: { order }
-    });
-  }),
-
-  rejectPaymentProof: catchAsync(async (req: Request, res: Response) => {
-    const order = await adminOrderService.rejectPaymentProof(req.params.orderNumber as string, req.user!);
-
-    res.json({
-      success: true,
-      message: 'Payment proof rejected',
+      message: 'Payment confirmed — order is now processing',
       data: { order }
     });
   }),

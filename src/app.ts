@@ -24,7 +24,7 @@ import regionRouter from './routes/region.router';
 import mutationRouter from './routes/mutation.router';
 import reportRouter from './routes/report.router';
 import schedulerRouter from './routes/scheduler.router';
-// import { schedulerService } from './services/scheduler.service';
+import { schedulerService } from './services/scheduler.service';
 
 const serverPort = PORT || 8000;
 const PgStore = connectPg(session);
@@ -75,6 +75,7 @@ app.use(errorMiddleware);
 
 // Local dev only — Vercel serverless uses the exported app, not app.listen()
 if (process.env.NODE_ENV !== 'production') {
+  schedulerService.start();
   app.listen(serverPort, () => {
     console.log(
       `⚡️[server]: Server is running at http://localhost:${serverPort}`

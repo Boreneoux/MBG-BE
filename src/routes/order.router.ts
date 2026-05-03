@@ -40,6 +40,17 @@ router.get(
   validate(orderIdParamsSchema),
   orderController.getPaymentStatus
 );
+router.post(
+  '/:orderNumber/sync-payment',
+  validate(orderIdParamsSchema),
+  orderController.syncPaymentStatus
+);
+router.post(
+  '/:orderNumber/admin-sync-payment',
+  authorize(user_role.super_admin, user_role.store_admin),
+  validate(orderIdParamsSchema),
+  orderController.adminSyncPaymentStatus
+);
 
 router.post(
   '/:orderNumber/cancel',
@@ -62,6 +73,12 @@ router.post(
   authorize(user_role.super_admin, user_role.store_admin),
   validate(orderIdParamsSchema),
   orderController.shipOrder
+);
+router.post(
+  '/:orderNumber/process-shipment',
+  authorize(user_role.super_admin, user_role.store_admin),
+  validate(orderIdParamsSchema),
+  orderController.processShipment
 );
 
 export default router;
