@@ -2,6 +2,7 @@ import { AppError } from '../utils/AppError';
 import mutationRepository from '../repositories/mutation.repository';
 import inventoryRepository from '../repositories/inventory.repository';
 import { prisma } from '../config/prisma-client.config';
+import { Prisma } from '../../generated/prisma/client';
 
 export const mutationService = {
     async createMutation(input: { source_store_id: string; destination_store_id: string; product_id: string; quantity: number }) {
@@ -70,15 +71,28 @@ export const mutationService = {
         return result;
     },
 
-    async getMutations(query: { page?: string; limit?: string; sort?: 'asc' | 'desc' }) {
+    async getMutations(query: { page?: string; limit?: string; sort?: 'asc' | 'desc'; search?: string }) {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 10;
         const sort = query.sort ?? 'desc';
 
         const skip = (page - 1) * limit;
+        const search = query.search?.trim();
+
+        let where: Prisma.StockMutationWhereInput | undefined = undefined;
+        if (search) {
+            where = {
+                OR: [
+                    { product: { name: { contains: search, mode: 'insensitive' } } },
+                    { source_store: { name: { contains: search, mode: 'insensitive' } } },
+                    { destination_store: { name: { contains: search, mode: 'insensitive' } } },
+                ]
+            };
+        }
+
         const [mutations, total] = await Promise.all([
-            mutationRepository.findMutations({ skip, take: limit, sort }),
-            mutationRepository.countMutations()
+            mutationRepository.findMutations({ skip, take: limit, sort, where }),
+            mutationRepository.countMutations(where)
         ]);
 
         return {

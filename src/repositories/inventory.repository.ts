@@ -105,6 +105,8 @@ const inventoryRepository = {
 
     findInventories(params: {
         where: Prisma.StoreInventoryWhereInput;
+        skip?: number;
+        take?: number;
     }) {
         return prisma.storeInventory.findMany({
             where: {
@@ -128,7 +130,19 @@ const inventoryRepository = {
                     },
                 },
             },
-            orderBy: [{ store_id: 'asc' }, { product_id: 'asc' }],
+            orderBy: [{ store: { name: 'asc' } }, { product: { name: 'asc' } }],
+            skip: params.skip,
+            take: params.take,
+        });
+    },
+
+    countInventories(where: Prisma.StoreInventoryWhereInput) {
+        return prisma.storeInventory.count({
+            where: {
+                ...where,
+                deleted_at: null,
+                product: { deleted_at: null }
+            }
         });
     },
 
