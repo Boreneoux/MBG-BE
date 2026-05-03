@@ -1,5 +1,5 @@
 import { orderRepository } from '../repositories/order.repository';
-import { createSnapTransaction, mapMidtransStatus, verifyWebhookSignature } from '../helpers/midtrans.helper';
+import { createSnapTransaction, mapMidtransStatus, verifyWebhookSignature, getTransactionStatus } from '../helpers/midtrans.helper';
 import { AppError } from '../utils/AppError';
 import logger from '../config/logger.config';
 
@@ -65,9 +65,9 @@ export const paymentService = {
       items: midtransItems,
     });
 
-    // Persist Midtrans details on the order
+    // Persist Midtrans details on the order (store the suffixed order_id so we can look it up later)
     const updatedOrder = await orderRepository.updatePaymentDetails(order.id, {
-      midtrans_order_id: midtransResponse.transaction_id,
+      midtrans_order_id: midtransOrderId,
       payment_url: midtransResponse.redirect_url,
       midtrans_status: 'pending',
     });
@@ -110,7 +110,7 @@ export const paymentService = {
       return { success: false, message: 'Order not found' };
     }
 
-    // BUG FIX: Idempotency guard — don't re-process if order is already in a terminal state.
+    // Idempotency guard — don't re-process if order is already in a terminal state.
     if ((TERMINAL_STATUSES as readonly string[]).includes(order.status)) {
       logger.info(`Skipping webhook for order ${order.order_number} — already in status: ${order.status}`);
       return { success: true, message: 'Already processed' };
@@ -148,5 +148,62 @@ export const paymentService = {
       midtrans_status: order.midtrans_status,
       payment_url: order.payment_url,
     };
+  },
+
+  /**
+   * Actively queries the Midtrans API to get the real transaction status,
+   * then syncs the order status in our DB accordingly.
+   *
+   * This is the local-dev-friendly alternative to relying on webhooks
+   * (Midtrans cannot reach localhost, so webhooks never fire in dev).
+   *
+   * Called by the frontend after the Snap popup closes successfully.
+   */
+  async syncPaymentStatus(orderNumber: string, userId: string, isAdmin: boolean = false) {
+    const order = await orderRepository.findOrderByOrderNumber(orderNumber);
+    if (!order) throw new AppError('Order not found', 404);
+    if (!isAdmin && order.user_id !== userId) throw new AppError('Access denied', 403);
+
+    // Only sync if the order is still waiting for payment
+    if (order.status !== 'waiting_for_payment') {
+      return { synced: false, status: order.status, message: 'No sync needed' };
+    }
+
+    // We need the Midtrans order_id (which we stored with a timestamp suffix)
+    const midtransOrderId = order.midtrans_order_id;
+    if (!midtransOrderId) {
+      return { synced: false, status: order.status, message: 'No Midtrans transaction found' };
+    }
+
+    let midtransData: any;
+    try {
+      midtransData = await getTransactionStatus(midtransOrderId);
+    } catch (err) {
+      logger.warn(`Failed to fetch Midtrans status for order ${order.order_number}`, { err });
+      return { synced: false, status: order.status, message: 'Could not reach Midtrans' };
+    }
+
+    const transactionStatus: string = midtransData.transaction_status ?? 'pending';
+    const newStatus = mapMidtransStatus(transactionStatus);
+
+    // Persist the Midtrans status
+    await orderRepository.updatePaymentDetails(order.id, {
+      midtrans_status: transactionStatus,
+      midtrans_transaction_id: midtransData.transaction_id ?? '',
+    });
+
+    if (newStatus === 'processing') {
+      await orderRepository.confirmPayment(order.id);
+      logger.info(`[sync] Payment confirmed for order ${order.order_number} (midtrans: ${transactionStatus})`);
+      return { synced: true, status: 'waiting_for_confirmation', message: 'Payment confirmed' };
+    }
+
+    if (newStatus === 'cancelled') {
+      await orderRepository.cancelOrder(order.id);
+      logger.info(`[sync] Order cancelled for order ${order.order_number} (midtrans: ${transactionStatus})`);
+      return { synced: true, status: 'cancelled', message: 'Payment cancelled' };
+    }
+
+    return { synced: false, status: order.status, message: `Midtrans status: ${transactionStatus}` };
   },
 };

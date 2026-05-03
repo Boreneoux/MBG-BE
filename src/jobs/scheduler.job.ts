@@ -12,6 +12,11 @@ export async function runSchedulerTick() {
     logger.info(`Scheduler: Auto-approved ${autoApprovedCount} pending confirmations`);
   }
 
+  const autoShippedCount = await orderService.autoShipProcessingOrders();
+  if (autoShippedCount > 0) {
+    logger.info(`Scheduler: Auto-shipped ${autoShippedCount} processing orders`);
+  }
+
   const autoConfirmedCount = await orderService.autoConfirmShippedOrders();
   if (autoConfirmedCount > 0) {
     logger.info(`Scheduler: Auto-confirmed ${autoConfirmedCount} shipped orders`);
