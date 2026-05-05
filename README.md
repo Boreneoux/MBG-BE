@@ -1,63 +1,61 @@
 # MagerBeliGrocery — Backend API
 
-REST API for an online grocery platform built with Express, TypeScript, Prisma, and PostgreSQL.
+REST API for a multi-store online grocery platform. Handles authentication, product catalogue, cart, orders, inventory, promotions, and shipping.
 
 ## Tech Stack
 
-| Layer       | Library                                        |
-| ----------- | ---------------------------------------------- |
-| Runtime     | Node.js + TypeScript                           |
-| Framework   | Express v5                                     |
-| ORM         | Prisma v7 (pg adapter)                         |
-| Database    | PostgreSQL                                     |
-| Auth        | JWT (cookie-based) + Passport Google OAuth 2.0 |
-| Password    | bcrypt                                         |
-| Validation  | Zod                                            |
-| Email       | Nodemailer + Handlebars templates              |
-| File upload | Multer + Cloudinary                            |
-| Logging     | Winston + winston-daily-rotate-file            |
-| Testing     | Jest + ts-jest                                 |
-| Scheduler   | node-cron                                      |
+| Layer       | Library                                  |
+| ----------- | ---------------------------------------- |
+| Runtime     | Node.js + TypeScript                     |
+| Framework   | Express v5                               |
+| ORM         | Prisma v7 (pg adapter)                   |
+| Database    | PostgreSQL                               |
+| Auth        | JWT (HttpOnly cookie) + Google OAuth 2.0 |
+| Validation  | Zod                                      |
+| Email       | Nodemailer + Handlebars                  |
+| File upload | Multer + Cloudinary                      |
+| Payment     | Midtrans                                 |
+| Shipping    | RajaOngkir                               |
+| Logging     | Winston + daily-rotate-file              |
+| Scheduler   | node-cron                                |
+| Testing     | Jest + ts-jest                           |
 
 ## Project Structure
 
 ```
 src/
-  config/          # App config (CORS, logger, Passport, Prisma client, env vars)
-  controllers/     # Request/response handlers
-  helpers/         # Shared utilities (bcrypt, JWT, Cloudinary, Multer, Nodemailer)
-  jobs/            # Scheduled cron jobs
-  middlewares/     # Express middleware (auth, error handler, Zod validation)
-  repositories/    # Database layer — raw Prisma queries per feature
-  routes/          # Express routers
-  services/        # Business logic per feature
-    __tests__/     # Unit tests (Jest) — colocated with services
-  templates/       # Handlebars email templates
-  types/           # Shared TypeScript types per feature
-  validators/      # Zod request schemas per feature
-  app.ts           # App entry point
+  config/        # CORS, logger, Passport, Prisma client, env vars
+  controllers/   # HTTP request/response handlers
+  helpers/       # Shared utilities (JWT, bcrypt, Cloudinary, Nodemailer, Midtrans)
+  jobs/          # Scheduled cron jobs
+  middlewares/   # Auth, error handler, Zod validation
+  repositories/  # Prisma queries per feature
+  routes/        # Express routers
+  services/      # Business logic per feature
+    __tests__/   # Jest unit tests (colocated)
+  templates/     # Handlebars email templates
+  types/         # TypeScript interfaces per feature
+  validators/    # Zod request schemas
+  app.ts         # Entry point
 ```
 
 ## Architecture
 
-Requests flow through the following layers:
-
 ```
-Router → Controller → Service → Repository → Prisma (PostgreSQL)
+Router → Controller → Service → Repository → Prisma → PostgreSQL
 ```
 
-- **Router** — defines routes and applies middleware (auth, validation)
-- **Controller** — handles HTTP (req/res), delegates to service
+- **Router** — mounts routes, applies auth and validation middleware
+- **Controller** — handles HTTP, delegates to service
 - **Service** — business logic, transaction orchestration
-- **Repository** — all database queries; accepts optional `tx` for transactions
-- **Types** (`src/types/`) — shared interfaces used across layers
+- **Repository** — all Prisma queries; accepts optional `tx` for transactions
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL
 
 ### Installation
 
@@ -67,32 +65,41 @@ npm install
 
 ### Environment Variables
 
-Create a `.env` file at the project root:
+Copy `.env.example` to `.env` and fill in the values:
 
-```env
-PORT=8000
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-
-JWT_SECRET_TOKEN=your_jwt_secret
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:8000/api/auth/google/callback
-
-# Email
-USER_EMAILER=your_email@gmail.com
-PASSWORD_EMAILER=your_app_password
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# App
-FRONTEND_URL=http://localhost:5173
-SESSION_SECRET=your_session_secret
+```bash
+cp .env.example .env
 ```
+
+| Variable                            | Description                                |
+| ----------------------------------- | ------------------------------------------ |
+| `PORT`                              | Server port (default: `8000`)              |
+| `DATABASE_URL`                      | PostgreSQL connection string               |
+| `JWT_SECRET_TOKEN`                  | Access token signing secret                |
+| `JWT_REFRESH_SECRET`                | Refresh token signing secret               |
+| `JWT_ACCESS_TOKEN_EXPIRY`           | Access token TTL (default: `30m`)          |
+| `JWT_REFRESH_TOKEN_EXPIRY`          | Refresh token TTL (default: `30d`)         |
+| `EMAIL_VERIFICATION_EXPIRY_MINUTES` | Email token TTL (default: `60`)            |
+| `PASSWORD_RESET_EXPIRY_MINUTES`     | Password reset token TTL (default: `15`)   |
+| `USER_EMAILER`                      | Gmail address used to send emails          |
+| `PASSWORD_EMAILER`                  | Gmail app password                         |
+| `GOOGLE_CLIENT_ID`                  | Google OAuth client ID                     |
+| `GOOGLE_CLIENT_SECRET`              | Google OAuth client secret                 |
+| `GOOGLE_CALLBACK_URL`               | OAuth redirect URI                         |
+| `SESSION_SECRET`                    | express-session secret                     |
+| `CLOUDINARY_CLOUD_NAME`             | Cloudinary cloud name                      |
+| `CLOUDINARY_API_KEY`                | Cloudinary API key                         |
+| `CLOUDINARY_API_SECRET`             | Cloudinary API secret                      |
+| `RAJAONGKIR_API_KEY`                | RajaOngkir API key                         |
+| `RAJAONGKIR_BASE_URL`               | RajaOngkir base URL                        |
+| `MIDTRANS_SERVER_KEY`               | Midtrans server key                        |
+| `MIDTRANS_CLIENT_KEY`               | Midtrans client key                        |
+| `MIDTRANS_IS_PRODUCTION`            | `true` for production, `false` for sandbox |
+| `MIDTRANS_SNAP_URL`                 | Midtrans Snap API URL                      |
+| `MIDTRANS_API_URL`                  | Midtrans core API URL                      |
+| `MIDTRANS_WEBHOOK_URL`              | Public URL for payment webhook             |
+| `FRONTEND_URL`                      | Frontend origin (CORS whitelist)           |
+| `CRON_SECRET`                       | Secret for Vercel internal cron endpoint   |
 
 ### Database Setup
 
@@ -100,17 +107,23 @@ SESSION_SECRET=your_session_secret
 # Run migrations
 npx prisma migrate dev
 
-# Generate Prisma client
-npx prisma generate
+# Seed base data (regions, categories, stores)
+npm run seed
+
+# Seed Indonesian region data (provinces, cities, districts)
+npm run seed:regions
+
+# Seed demo data (users, products, orders)
+npm run seed:demo
 ```
 
 ### Running the App
 
 ```bash
-# Development (with hot reload)
+# Development with hot reload
 npm run dev
 
-# Production build
+# Production
 npm run build
 npm start
 ```
@@ -118,160 +131,173 @@ npm start
 ### Running Tests
 
 ```bash
-# Run all tests
 npm test
-
-# Run with coverage report
 npm run test:coverage
 ```
 
-## API Endpoints
+## API Overview
 
-All routes are prefixed with `/api`.
-
-### Response Format
-
-All endpoints return a consistent JSON shape:
+All routes are prefixed with `/api`. Every response follows:
 
 ```json
-{
-  "success": true,
-  "message": "Human-readable message",
-  "data": {}
-}
+{ "success": true, "message": "...", "data": {} }
 ```
 
-### Authentication
+Authentication uses a JWT issued as an `HttpOnly` cookie (`access_token`) on login or OAuth callback. It can also be passed as a `Bearer` token in the `Authorization` header.
 
-Protected routes require a valid JWT. The token is issued as an `access_token` `HttpOnly` cookie on login / OAuth callback. Alternatively, pass it as a `Bearer` token in the `Authorization` header.
+**Feature domains:**
 
-### Auth (`/api/auth`)
+| Prefix              | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `/api/auth`         | Register, login, email verification, password reset, Google OAuth |
+| `/api/users`        | Profile management, address book                                  |
+| `/api/products`     | Product catalogue with category and image support                 |
+| `/api/categories`   | Product category management                                       |
+| `/api/cart`         | Cart management (single-store restriction)                        |
+| `/api/orders`       | Order creation, payment proof upload, payment webhook             |
+| `/api/admin/orders` | Admin order management (confirm, ship, cancel)                    |
+| `/api/stores`       | Store listings and management                                     |
+| `/api/inventory`    | Per-store stock management and adjustments                        |
+| `/api/mutations`    | Inter-store stock transfer requests and approvals                 |
+| `/api/discounts`    | Store-level discount management (%, nominal, BOGO)                |
+| `/api/vouchers`     | Voucher management and redemption                                 |
+| `/api/shipping`     | Shipping cost calculation via RajaOngkir                          |
+| `/api/regions`      | Indonesian provinces, cities, and districts                       |
+| `/api/reports`      | Sales and inventory reports (admin only)                          |
 
-| Method | Endpoint               | Auth | Description                          |
-| ------ | ---------------------- | ---- | ------------------------------------ |
-| POST   | `/register`            | No   | Register a new user                  |
-| POST   | `/login`               | No   | Log in with email & password         |
-| POST   | `/verify-email`        | No   | Verify email and set password        |
-| POST   | `/resend-verification` | No   | Resend verification email            |
-| POST   | `/forgot-password`     | No   | Request password reset link          |
-| POST   | `/reset-password`      | No   | Reset password via token             |
-| GET    | `/google`              | No   | Initiate Google OAuth                |
-| GET    | `/google/callback`     | No   | Google OAuth callback                |
-| GET    | `/me`                  | Yes  | Get current user profile             |
-| POST   | `/logout`              | Yes  | Log out (clear cookie)               |
-| POST   | `/complete-profile`    | Yes  | Complete profile (phone, referral)   |
-| POST   | `/setup-password`      | Yes  | Set password for OAuth-only accounts |
+For the full request/response contract, import the Postman collection from `/docs`.
 
-### Cart (`/api/cart`)
+## Roles & Permissions
 
-All cart routes require authentication. Only verified users can add items.
+| Role          | Access                                                           |
+| ------------- | ---------------------------------------------------------------- |
+| `user`        | Browse products, manage own cart/orders/addresses/vouchers       |
+| `store_admin` | Manage inventory, discounts, and orders for their assigned store |
+| `super_admin` | Full access — stores, users, products, categories, reports       |
 
-| Method | Endpoint | Auth | Description                                         |
-| ------ | -------- | ---- | --------------------------------------------------- |
-| GET    | `/`      | Yes  | Get authenticated user's cart with items            |
-| POST   | `/`      | Yes  | Add item to cart (increments qty if already exists) |
-| PUT    | `/:id`   | Yes  | Update cart item quantity                           |
-| DELETE | `/:id`   | Yes  | Remove cart item (auto-deletes empty cart)          |
+## Background Jobs
 
-**Business rules:**
+The scheduler runs every 5 minutes and handles order lifecycle transitions automatically:
 
-- Stock is validated against `StoreInventory` before adding or updating
-- A cart is locked to one store — adding from a different store returns `400`
-- Deleting the last item automatically removes the cart
+- Cancel orders that exceed the payment deadline
+- Auto-confirm orders after the store accepts them
+- Auto-ship processing orders
+- Auto-complete shipped orders after the delivery window
 
----
+In production (Vercel), jobs are triggered via a secured internal endpoint instead of a long-running process.
 
-### Orders (`/api/orders`)
+## External APIs
 
-All order routes require authentication unless otherwise noted. Only verified users can place orders.
+| Service              | Purpose                                                           | Docs                                   |
+| -------------------- | ----------------------------------------------------------------- | -------------------------------------- |
+| **Midtrans**         | Payment gateway — Snap (redirect) and Core API (webhook)          | https://docs.midtrans.com              |
+| **RajaOngkir**       | Indonesian shipping cost calculation (JNE, TIKI, POS, etc.)       | https://rajaongkir.com/docs            |
+| **Cloudinary**       | Image storage and CDN for product and payment proof images        | https://cloudinary.com/documentation   |
+| **Google OAuth 2.0** | Social login via Passport.js strategy                             | https://developers.google.com/identity |
+| **Gmail SMTP**       | Transactional email (verification, password reset) via Nodemailer | https://nodemailer.com/smtp            |
 
-| Method | Endpoint             | Auth | Description                                                        |
-| ------ | -------------------- | ---- | ------------------------------------------------------------------ |
-| POST   | `/`                  | Yes  | Create a new order from the authenticated user's cart              |
-| POST   | `/:id/payment-proof` | Yes  | Upload payment proof image for a manual-transfer order             |
-| POST   | `/webhook/payment`   | No   | Receive payment gateway webhook for automatic payment confirmation |
+## Git Workflow
 
-#### Request body — `POST /api/orders`
+### Branch Flow
 
-```json
-{
-  "address_id": 1,
-  "payment_method": "manual_transfer",
-  "voucher_code": "DISC10",
-  "shipping_method": "JNE REG",
-  "shipping_cost": 15000
-}
+**Development:**
+
+```
+feat/...  ─┐
+fix/...   ─┼──→ development ──→ main
+chore/... ─┘
 ```
 
-| Field             | Type     | Required | Description                                              |
-| ----------------- | -------- | -------- | -------------------------------------------------------- |
-| `address_id`      | `number` | ✅       | ID of the saved delivery address (must belong to user)   |
-| `payment_method`  | `enum`   | ✅       | `manual_transfer` or `payment_gateway`                   |
-| `voucher_code`    | `string` | ❌       | Applies a voucher (product, total purchase, or shipping) |
-| `shipping_method` | `string` | ❌       | Courier / service name (e.g. `"JNE REG"`)                |
-| `shipping_cost`   | `number` | ❌       | Shipping fee in IDR — defaults to `0`                    |
+**Release (production):**
 
-#### Response — `201 Created`
-
-```json
-{
-  "success": true,
-  "message": "Order created successfully. Please complete payment within 1 hour.",
-  "data": {
-    "order": {
-      "id": 42,
-      "order_number": "MBG-123456789",
-      "status": "waiting_for_payment",
-      "payment_deadline": "2026-04-14T09:30:00.000Z",
-      "total_price": "185000.00",
-      "total_discount": "15000.00",
-      "shipping_cost": "15000.00",
-      "order_items": [ "..." ],
-      "store": { "id": 3, "name": "MBG Warehouse Selatan" },
-      "address": { "..." }
-    }
-  }
-}
+```
+feat/...  ─┐
+fix/...   ─┼──→ release/v1.2.0 ──→ main
+chore/... ─┘
 ```
 
-#### Business rules
+### Branch Naming
 
-- User must have a verified email — otherwise `403`
-- Cart must be non-empty — otherwise `400`
-- **Pre-order global stock check** — sums `StoreInventory.stock` across _all_ warehouses for each cart product; fails immediately if global stock is insufficient
-- **Nearest-warehouse routing** — all stores are sorted by Haversine distance to the delivery address; the closest store that can **fully fulfil all items** is selected
-  - If no single store can fulfil the full order, returns `400`
-- Active store/product discounts (BOGO, percentage, nominal) are applied per line item
-- Vouchers are validated against ownership (`UserVoucher`), expiry, and minimum purchase amount
-- Order is created with status `waiting_for_payment` and a **1-hour payment deadline**
-- Users upload payment proof via `POST /api/orders/:id/payment-proof` using `proof` file field
-  - Accepted formats: `jpg`, `jpeg`, `png`
-  - Max file size: `1MB`
-- Orders without payment proof after one hour are automatically cancelled by the scheduler
-- Payment gateway webhooks are accepted at `POST /api/orders/webhook/payment` for automatic confirmation
-- On success, the following happen atomically inside a single transaction:
-  - `Order` + `OrderItem` records are created
-  - `StoreInventory` stock is decremented for the selected warehouse
-  - A `StockJournal` entry (`order_deduction`) is written per item
-  - `UserVoucher` is marked as used (if applicable)
-  - The user's `Cart` and all `CartItem` rows are deleted
+Follows the [Conventional Branch](https://conventional-branch.github.io/) spec.
 
-## Data Model Overview
+Format: `<type>/<short-description>`
 
-| Model                            | Description                                                     |
-| -------------------------------- | --------------------------------------------------------------- |
-| `User`                           | Platform users with roles: `user`, `store_admin`, `super_admin` |
-| `UserOAuthAccount`               | Linked OAuth providers (Google, Facebook, Twitter)              |
-| `VerificationToken`              | Email verification and password reset tokens                    |
-| `Store`                          | Physical grocery stores with geolocation                        |
-| `StoreInventory`                 | Per-store product stock levels                                  |
-| `StockJournal`                   | Immutable log of every stock change                             |
-| `StockMutation`                  | Inter-store stock transfer requests                             |
-| `Product` / `ProductImage`       | Product catalogue with images                                   |
-| `ProductCategory`                | Product categories                                              |
-| `Cart` / `CartItem`              | User shopping cart                                              |
-| `Order` / `OrderItem`            | Orders with payment and shipping info                           |
-| `Discount`                       | Store/product-level discounts                                   |
-| `Voucher` / `UserVoucher`        | User vouchers including referral rewards                        |
-| `UserAddress`                    | Saved delivery addresses with geocoding                         |
-| `Province` / `City` / `District` | Indonesian region data                                          |
+| Type       | When to use                                  |
+| ---------- | -------------------------------------------- |
+| `feat/`    | New feature                                  |
+| `fix/`     | Bug fix                                      |
+| `hotfix/`  | Urgent production fix                        |
+| `chore/`   | Non-functional tasks (deps, config, scripts) |
+| `release/` | Release preparation (e.g. `release/v1.2.0`)  |
+
+Rules:
+
+- Lowercase only, words separated by hyphens
+- No underscores, no consecutive hyphens, no trailing hyphens
+- Include ticket number when applicable: `feat/issue-42-discount-engine`
+
+```
+✅ feat/add-voucher-redemption
+✅ fix/order-stock-deduction
+✅ chore/update-prisma-client
+✅ release/v1.2.0
+❌ Feature/AddVoucher
+❌ fix/order_stock
+❌ feat/new--feature
+```
+
+### Commit Messages
+
+Follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) spec.
+
+Format:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+| Type       | When to use                        |
+| ---------- | ---------------------------------- |
+| `feat`     | New feature (MINOR bump)           |
+| `fix`      | Bug fix (PATCH bump)               |
+| `docs`     | Documentation only                 |
+| `refactor` | Code change with no feature or fix |
+| `test`     | Adding or updating tests           |
+| `chore`    | Build, tooling, dependency updates |
+| `perf`     | Performance improvement            |
+| `ci`       | CI/CD config changes               |
+
+Breaking changes: append `!` after the type or add `BREAKING CHANGE:` in the footer (MAJOR bump).
+
+```
+feat(order): add nearest-warehouse routing on checkout
+fix(cart): prevent adding item from different store
+chore: upgrade prisma to v7
+feat!: rename order status enum values
+```
+
+## API Resource Naming
+
+Follows [REST resource naming conventions](https://restfulapi.net/resource-naming/).
+
+- **Use nouns, not verbs** — the HTTP method expresses the action
+- **Plural for collections** — `/orders`, `/products`, `/stores`
+- **Lowercase, hyphen-separated** — `/order-items`, not `/orderItems` or `/order_items`
+- **Hierarchy for sub-resources** — `/stores/:id/inventory`, `/orders/:id/payment-proof`
+- **No trailing slashes**
+- **Query params for filtering/sorting** — `/products?category=dairy&sort=price`
+
+```
+✅ GET    /api/products
+✅ GET    /api/products/:id
+✅ POST   /api/orders
+✅ GET    /api/stores/:id/inventory
+✅ POST   /api/orders/:id/payment-proof
+❌ POST   /api/createOrder
+❌ GET    /api/getProductById/:id
+❌ GET    /api/products/
+```
