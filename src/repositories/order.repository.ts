@@ -273,11 +273,26 @@ export const orderRepository = {
     },
     db: Db = prisma
   ) {
+    const searchFilter = params.search
+      ? {
+          OR: [
+            { order_number: { contains: params.search, mode: 'insensitive' as const } },
+            {
+              order_items: {
+                some: {
+                  product: {
+                    name: { contains: params.search, mode: 'insensitive' as const }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      : {};
+
     const where: Prisma.OrderWhereInput = {
       user_id: params.userId,
-      ...(params.search
-        ? { order_number: { contains: params.search, mode: 'insensitive' } }
-        : {})
+      ...searchFilter
     };
 
     if (params.date) {
@@ -305,11 +320,26 @@ export const orderRepository = {
     params: { userId: string; search?: string; date?: string },
     db: Db = prisma
   ) {
+    const searchFilter = params.search
+      ? {
+          OR: [
+            { order_number: { contains: params.search, mode: 'insensitive' as const } },
+            {
+              order_items: {
+                some: {
+                  product: {
+                    name: { contains: params.search, mode: 'insensitive' as const }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      : {};
+
     const where: Prisma.OrderWhereInput = {
       user_id: params.userId,
-      ...(params.search
-        ? { order_number: { contains: params.search, mode: 'insensitive' } }
-        : {})
+      ...searchFilter
     };
 
     if (params.date) {
